@@ -25,7 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { NinkenLogoCompact } from "@/components/logo"
+import Image from "next/image"
 import { NinkenIcon } from "@/components/ninken-icon"
 
 export function AppSidebar() {
@@ -54,22 +54,34 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
-          <button
-            className="px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={toggleSidebar}
-            aria-label="Toggle sidebar"
-          >
-            <NinkenIcon className="h-5 w-5" />
-          </button>
-          <span className="group-data-[collapsible=icon]:hidden">
-            <NinkenLogoCompact />
-          </span>
-        </div>
-        <p className="text-[11px] font-medium tracking-widest text-red-500/80 uppercase group-data-[collapsible=icon]:hidden">
-          Track. Hunt. Retrieve.
-        </p>
+      <SidebarHeader className="p-0">
+        {/* Expanded: full logo image */}
+        <button
+          className="group-data-[collapsible=icon]:hidden cursor-pointer hover:opacity-90 transition-opacity"
+          onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
+        >
+          <Image
+            src="/ninken-logo.png"
+            alt="Ninken 忍犬"
+            width={256}
+            height={85}
+            className="w-full h-auto"
+            style={{
+              maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+            }}
+            priority
+          />
+        </button>
+        {/* Collapsed: SVG badge */}
+        <button
+          className="hidden group-data-[collapsible=icon]:flex items-center justify-center py-2 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
+        >
+          <NinkenIcon className="h-5 w-5" />
+        </button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

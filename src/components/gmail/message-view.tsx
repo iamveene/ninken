@@ -10,6 +10,7 @@ import {
   Download,
   FileIcon,
   ArrowLeft,
+  X,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -128,8 +129,8 @@ export function MessageView({
     <div className="flex flex-1 flex-col">
       <div className="flex items-center gap-2 border-b px-4 py-2">
         {onBack && (
-          <Button variant="ghost" size="icon-sm" onClick={onBack}>
-            <ArrowLeft className="size-4" />
+          <Button variant="ghost" size="icon-sm" onClick={onBack} title="Close message">
+            <X className="size-4" />
           </Button>
         )}
         <div className="flex-1" />

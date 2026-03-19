@@ -305,7 +305,7 @@ export default function GmailPage() {
           onTrash={handleTrash}
           onMarkUnread={handleMarkSingleUnread}
           onArchive={handleArchive}
-          onBack={isMobile ? handleBack : undefined}
+          onBack={handleBack}
         />
       )}
     </div>
@@ -330,11 +330,11 @@ export default function GmailPage() {
             />
           </Panel>
           <ResizeHandle />
-          <Panel defaultSize={33} minSize={25} maxSize={50}>
+          <Panel defaultSize={38} minSize={30} maxSize={55}>
             {messageListContent}
           </Panel>
           <ResizeHandle />
-          <Panel defaultSize={55} minSize={30}>
+          <Panel defaultSize={50} minSize={30}>
             {detailContent}
           </Panel>
         </PanelGroup>

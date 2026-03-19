@@ -8,65 +8,54 @@
 | **Meaning** | Stealth Hound (Japanese) |
 | **Tagline** | "Track. Hunt. Retrieve." |
 | **Key feature** | Perpetual access — refresh token auto-renews the access token forever, no re-auth needed |
-| **Logo** | Custom SVG: stylized hound silhouette with stealth/ninja aesthetic, kanji 忍犬 integrated |
-| **Typography** | Logo: Inter or Geist (clean, modern). Kanji: Noto Sans JP or similar |
-| **Color palette** | Base: black/neutral-950. Accent: red-600/red-500 (subtle, not aggressive). Muted: neutral-800/900. Red team aesthetic |
+| **Logo** | Gemini-generated cyber hound (`/public/ninken-logo.png`). SVG wolf badge for compact contexts (`NinkenIcon`). README banner (`/images/ninken-banner.png`) |
+| **Typography** | Logo: Geist Sans (variable). Kanji: Noto Sans JP. Brand name bold, tracked tight |
+| **Color palette** | Base: soft dark gray (oklch 0.145). Accent: red-600 (#dc2626). No pure black. Red team aesthetic |
 | **Icon style** | SVG only. No emojis anywhere. Lucide icons for UI. Custom SVG for logo and branding |
 | **Modes** | Full dark/light mode support. Dark mode is the default (stealth aesthetic) |
 
-### Logo Specification
-- Main logo: "Ninken" text + "(忍犬)" kanji in parentheses
-- SVG format, scalable, works at 24px sidebar and 64px landing page
-- Minimal, geometric style — think stealth/precision
-- Monochrome that adapts to light/dark mode (uses currentColor or CSS variables)
-- Optional: small hound/wolf silhouette icon mark for favicon and compact contexts
+### Logo Assets
+- **Full logo** (`/public/ninken-logo.png`): Cyber hound with "NINKEN 忍犬 TRACK. HUNT. RETRIEVE." Generated with Gemini `gemini-3-pro-image-preview`. Used on landing page (large, with radial gradient mask) and sidebar header (full width when expanded)
+- **Badge** (`NinkenIcon` SVG): Geometric wolf silhouette with red eyes (#dc2626). Uses `currentColor` for adaptability. Used in sidebar when collapsed
+- **Banner** (`/images/ninken-banner.png`): Wide README header with dog face, title, kanji, tagline. Dark bg with subtle tech grid
 
-### Color System — Red Team Aesthetic
+### Sidebar Branding
+- **Expanded**: Full logo image at top, zero padding, fills sidebar width. Bottom edge dissolves via CSS `mask-image: linear-gradient(to bottom, black 70%, transparent 100%)`
+- **Collapsed**: SVG wolf badge with red eyes. Click either to toggle sidebar state
+
+### Color System (OKLCH)
+All colors use OKLCH color space. Dark mode is the default.
+
 ```
-Dark mode (default, primary):
-  --background: neutral-950 (#0a0a0a)
-  --foreground: neutral-100
-  --primary: red-600 (#dc2626) — accent, buttons, active states
-  --primary-foreground: white
-  --muted: neutral-900 (#171717)
-  --muted-foreground: neutral-400
-  --accent: red-950/30 — subtle red tint for hover/selected states
-  --border: neutral-800
-  --ring: red-600
-  --destructive: red-500
-  --card: neutral-900
-  --card-foreground: neutral-100
-
-Light mode (secondary):
-  --background: neutral-50
-  --foreground: neutral-950
-  --primary: red-700
-  --primary-foreground: white
-  --muted: neutral-100
-  --muted-foreground: neutral-500
-  --accent: red-50
-  --border: neutral-200
-  --ring: red-700
-  --card: white
-  --card-foreground: neutral-950
+Dark mode (default):
+  --background:       oklch(0.145 0 0)   ~#222    Soft dark gray (NOT pure black)
+  --sidebar:          oklch(0.145 0 0)   ~#222    Matches background (no visible boundary)
+  --card/--popover:   oklch(0.17 0 0)    ~#282828 Elevated surfaces
+  --muted/--secondary:oklch(0.20 0 0)    ~#303030 Muted backgrounds
+  --accent:           oklch(0.20 0.02 27)~#303030 Hover states (slight red warmth)
+  --border/--input:   oklch(0.27 0 0)    ~#3e3e3e Borders, input outlines
+  --muted-foreground: oklch(0.55 0 0)    ~#808080 Secondary text
+  --foreground:       oklch(0.9 0 0)     ~#e6e6e6 Primary text
+  --primary:          oklch(0.577 0.245 27.325) #dc2626 Red accent
 ```
 
-Design notes:
-- Red is used SPARINGLY — accents, active states, primary buttons, logo
-- NOT a red flood — the base is deep black/neutral with red highlights
+Landing page uses Tailwind `from-neutral-950 to-neutral-900` gradient (slightly darker than app bg for drama).
+
+### Design Notes
+- Red is used SPARINGLY — accents, active states, primary buttons, logo eyes
+- NOT a red flood — the base is soft dark gray with red highlights
+- No pure black anywhere — `oklch(0.145)` is the darkest surface
+- Sidebar and background share the same color — seamless, no boundary
+- Logo dissolves into sidebar via CSS mask gradient
 - Think: terminal aesthetic, Cobalt Strike, Mythic C2 UI
-- Unread messages: subtle red-950/20 tint (not bright red background)
 - Star color: red-500 (not yellow — stays on-brand)
-- Hover states: neutral-800 with subtle red border or tint
-- Selected states: red-950/30 background
-- Scrollbars: dark, thin, minimal
-```
 
 ### Design Principles
 - **No emojis** — SVG icons only, everywhere
-- **Red team aesthetic** — black base, red accents, think Cobalt Strike / Mythic C2 / terminal ops
+- **Red team aesthetic** — dark gray base, red accents, think Cobalt Strike / Mythic C2
 - **Minimal chrome** — content-first, UI stays out of the way
-- **Sharp typography** — Inter/Geist, proper hierarchy, no rounded bubbly fonts
+- **No horizontal scroll** — all layouts use `overflow-x-hidden` and `min-w-0`
+- **Sharp typography** — Geist Sans, proper hierarchy, no rounded bubbly fonts
 - **Subtle animations** — smooth but not playful. Fade, slide, no bounce
 
 ## Overview

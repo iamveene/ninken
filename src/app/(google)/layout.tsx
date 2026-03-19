@@ -16,7 +16,7 @@ export default function AppLayout({
     <ProviderContextProvider>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="overflow-x-hidden">
           <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
             <ModeToggle />
             <div className="ml-auto flex items-center gap-3">
@@ -26,7 +26,7 @@ export default function AppLayout({
             </div>
           </header>
           <OfflineBanner />
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 min-w-0">
             {children}
           </div>
         </SidebarInset>
