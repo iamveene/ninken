@@ -1,16 +1,27 @@
-import type {
-  BaseCredential,
-  MicrosoftCredential,
-  ServiceProvider,
+import {
+  minimalAccessToken,
+  type AccessTokenCredential,
+  type BaseCredential,
+  type MicrosoftCredential,
+  type ServiceProvider,
 } from "./types"
 import type { CredentialStrategy } from "./credential-strategy"
 import { decodeScopesFromJwt } from "../microsoft"
 import {
-  microsoftOAuthStrategy,
+microsoftOAuthStrategy,
   normalizeRaw,
   TEAMS_FOCI_CLIENT_ID,
 } from "./strategies/microsoft-oauth"
 import { microsoftServicePrincipalStrategy } from "./strategies/microsoft-service-principal"
+
+getAccessToken as msGetAccessToken,
+  decodeJwtPayload,
+  decodeScopesFromJwt,
+} from "../microsoft"
+import {
+  detectMicrosoftAccessToken,
+  validateMicrosoftAccessToken,
+} from "./strategies/microsoft-access-token"
 
 const strategies: CredentialStrategy[] = [
   // Service principal must be checked before OAuth because both may have client_id + tenant_id,
@@ -185,13 +196,19 @@ export const microsoftProvider: ServiceProvider = {
   iconName: "Monitor",
 
   detectCredential(raw: unknown): boolean {
-    return strategies.some((s) => s.detect(raw))
+return strategies.some((s) => s.detect(raw))
+
+// Raw JWT string: check for Microsoft-specific claims
+    if (detectMicrosoftAccessToken(raw)) return true
+    if (!raw || typeof raw !== "object") return false
+    const obj = normalizeRaw(raw as Record<string, unknown>)
+    return isMicrosoftShape(obj)
   },
 
   validateCredential(
     raw: unknown,
   ):
-    | { valid: true; credential: BaseCredential; email?: string }
+| { valid: true; credential: BaseCredential; email?: string }
     | { valid: false; error: string } {
     const strategy = strategies.find((s) => s.detect(raw))
     if (!strategy) {
@@ -199,18 +216,33 @@ export const microsoftProvider: ServiceProvider = {
         valid: false,
         error: "Unrecognized Microsoft credential format",
       }
+
+| { valid: true; credential: MicrosoftCredential | AccessTokenCredential; email?: string }
+    | { valid: false; error: string } {
+    // Raw access token JWT string
+    if (typeof raw === "string" && detectMicrosoftAccessToken(raw)) {
+      return validateMicrosoftAccessToken(raw)
+    }
+    if (!raw || typeof raw !== "object") {
+      return { valid: false, error: "Invalid JSON" }
     }
     return strategy.validate(raw)
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
-    const strategy = strategyForKind(credential)
+const strategy = strategyForKind(credential)
     if (!strategy) {
       throw new Error(
         `No Microsoft strategy for credential kind: ${credential.credentialKind}`,
       )
     }
     return strategy.getAccessToken(credential)
+
+// Access token credentials: return stored token directly (non-refreshable)
+    if (credential.credentialKind === "access-token") {
+      return (credential as AccessTokenCredential).access_token
+    }
+    return msGetAccessToken(credential as MicrosoftCredential)
   },
 
   async fetchScopes(credential: BaseCredential): Promise<string[]> {
@@ -486,7 +518,7 @@ export const microsoftProvider: ServiceProvider = {
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
-    const strategy = strategyForKind(credential)
+const strategy = strategyForKind(credential)
     if (!strategy) {
       const c = credential as MicrosoftCredential
       return {
@@ -499,5 +531,18 @@ export const microsoftProvider: ServiceProvider = {
       } as MicrosoftCredential
     }
     return strategy.minimalCredential(credential)
+
+if (credential.credentialKind === "access-token") {
+      return minimalAccessToken(credential as AccessTokenCredential)
+    }
+    const c = credential as MicrosoftCredential
+    return {
+      provider: "microsoft",
+      credentialKind: c.credentialKind,
+      refresh_token: c.refresh_token,
+      client_id: c.client_id,
+      tenant_id: c.tenant_id,
+      token_uri: c.token_uri,
+    } as MicrosoftCredential
   },
 }

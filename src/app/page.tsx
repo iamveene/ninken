@@ -12,13 +12,14 @@ import {
   X,
   Check,
   Users,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
 import { getAllProviders, detectProvider, getProvider, extractAllCredentials } from "@/lib/providers"
 import type { ExtractedMicrosoftAccount } from "@/lib/providers"
 import { resolveIcon } from "@/lib/icon-resolver"
-import type { ServiceProvider } from "@/lib/providers/types"
+import type { AccessTokenCredential, ServiceProvider } from "@/lib/providers/types"
 import {
   addProfile,
   getAllProfiles,
@@ -60,6 +61,7 @@ function AuthPageInner() {
   const [multiAccounts, setMultiAccounts] = useState<ExtractedMicrosoftAccount[]>([])
   const [selectedAccountIndices, setSelectedAccountIndices] = useState<Set<number>>(new Set())
   const [importingMulti, setImportingMulti] = useState(false)
+  const [accessTokenInfo, setAccessTokenInfo] = useState<{ expiresAt?: number; provider: string } | null>(null)
 
   const providers = getAllProviders()
 
@@ -106,9 +108,13 @@ function AuthPageInner() {
     async (text: string) => {
       setStatus("validating")
       setErrorMessage("")
+      setAccessTokenInfo(null)
 
       try {
-        const data = JSON.parse(text)
+        // Try JSON first, fall back to raw string (access tokens, JWTs)
+        let data: unknown
+        try { data = JSON.parse(text) } catch { data = text.trim() }
+
         const provider = selectedProvider ?? detectProvider(data)
         if (!provider) {
           throw new Error(
@@ -130,6 +136,15 @@ function AuthPageInner() {
 
         const result = provider.validateCredential(data)
         if (!result.valid) throw new Error(result.error)
+
+        // Show expiry info for access token credentials before redirect
+        if (result.credential.credentialKind === "access-token") {
+          const atCred = result.credential as AccessTokenCredential
+          setAccessTokenInfo({
+            expiresAt: atCred.expires_at,
+            provider: provider.name,
+          })
+        }
 
         const profile = await addProfile(
           provider.id,
@@ -154,15 +169,14 @@ function AuthPageInner() {
         }
 
         setStatus("success")
-        setTimeout(() => router.push(provider.defaultRoute), 500)
+        const isAccessToken = result.credential.credentialKind === "access-token"
+        setTimeout(() => router.push(provider.defaultRoute), isAccessToken ? 1500 : 500)
       } catch (e) {
         setStatus("error")
         setErrorMessage(
-          e instanceof SyntaxError
-            ? "Invalid JSON"
-            : e instanceof Error
-              ? e.message
-              : "Unknown error"
+          e instanceof Error
+            ? e.message
+            : "Unknown error"
         )
       }
     },
@@ -491,7 +505,7 @@ function AuthPageInner() {
               <input
                 id="file-input"
                 type="file"
-                accept=".json,application/json"
+                accept=".json,.txt,application/json,text/plain"
                 className="hidden"
                 onChange={onFileSelect}
               />
@@ -499,7 +513,19 @@ function AuthPageInner() {
               {status === "success" ? (
                 <>
                   <CheckCircle className="h-6 w-6 text-emerald-400" />
-                  <p className="text-sm text-emerald-400">Authenticated. Redirecting...</p>
+                  <div>
+                    <p className="text-sm text-emerald-400">Authenticated. Redirecting...</p>
+                    {accessTokenInfo && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Clock className="h-3 w-3 text-amber-400" />
+                        <p className="text-[11px] text-amber-400">
+                          {accessTokenInfo.expiresAt
+                            ? `Access token expires ${new Date(accessTokenInfo.expiresAt * 1000).toLocaleString()} (non-refreshable)`
+                            : `${accessTokenInfo.provider} access token (non-refreshable, unknown expiry)`}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </>
               ) : status === "error" ? (
                 <>
@@ -533,7 +559,7 @@ function AuthPageInner() {
                         : "Drag and drop any credential"}
                     </p>
                     <p className="text-[11px] text-neutral-500">
-                      {selectedProvider ? selectedProvider.description : "Auto-detects service from credential format"}
+                      {selectedProvider ? selectedProvider.description : "JSON credentials, access tokens, or JWTs"}
                     </p>
                   </div>
                 </>
@@ -554,7 +580,7 @@ function AuthPageInner() {
                 className="inline-flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors"
               >
                 <ClipboardPaste className="h-3 w-3" />
-                {showPaste ? "Hide paste" : "Or paste credential JSON"}
+                {showPaste ? "Hide paste" : "Or paste credential JSON / access token"}
               </button>
             </div>
 
@@ -563,7 +589,7 @@ function AuthPageInner() {
                 <textarea
                   value={pasteValue}
                   onChange={(e) => setPasteValue(e.target.value)}
-                  placeholder='{"refresh_token": "...", "client_id": "...", "client_secret": "..."}'
+                  placeholder='{"refresh_token": "..."} or ya29.xxx... or eyJhbG...'
                   spellCheck={false}
                   className="w-full h-24 rounded border border-neutral-700 bg-neutral-900/50 p-2.5 font-mono text-xs text-neutral-300 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-900/50 resize-none"
                 />

@@ -10,6 +10,7 @@ export type {
   ProviderId,
   CredentialKind,
   BaseCredential,
+  AccessTokenCredential,
   GoogleCredential,
   GoogleServiceAccountCredential,
   MicrosoftCredential,
@@ -20,6 +21,8 @@ export type {
   ServiceProvider,
 } from "./types"
 export type { CredentialStrategy } from "./credential-strategy"
+
+export { minimalAccessToken } from "./types"
 export { registerProvider, getProvider, getAllProviders, detectProvider } from "./registry"
 export { googleProvider } from "./google"
 export { microsoftProvider, extractAllCredentials } from "./microsoft"
