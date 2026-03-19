@@ -1,6 +1,6 @@
 "use client"
 
-import { Users, AlertCircle } from "lucide-react"
+import { Users, UsersRound, AlertCircle, Info } from "lucide-react"
 import { useAuditGroups } from "@/hooks/use-audit"
 import {
   Table,
@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 export default function GroupsAuditPage() {
   const { data, loading, error } = useAuditGroups()
   const groups = data.groups
+  const scope = data.scope
 
   const isPermissionError =
     error != null &&
@@ -32,6 +33,26 @@ export default function GroupsAuditPage() {
           configurations.
         </p>
       </div>
+
+      {/* Scope indicator */}
+      {!loading && !error && scope === "user" && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-950/10 px-3 py-2 text-sm text-amber-200">
+          <Info className="h-4 w-4 shrink-0 text-amber-500" />
+          <span>Limited view — showing groups you belong to. Full organization audit requires admin privileges.</span>
+        </div>
+      )}
+      {!loading && !error && scope === "organization" && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-950/10 px-3 py-2 text-sm text-emerald-200">
+          <UsersRound className="h-4 w-4 shrink-0 text-emerald-500" />
+          <span>Full organization view — showing all groups.</span>
+        </div>
+      )}
+      {!loading && !error && scope === "none" && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/10 px-3 py-2 text-sm text-red-200">
+          <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
+          <span>Cannot list groups with current permissions.</span>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">

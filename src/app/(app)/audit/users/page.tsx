@@ -67,6 +67,7 @@ export default function UsersAuditPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all")
 
   const users = data.users
+  const scope = data.scope
 
   const stats = useMemo(() => {
     const total = users.length
@@ -105,6 +106,20 @@ export default function UsersAuditPage() {
           admin privileges.
         </p>
       </div>
+
+      {/* Scope indicator */}
+      {!loading && scope === "self" && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-950/10 px-3 py-2 text-sm text-amber-200">
+          <ShieldAlert className="h-4 w-4 shrink-0 text-amber-500" />
+          <span>Limited view — showing your own account only. Organization-wide user audit requires admin privileges.</span>
+        </div>
+      )}
+      {!loading && scope === "organization" && (
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-950/10 px-3 py-2 text-sm text-emerald-200">
+          <Users className="h-4 w-4 shrink-0 text-emerald-500" />
+          <span>Full organization view — showing all users.</span>
+        </div>
+      )}
 
       {/* Error state */}
       {error ? (

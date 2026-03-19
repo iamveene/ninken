@@ -82,11 +82,13 @@ export type AuditDelegation = {
 type AuditUsersResult = {
   users: AuditUser[]
   nextPageToken: string | null
+  scope?: "organization" | "self"
 }
 
 type AuditGroupsResult = {
   groups: AuditGroup[]
   nextPageToken: string | null
+  scope?: "organization" | "user" | "none"
 }
 
 type AuditRolesResult = {
