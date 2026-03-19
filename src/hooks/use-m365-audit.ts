@@ -312,6 +312,23 @@ export function useCrossTenantAccess() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       throw new Error(data.error || `Failed to fetch cross-tenant access policy (${res.status})`)
+    }
+    return res.json()
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<{
+    defaultPolicy: CrossTenantDefaultPolicy
+    partners: CrossTenantPartner[]
+  }>("m365-audit:cross-tenant", fetcher, { ttlMs: CACHE_TTL_BODY })
+
+  return {
+    defaultPolicy: data?.defaultPolicy ?? null,
+    partners: data?.partners ?? [],
+    loading,
+    error,
+    refetch,
+  }
+}
 
 // Resource Pivot Probing
 // ---------------------------------------------------------------------------
@@ -340,24 +357,7 @@ export function useResourcePivot() {
     return res.json()
   }, [])
 
-const { data, loading, error, refetch } = useCachedQuery<{
-    defaultPolicy: CrossTenantDefaultPolicy
-    partners: CrossTenantPartner[]
-  }>(
-    "m365-audit:cross-tenant",
-    fetcher,
-    { ttlMs: CACHE_TTL_LIST }
-  )
-
-  return {
-    defaultPolicy: data?.defaultPolicy ?? null,
-    partners: data?.partners ?? [],
-    loading,
-    error,
-    refetch,
-  }
-
-const { data, loading, error, refetch } = useCachedQuery<ResourcePivotResult>(
+  const { data, loading, error, refetch } = useCachedQuery<ResourcePivotResult>(
     "m365-audit:resource-pivot",
     fetcher,
     { ttlMs: CACHE_TTL_BODY }

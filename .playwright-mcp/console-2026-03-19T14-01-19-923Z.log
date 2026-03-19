@@ -1,0 +1,2 @@
+[    1065ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/directory/groups?:0
+[    1597ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/directory/users?:0

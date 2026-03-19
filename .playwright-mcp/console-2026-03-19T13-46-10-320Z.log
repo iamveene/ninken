@@ -1,0 +1,202 @@
+[     759ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/chat/spaces:0
+[  451762ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  451770ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  451784ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  452262ms] [ERROR] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  452321ms] Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <SegmentViewNode type="page" pagePath="(google)/c...">
+      <SegmentTrieNode>
+      <ClientPageRoot Component={function ChatPage} serverProvidedParams={{...}}>
+        <ChatPage params={Promise} searchParams={Promise}>
+          <div className="flex h-[ca...">
+            <Group orientation="horizontal" className="h-full">
+              <div className="h-full" data-group={true} data-testid="_R_inebnqi..." id="_R_inebnqi..." ref={function} ...>
+                <Panel id="cs" defaultSize="260px" minSize="180px" maxSize="360px">
+                  <div aria-disabled={undefined} data-panel={true} data-testid="cs" id="cs" ref={function} ...>
+                    <div className={undefined} style={{...}}>
+                      <div className="flex flex-...">
+                        <div className="px-3 py-2....">
+                          <Hash className="h-4 w-4 te...">
+                            <svg
+                              ref={null}
+                              xmlns="http://www.w3.org/2000/svg"
+                              width={24}
+                              height={24}
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
++                             className="lucide lucide-hash h-4 w-4 text-muted-foreground"
+-                             className="lucide lucide-message-square h-4 w-4 text-muted-foreground"
+                              aria-hidden="true"
+                            >
++                             <line x1="4" x2="20" y1="9" y2="9">
+-                             <path
+-                               d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5..."
+-                             >
+                              ...
+                          ...
+                        ...
+                ...
+    ...
+
+    at throwOnHydrationMismatch (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6758:918)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopConcurrentByScheduler (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[  453695ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/chat/spaces:0
+[  453975ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/chat/spaces:0
+[  542443ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  542443ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:4000/api/auth/token-info:0
+[  542485ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  546578ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  548598ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  557336ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  563628ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  565423ms] [ERROR] ./src/app/api/_helpers.ts:24:1
+Merge conflict marker encountered.
+  22 | =======
+  23 | /** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
+> 24 | >>>>>>> origin/worktree-agent-a9227098
+     | ^^^^^^^
+  25 | export async function getTokenFromRequest(): Promise<TokenData | null> {
+  26 |   const cookieStore = await cookies()
+  27 |
+
+Parsing ecmascript source code failed
+
+Import trace:
+  App Route:
+    ./src/app/api/_helpers.ts
+    ./src/app/api/auth/token-info/route.ts @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  574034ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://localhost:4000/api/chat/spaces:0

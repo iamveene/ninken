@@ -90,12 +90,15 @@ export function createReportsServiceFromToken(accessToken: string) {
 
 export function createAlertCenterServiceFromToken(accessToken: string) {
   return google.alertcenter({ version: "v1beta1", auth: createBearerClient(accessToken) })
+}
 
 export function createDriveActivityServiceFromToken(accessToken: string) {
   return google.driveactivity({ version: "v2", auth: createBearerClient(accessToken) })
+}
 
 export function createGroupsSettingsServiceFromToken(accessToken: string) {
   return google.groupssettings({ version: "v1", auth: createBearerClient(accessToken) })
+}
 
 export function createPeopleServiceFromToken(accessToken: string) {
   return google.people({ version: "v1", auth: createBearerClient(accessToken) })
