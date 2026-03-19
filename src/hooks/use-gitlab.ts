@@ -2,7 +2,7 @@
 
 import { useCallback } from "react"
 import { useCachedQuery } from "@/hooks/use-cached"
-import { CACHE_TTL_LIST } from "@/lib/cache"
+import { CACHE_TTL_LIST, CACHE_TTL_BODY } from "@/lib/cache"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -68,6 +68,30 @@ export type GitLabSnippet = {
   createdAt: string
   updatedAt: string
   author: string
+}
+
+export type GitLabTreeItem = {
+  id: string
+  name: string
+  type: "tree" | "blob"
+  path: string
+  mode: string
+}
+
+export type GitLabFileContent = {
+  fileName: string
+  filePath: string
+  size: number
+  content: string | null
+  encoding: string
+  ref: string
+  truncated: boolean
+}
+
+export type GitLabBranch = {
+  name: string
+  default: boolean
+  webUrl: string
 }
 
 // ── Hooks ────────────────────────────────────────────────────────────
@@ -159,6 +183,102 @@ export function useGitLabSnippets() {
 
   return {
     snippets: data?.snippets ?? [],
+    totalCount: data?.totalCount ?? 0,
+    loading,
+    error,
+    refetch,
+  }
+}
+
+export function useGitLabTree(
+  projectId: number | null,
+  path: string,
+  ref: string
+) {
+  const cacheKey = projectId
+    ? `gitlab:tree:${projectId}:${ref}:${path}`
+    : null
+
+  const fetcher = useCallback(async () => {
+    if (!projectId) throw new Error("No project ID")
+    const params = new URLSearchParams({ path, ref })
+    const res = await fetch(
+      `/api/gitlab/projects/${projectId}/tree?${params}`
+    )
+    if (!res.ok) throw new Error("Failed to fetch repository tree")
+    const json = await res.json()
+    return {
+      items: (json.items ?? []) as GitLabTreeItem[],
+      totalCount: (json.totalCount ?? 0) as number,
+    }
+  }, [projectId, path, ref])
+
+  const { data, loading, error, refetch } = useCachedQuery(
+    cacheKey,
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST, enabled: !!projectId }
+  )
+
+  return {
+    items: data?.items ?? [],
+    totalCount: data?.totalCount ?? 0,
+    loading,
+    error,
+    refetch,
+  }
+}
+
+export function useGitLabFile(
+  projectId: number | null,
+  filePath: string | null,
+  ref: string
+) {
+  const cacheKey =
+    projectId && filePath
+      ? `gitlab:file:${projectId}:${ref}:${filePath}`
+      : null
+
+  const fetcher = useCallback(async () => {
+    if (!projectId || !filePath) throw new Error("No project ID or file path")
+    const params = new URLSearchParams({ path: filePath, ref })
+    const res = await fetch(
+      `/api/gitlab/projects/${projectId}/file?${params}`
+    )
+    if (!res.ok) throw new Error("Failed to fetch file content")
+    return (await res.json()) as GitLabFileContent
+  }, [projectId, filePath, ref])
+
+  const { data, loading, error, refetch } = useCachedQuery(
+    cacheKey,
+    fetcher,
+    { ttlMs: CACHE_TTL_BODY, enabled: !!projectId && !!filePath }
+  )
+
+  return { file: data ?? null, loading, error, refetch }
+}
+
+export function useGitLabBranches(projectId: number | null) {
+  const cacheKey = projectId ? `gitlab:branches:${projectId}` : null
+
+  const fetcher = useCallback(async () => {
+    if (!projectId) throw new Error("No project ID")
+    const res = await fetch(`/api/gitlab/projects/${projectId}/branches`)
+    if (!res.ok) throw new Error("Failed to fetch branches")
+    const json = await res.json()
+    return {
+      branches: (json.branches ?? []) as GitLabBranch[],
+      totalCount: (json.totalCount ?? 0) as number,
+    }
+  }, [projectId])
+
+  const { data, loading, error, refetch } = useCachedQuery(
+    cacheKey,
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST, enabled: !!projectId }
+  )
+
+  return {
+    branches: data?.branches ?? [],
     totalCount: data?.totalCount ?? 0,
     loading,
     error,
