@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
+import { CapabilitiesCard, type ServiceProbe } from "@/components/capabilities-card"
 import { getAllProviders, detectProvider, getProvider, extractAllCredentials } from "@/lib/providers"
 import type { ExtractedMicrosoftAccount } from "@/lib/providers"
 import { resolveIcon } from "@/lib/icon-resolver"
@@ -60,8 +61,111 @@ function AuthPageInner() {
   const [multiAccounts, setMultiAccounts] = useState<ExtractedMicrosoftAccount[]>([])
   const [selectedAccountIndices, setSelectedAccountIndices] = useState<Set<number>>(new Set())
   const [importingMulti, setImportingMulti] = useState(false)
+  const [showCapabilities, setShowCapabilities] = useState(false)
+  const [capabilityServices, setCapabilityServices] = useState<ServiceProbe[]>([])
+  const [capabilityLoading, setCapabilityLoading] = useState(false)
+  const [capabilityError, setCapabilityError] = useState<string | undefined>()
+  const [importedProvider, setImportedProvider] = useState<ServiceProvider | null>(null)
 
   const providers = getAllProviders()
+
+  const fetchCapabilities = useCallback(async (provider: ServiceProvider) => {
+    setShowCapabilities(true)
+    setCapabilityLoading(true)
+    setCapabilityError(undefined)
+    setCapabilityServices([])
+    setImportedProvider(provider)
+
+    const endpoint =
+      provider.id === "microsoft"
+        ? "/api/microsoft/audit/overview"
+        : "/api/audit/overview"
+
+    try {
+      const res = await fetch(endpoint)
+      if (!res.ok) throw new Error(`Probe failed (${res.status})`)
+      const overview = await res.json()
+
+      let services: ServiceProbe[]
+      if (provider.id === "google") {
+        services = [
+          {
+            name: "Gmail",
+            iconName: "Mail",
+            accessible: overview.gmail?.accessible ?? false,
+            detail: overview.gmail?.messagesTotal
+              ? `${Number(overview.gmail.messagesTotal).toLocaleString()} messages`
+              : undefined,
+          },
+          {
+            name: "Drive",
+            iconName: "HardDrive",
+            accessible: overview.drive?.accessible ?? false,
+            detail: overview.drive?.sharedDriveCount
+              ? `${overview.drive.sharedDriveCount} shared drives`
+              : undefined,
+          },
+          {
+            name: "Calendar",
+            iconName: "Calendar",
+            accessible: overview.calendar?.accessible ?? false,
+            detail: overview.calendar?.calendarCount
+              ? `${overview.calendar.calendarCount} calendars`
+              : undefined,
+          },
+          {
+            name: "Cloud Storage",
+            iconName: "Database",
+            accessible: overview.storage?.accessible ?? false,
+            detail: overview.storage?.projectCount
+              ? `${overview.storage.projectCount} projects`
+              : undefined,
+          },
+          {
+            name: "Directory",
+            iconName: "Users",
+            accessible: overview.directory?.accessible ?? false,
+            detail: overview.directory?.hasAdminAccess ? "Admin access" : undefined,
+          },
+        ]
+      } else {
+        // Microsoft
+        services = [
+          {
+            name: "Profile",
+            iconName: "Users",
+            accessible: overview.me?.accessible ?? false,
+          },
+          {
+            name: "Outlook",
+            iconName: "Mail",
+            accessible: overview.outlook?.accessible ?? false,
+          },
+          {
+            name: "OneDrive",
+            iconName: "HardDrive",
+            accessible: overview.onedrive?.accessible ?? false,
+          },
+          {
+            name: "Teams",
+            iconName: "MessageSquare",
+            accessible: overview.teams?.accessible ?? false,
+          },
+          {
+            name: "Directory",
+            iconName: "Users",
+            accessible: overview.directory?.accessible ?? false,
+          },
+        ]
+      }
+
+      setCapabilityServices(services)
+    } catch (e) {
+      setCapabilityError(e instanceof Error ? e.message : "Probe failed")
+    } finally {
+      setCapabilityLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     async function init() {
@@ -154,7 +258,7 @@ function AuthPageInner() {
         }
 
         setStatus("success")
-        setTimeout(() => router.push(provider.defaultRoute), 500)
+        fetchCapabilities(provider)
       } catch (e) {
         setStatus("error")
         setErrorMessage(
@@ -166,7 +270,7 @@ function AuthPageInner() {
         )
       }
     },
-    [router, selectedProvider]
+    [selectedProvider, fetchCapabilities]
   )
 
   const importAccounts = useCallback(async (indices: Set<number>) => {
@@ -203,15 +307,19 @@ function AuthPageInner() {
       setSelectedAccountIndices(new Set())
       setStatus("success")
 
-      const route = msProvider?.defaultRoute ?? "/m365-dashboard"
-      setTimeout(() => router.push(route), 500)
+      if (msProvider) {
+        fetchCapabilities(msProvider)
+      } else {
+        const route = "/m365-dashboard"
+        setTimeout(() => router.push(route), 500)
+      }
     } catch (e) {
       setStatus("error")
       setErrorMessage(e instanceof Error ? e.message : "Import failed")
     } finally {
       setImportingMulti(false)
     }
-  }, [multiAccounts, router])
+  }, [multiAccounts, router, fetchCapabilities])
 
   const handleFile = useCallback(
     async (file: File) => {
@@ -376,8 +484,16 @@ function AuthPageInner() {
           </div>
         </div>
 
-        {/* Multi-account selection UI */}
-        {multiAccounts.length > 0 ? (
+        {/* Capability probing results */}
+        {showCapabilities && importedProvider ? (
+          <CapabilitiesCard
+            services={capabilityServices}
+            loading={capabilityLoading}
+            error={capabilityError}
+            providerName={importedProvider.name}
+            onContinue={() => router.push(importedProvider.defaultRoute)}
+          />
+        ) : multiAccounts.length > 0 ? (
           <div className="space-y-3">
             {/* Format detection badge */}
             <div className="flex items-center justify-center gap-2">
@@ -499,7 +615,7 @@ function AuthPageInner() {
               {status === "success" ? (
                 <>
                   <CheckCircle className="h-6 w-6 text-emerald-400" />
-                  <p className="text-sm text-emerald-400">Authenticated. Redirecting...</p>
+                  <p className="text-sm text-emerald-400">Authenticated. Probing capabilities...</p>
                 </>
               ) : status === "error" ? (
                 <>
