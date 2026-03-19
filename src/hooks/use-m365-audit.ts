@@ -154,6 +154,70 @@ export type ConditionalAccessPolicy = {
   sessionControls: Record<string, unknown> | null
 }
 
+// ---------------------------------------------------------------------------
+// Cross-Tenant Access
+// ---------------------------------------------------------------------------
+
+export type CrossTenantInboundTrust = {
+  isMfaAccepted?: boolean
+  isCompliantDeviceAccepted?: boolean
+  isHybridAzureADJoinedDeviceAccepted?: boolean
+}
+
+export type CrossTenantDefaultPolicy = {
+  inboundTrust?: CrossTenantInboundTrust
+  b2bCollaborationInbound?: Record<string, unknown>
+  b2bCollaborationOutbound?: Record<string, unknown>
+  b2bDirectConnectInbound?: Record<string, unknown>
+  b2bDirectConnectOutbound?: Record<string, unknown>
+}
+
+export type CrossTenantPartner = {
+  tenantId: string
+  inboundTrust?: CrossTenantInboundTrust
+  b2bCollaborationInbound?: Record<string, unknown>
+  b2bCollaborationOutbound?: Record<string, unknown>
+  b2bDirectConnectInbound?: Record<string, unknown>
+  b2bDirectConnectOutbound?: Record<string, unknown>
+  isServiceProvider?: boolean
+  isInMultiTenantOrganization?: boolean
+}
+
+export function useCrossTenantAccess() {
+  const fetcher = useCallback(async (): Promise<{
+    defaultPolicy: CrossTenantDefaultPolicy
+    partners: CrossTenantPartner[]
+  }> => {
+    const res = await fetch("/api/microsoft/audit/cross-tenant")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch cross-tenant access policy (${res.status})`)
+    }
+    return res.json()
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<{
+    defaultPolicy: CrossTenantDefaultPolicy
+    partners: CrossTenantPartner[]
+  }>(
+    "m365-audit:cross-tenant",
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST }
+  )
+
+  return {
+    defaultPolicy: data?.defaultPolicy ?? null,
+    partners: data?.partners ?? [],
+    loading,
+    error,
+    refetch,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Conditional Access Policies
+// ---------------------------------------------------------------------------
+
 export function useConditionalAccessPolicies() {
   const fetcher = useCallback(async (): Promise<ConditionalAccessPolicy[]> => {
     const res = await fetch("/api/microsoft/audit/conditional-access")
