@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       drives: res.data.drives || [],
-      nextPageToken: res.data.nextPageToken || undefined,
+      nextPageToken: res.data.nextPageToken || null,
     })
   } catch (error) {
     return serverError(error)
