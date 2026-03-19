@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useGitHubRepos } from "@/hooks/use-github"
 import { ExportButton } from "@/components/layout/export-button"
 import { ServiceError } from "@/components/ui/service-error"
+import { CollectButton } from "@/components/collection/collect-button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -96,13 +97,14 @@ export default function ReposPage() {
               <TableHead className="text-xs text-right">Stars</TableHead>
               <TableHead className="text-xs text-right">Forks</TableHead>
               <TableHead className="text-xs">Updated</TableHead>
+              <TableHead className="text-xs w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 7 }).map((__, j) => (
                     <TableCell key={j}>
                       <div className="h-4 animate-pulse rounded bg-muted" />
                     </TableCell>
@@ -111,7 +113,7 @@ export default function ReposPage() {
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-xs text-muted-foreground py-8">
                   No repositories found
                 </TableCell>
               </TableRow>
@@ -188,6 +190,28 @@ export default function ReposPage() {
                         ? new Date(repo.updatedAt).toLocaleDateString()
                         : "-"}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <CollectButton
+                      variant="icon-xs"
+                      params={{
+                        type: "repo",
+                        source: "github",
+                        title: repo.fullName,
+                        subtitle: repo.visibility,
+                        sourceId: repo.id.toString(),
+                        metadata: {
+                          description: repo.description,
+                          language: repo.language,
+                          visibility: repo.visibility,
+                          stars: repo.stars,
+                          forks: repo.forks,
+                          defaultBranch: repo.defaultBranch,
+                          htmlUrl: repo.htmlUrl,
+                          updatedAt: repo.updatedAt,
+                        },
+                      }}
+                    />
                   </TableCell>
                 </TableRow>
               ))

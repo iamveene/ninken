@@ -1,6 +1,6 @@
-export type CollectionItemType = "email" | "file" | "object" | "chat-message"
+export type CollectionItemType = "email" | "file" | "object" | "chat-message" | "repo"
 export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
-export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams"
+export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "github"
 
 export type CollectionItem = {
   id: string
