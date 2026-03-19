@@ -18,4 +18,5 @@ export type {
 } from "./types"
 export { registerProvider, getProvider, getAllProviders, detectProvider } from "./registry"
 export { googleProvider } from "./google"
-export { microsoftProvider } from "./microsoft"
+export { microsoftProvider, extractAllCredentials } from "./microsoft"
+export type { ExtractedMicrosoftAccount } from "./microsoft"

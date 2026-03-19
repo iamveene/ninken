@@ -116,6 +116,146 @@ function normalizeRaw(raw: Record<string, unknown>): Record<string, unknown> {
   return raw
 }
 
+/** Extracted account from a multi-account cache file */
+export type ExtractedMicrosoftAccount = {
+  credential: MicrosoftCredential
+  email?: string
+  label?: string
+  format: string
+}
+
+/**
+ * Extract ALL credentials from an Azure CLI MSAL cache or PowerShell context.
+ * Returns an array so the UI can let the user pick which accounts to import.
+ * For single-credential formats, returns a one-element array.
+ */
+export function extractAllCredentials(
+  raw: Record<string, unknown>
+): ExtractedMicrosoftAccount[] {
+  // Azure CLI MSAL cache: { AccessToken: {...}, RefreshToken: {...}, Account: {...}, ... }
+  if (raw.RefreshToken && typeof raw.RefreshToken === "object") {
+    const rtEntries = Object.values(
+      raw.RefreshToken as Record<string, Record<string, unknown>>
+    )
+    const accounts = raw.Account
+      ? Object.values(raw.Account as Record<string, Record<string, unknown>>)
+      : []
+
+    const results: ExtractedMicrosoftAccount[] = []
+    for (const rt of rtEntries) {
+      if (typeof rt.secret !== "string" || !rt.secret) continue
+
+      // Cross-reference with Account entries by home_account_id
+      const homeId = rt.home_account_id as string | undefined
+      const account = accounts.find(
+        (a) =>
+          a.home_account_id === homeId ||
+          a.username === rt.username
+      )
+
+      const isFoci = rt.family_id === "1"
+      const email = (account?.username ?? rt.username) as string | undefined
+      const tenantId = (rt.realm ?? rt.environment) as string | undefined
+
+      results.push({
+        credential: {
+          provider: "microsoft",
+          credentialKind: isFoci ? "foci" : "oauth",
+          refresh_token: rt.secret as string,
+          client_id: (rt.client_id as string) || TEAMS_FOCI_CLIENT_ID,
+          tenant_id: tenantId || "",
+          foci: isFoci,
+          account: email,
+        },
+        email,
+        format: "Azure CLI MSAL Token Cache",
+      })
+    }
+    return results
+  }
+
+  // Azure PowerShell: { Contexts: { "Default": { Account: { Id, Tenants }, ... } } }
+  if (raw.Contexts && typeof raw.Contexts === "object") {
+    const contexts = raw.Contexts as Record<
+      string,
+      Record<string, unknown>
+    >
+    const results: ExtractedMicrosoftAccount[] = []
+    for (const [name, ctx] of Object.entries(contexts)) {
+      const account = ctx.Account as Record<string, unknown> | undefined
+      const tenant = (account?.Tenants as string[])?.[0] || ""
+      const email = account?.Id as string | undefined
+
+      results.push({
+        credential: {
+          provider: "microsoft",
+          credentialKind: "oauth",
+          refresh_token: "",
+          tenant_id: tenant,
+          client_id: TEAMS_FOCI_CLIENT_ID,
+          account: email,
+        },
+        email,
+        label: name,
+        format: "Azure PowerShell Context",
+      })
+    }
+    return results
+  }
+
+  // Single credential: use existing normalizeRaw + validateCredential path
+  const obj = normalizeRaw(raw)
+
+  if (typeof obj.refresh_token !== "string" || !obj.refresh_token) {
+    return []
+  }
+
+  const tenantId = (obj.tenant_id || obj.tenantId) as string | undefined
+  if (!tenantId) return []
+
+  const clientId =
+    typeof obj.client_id === "string" && obj.client_id
+      ? obj.client_id
+      : TEAMS_FOCI_CLIENT_ID
+
+  const isFoci = obj.foci === true || obj.foci === "1"
+
+  // Detect specific format
+  let format = "Microsoft OAuth Token"
+  if (isFoci) format = "FOCI Refresh Token"
+
+  return [
+    {
+      credential: {
+        provider: "microsoft",
+        credentialKind: isFoci ? "foci" : "oauth",
+        refresh_token: obj.refresh_token as string,
+        client_id: clientId,
+        tenant_id: tenantId,
+        access_token:
+          typeof obj.access_token === "string" ? obj.access_token : undefined,
+        scope: Array.isArray(obj.scope)
+          ? (obj.scope as string[])
+          : typeof obj.scope === "string"
+            ? (obj.scope as string).split(" ").filter(Boolean)
+            : undefined,
+        token_uri:
+          typeof obj.token_uri === "string" ? obj.token_uri : undefined,
+        account:
+          typeof obj.account === "string" ? obj.account : undefined,
+        foci: isFoci,
+      },
+      email:
+        typeof obj.email === "string"
+          ? obj.email
+          : typeof obj.account === "string"
+            ? obj.account
+            : undefined,
+      format,
+    },
+  ]
+}
+
 export const microsoftProvider: ServiceProvider = {
   id: "microsoft",
   name: "Microsoft 365",
