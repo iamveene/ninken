@@ -420,6 +420,41 @@ All modules will support:
 | **Sign out button does not work** | High | Fixed | Was only clearing server cookie, not IndexedDB profiles. Fixed by adding `clearAllProfiles()` call in `handleSignOut` in `app-sidebar.tsx`. |
 | **Horizontal overflow on responsive views** | Medium | Fixed | Added `overflow-x-hidden` to html element (`globals.css`) and `SidebarInset` (`(google)/layout.tsx`), plus `min-w-0` on content areas. |
 | **Slack d_cookie import requires manual bootstrap** | Medium | Open | When a user pastes a Slack `d_cookie` credential, the landing page shows "Missing xoxc_token — credential must be bootstrapped before validation". The d_cookie must first be sent to `/api/slack/bootstrap` to extract the xoxc token, but this step is not automated in the import flow. **Fix needed**: The landing page should automatically call `/api/slack/bootstrap` when it detects a Slack d_cookie credential, extract the xoxc token, and then proceed with normal validation — all transparent to the user. |
+| **"Token invalid" on GitHub pages sidebar** | Medium | Open | The token lifecycle panel in the sidebar shows "Token invalid" on all GitHub pages because it tries to decode the PAT as a JWT (GitHub PATs are opaque `ghp_` strings, not JWTs). **Fix needed**: Token lifecycle should detect non-JWT tokens and show "PAT (no expiry)" instead of "Token invalid". |
+| **Flash error on GitHub token load** | Low | Open | Brief error flash appears when initially loading a GitHub PAT credential before the page renders. Likely the capability probing or token info endpoint returning an error momentarily. |
+| **Collection: missing Send to Collection on most services** | Medium | Open | Only Gmail, Drive, Buckets, and Teams have "Send to Collection" buttons. Missing from: Outlook, OneDrive, Calendar, Chat, Directory/Entra, GitHub (repos, gists, audit findings), Audit Query results. See Collection Expansion roadmap below. |
+
+### Collection Expansion Roadmap
+
+Currently implemented:
+- Gmail messages (`gmail/message-view.tsx`)
+- Drive files (`drive/file-card.tsx`)
+- GCS objects (`buckets/object-card.tsx`)
+- Teams messages (`teams/message-card.tsx`)
+
+Needs implementation:
+
+| Service | Collectible Items | Priority | Notes |
+|---------|------------------|----------|-------|
+| **Outlook** | Email messages | High | Mirror Gmail collect pattern — add CollectButton to outlook message view |
+| **OneDrive** | Files | High | Mirror Drive collect pattern — add CollectButton to onedrive file card |
+| **Calendar** | Events/meetings | Medium | Collect meeting invites with attendees, locations — useful for social engineering |
+| **Google Chat** | Messages | Medium | Mirror Teams collect pattern |
+| **Directory/Entra** | User profiles | Medium | Collect user dossiers (name, email, phone, org, title) for social engineering prep |
+| **GitHub Repos** | Repository metadata + README | Medium | Collect repo details, especially private repos with sensitive config |
+| **GitHub Gists** | Gist content | Medium | Secret gists may contain credentials/keys |
+| **GitHub Audit** | Secrets, deploy keys, webhooks | High | Collect sensitive findings from security audit |
+| **Audit Query** | Search result hits | High | Collect credential/secret findings from cross-service queries |
+| **Contacts** | Contact profiles | Low | Org directory contacts for social engineering |
+
+### Token Refresher & Lifecycle Testing Gaps
+
+Not yet E2E tested:
+- Token refresh button click → verify new access token obtained
+- Auto-refresh at 45min interval → verify background renewal
+- Token expiry countdown accuracy → verify countdown matches real expiry
+- Non-JWT token display (GitHub PATs) → shows "Token invalid" instead of graceful fallback
+- Token refresh failure → verify error notification appears
 
 ## Dual-Mode Architecture: Operate & Audit
 
