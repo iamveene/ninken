@@ -1,10 +1,12 @@
 import { registerProvider } from "./registry"
 import { googleProvider } from "./google"
 import { microsoftProvider } from "./microsoft"
+import { slackProvider } from "./slack"
 
 // Auto-register built-in providers
 registerProvider(googleProvider)
 registerProvider(microsoftProvider)
+registerProvider(slackProvider)
 
 export type {
   ProviderId,
@@ -15,6 +17,7 @@ export type {
   GoogleServiceAccountCredential,
   MicrosoftCredential,
   MicrosoftServicePrincipalCredential,
+  SlackCredential,
   StoredProfile,
   ActiveTokenCookie,
   ProviderNavItem,
@@ -27,3 +30,4 @@ export { registerProvider, getProvider, getAllProviders, detectProvider } from "
 export { googleProvider } from "./google"
 export { microsoftProvider, extractAllCredentials } from "./microsoft"
 export type { ExtractedMicrosoftAccount } from "./microsoft"
+export { slackProvider } from "./slack"

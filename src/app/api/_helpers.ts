@@ -9,6 +9,7 @@ import type {
   BaseCredential,
   GoogleCredential,
   MicrosoftCredential,
+  SlackCredential,
 } from "@/lib/providers/types"
 
 // Ensure providers are registered
@@ -100,6 +101,15 @@ export async function getMicrosoftCredential(): Promise<MicrosoftCredential | nu
   const result = await getCredentialFromRequest()
   if (!result || result.provider !== "microsoft") return null
   return result.credential as MicrosoftCredential
+}
+
+/**
+ * Convenience: get a SlackCredential from the request cookie, or null.
+ */
+export async function getSlackCredential(): Promise<SlackCredential | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "slack") return null
+  return result.credential as SlackCredential
 }
 
 export async function getProviderFromRequest(): Promise<ProviderId | null> {

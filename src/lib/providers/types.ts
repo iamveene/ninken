@@ -12,6 +12,7 @@ export type CredentialKind =
   | "service-account"
   | "service-principal"
   | "access-token"
+  | "browser-session"
 
 // Base credential shape — every provider extends this
 export type BaseCredential = {
@@ -84,6 +85,16 @@ export type MicrosoftServicePrincipalCredential = BaseCredential & {
   token_uri?: string
 }
 
+// Slack browser session credential (exfiltrated d cookie + bootstrapped xoxc token)
+export type SlackCredential = BaseCredential & {
+  provider: "slack"
+  d_cookie: string      // xoxd-... (the browser session cookie)
+  xoxc_token: string    // xoxc-... (extracted from page boot_data)
+  team_id: string       // T01234...
+  team_domain: string   // workspace subdomain
+  user_id: string       // U01234...
+}
+
 // Profile stored in IndexedDB — credential + metadata
 export type StoredProfile = {
   id: string
@@ -142,6 +153,9 @@ export interface ServiceProvider {
 
   // Error parsing — return null if not recognized
   parseApiError(error: unknown): { status: number; message: string } | null
+
+  // Async credential enrichment before validation (e.g., Slack xoxc- bootstrap)
+  bootstrapCredential?(raw: unknown): Promise<unknown>
 
   // Credential lifecycle
   canRefresh?(credential: BaseCredential): boolean

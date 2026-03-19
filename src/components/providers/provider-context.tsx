@@ -116,7 +116,21 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
         return { success: false, error: "Unrecognized credential format" }
       }
 
-      const result = detected.validateCredential(raw)
+      // Async bootstrap step (e.g., Slack extracts xoxc- token from d cookie)
+      let processedRaw = raw
+      if (detected.bootstrapCredential) {
+        try {
+          processedRaw = await detected.bootstrapCredential(raw)
+        } catch (err) {
+          return {
+            success: false,
+            error:
+              err instanceof Error ? err.message : "Credential bootstrap failed",
+          }
+        }
+      }
+
+      const result = detected.validateCredential(processedRaw)
       if (!result.valid) {
         return { success: false, error: result.error }
       }

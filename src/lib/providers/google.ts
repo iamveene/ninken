@@ -8,7 +8,6 @@ import {
 import type { CredentialStrategy } from "./credential-strategy"
 import { googleOAuthStrategy } from "./strategies/google-oauth"
 import { googleServiceAccountStrategy } from "./strategies/google-service-account"
-
 import {
   detectGoogleAccessToken,
   validateGoogleAccessToken,
@@ -30,65 +29,39 @@ export const googleProvider: ServiceProvider = {
   iconName: "Globe",
 
   detectCredential(raw: unknown): boolean {
-return strategies.some((s) => s.detect(raw))
-
-// Raw access token string (ya29.* prefix)
+    // Raw access token string (ya29.* prefix)
     if (detectGoogleAccessToken(raw)) return true
-    if (!raw || typeof raw !== "object") return false
-    return isGoogleShape(raw as Record<string, unknown>)
+    return strategies.some((s) => s.detect(raw))
   },
 
   validateCredential(
     raw: unknown,
   ):
-| { valid: true; credential: BaseCredential; email?: string }
-    | { valid: false; error: string } {
-    const strategy = strategies.find((s) => s.detect(raw))
-    if (!strategy) {
-      return { valid: false, error: "Unrecognized Google credential format" }
-
-| { valid: true; credential: GoogleCredential | AccessTokenCredential; email?: string }
+    | { valid: true; credential: BaseCredential; email?: string }
     | { valid: false; error: string } {
     // Raw access token string
     if (typeof raw === "string" && detectGoogleAccessToken(raw)) {
       return validateGoogleAccessToken(raw)
     }
-    if (!raw || typeof raw !== "object") {
-      return { valid: false, error: "Invalid JSON" }
+    const strategy = strategies.find((s) => s.detect(raw))
+    if (!strategy) {
+      return { valid: false, error: "Unrecognized Google credential format" }
     }
     return strategy.validate(raw)
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
-const strategy = strategyForKind(credential)
+    // Access token credentials: return stored token directly
+    if (credential.credentialKind === "access-token") {
+      return (credential as AccessTokenCredential).access_token
+    }
+    const strategy = strategyForKind(credential)
     if (!strategy) {
       throw new Error(
         `No Google strategy for credential kind: ${credential.credentialKind}`,
       )
     }
     return strategy.getAccessToken(credential)
-
-// Access token credentials: return stored token directly (non-refreshable)
-    if (credential.credentialKind === "access-token") {
-      return (credential as AccessTokenCredential).access_token
-    }
-    // Uses raw fetch to avoid importing google-auth-library in client bundles
-    const cred = credential as GoogleCredential
-    const tokenUri = cred.token_uri || "https://oauth2.googleapis.com/token"
-    const res = await fetch(tokenUri, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: cred.refresh_token,
-        client_id: cred.client_id,
-        client_secret: cred.client_secret,
-      }),
-    })
-    if (!res.ok) throw new Error("Failed to refresh Google access token")
-    const data = await res.json()
-    if (!data.access_token) throw new Error("No access_token in refresh response")
-    return data.access_token as string
   },
 
   async fetchScopes(credential: BaseCredential): Promise<string[]> {
@@ -252,30 +225,19 @@ const strategy = strategyForKind(credential)
   },
 
   canRefresh(credential: BaseCredential): boolean {
+    if (credential.credentialKind === "access-token") return false
     const strategy = strategyForKind(credential)
-    if (!strategy) return credential.credentialKind !== "access-token"
+    if (!strategy) return false
     return strategy.canRefresh(credential)
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
-const strategy = strategyForKind(credential)
-    if (!strategy) {
-      // Fallback for access-token or unknown kinds
-      const c = credential as GoogleCredential
-      return {
-        provider: "google",
-        credentialKind: c.credentialKind,
-        refresh_token: c.refresh_token,
-        client_id: c.client_id,
-        client_secret: c.client_secret,
-        token_uri: c.token_uri,
-      } as GoogleCredential
-    }
-    return strategy.minimalCredential(credential)
-
-if (credential.credentialKind === "access-token") {
+    if (credential.credentialKind === "access-token") {
       return minimalAccessToken(credential as AccessTokenCredential)
     }
+    const strategy = strategyForKind(credential)
+    if (strategy) return strategy.minimalCredential(credential)
+    // Fallback
     const c = credential as GoogleCredential
     return {
       provider: "google",
