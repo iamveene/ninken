@@ -287,16 +287,19 @@ src/components/buckets/
 
 ### Cross-Cutting Features (not tied to a specific service version)
 
-| Feature | Priority | Description |
-|---------|----------|-------------|
-| **Global Token Refresher** | Medium | Background system that auto-refreshes all refreshable tokens at a configurable interval. Enabled by default per-token, user can toggle per profile. Keeps tokens alive without manual intervention. Runs holistically across all providers. |
-| **Per-Service Layouts** | Built-in | Google/Microsoft share workspace-style layout (sidebar + content). GitHub, AWS, etc. may use different layouts. Each provider's route group `(google)`, `(microsoft)`, `(github)` has its own `layout.tsx`. This is expected and by design — not all services look the same. |
-| **AI Partner** | Low | AI assistant that helps explore data across Operate and Audit modes. Understands findings, correlates data across services, suggests next steps. High complexity — defer until after Microsoft + Studio are solid. |
-| **Studio Module** | After Microsoft | Token Intelligence Hub — deferred until Microsoft is implemented so we have a solid multi-provider foundation to build an agnostic Studio. |
-| **Resizable Panels** | Medium | Mouse-draggable panel dividers throughout the UI. Message list / content pane, file list / preview, etc. All split views should be user-resizable. Use a lightweight splitter (e.g., `react-resizable-panels`). Applies to all services and views. |
-| **Adaptive Empty States** | Medium | When no item is selected (no email open, no file previewed, etc.), expand the list view to fill the space instead of showing a static "Select a message" placeholder. Collapse the detail pane until an item is selected. Applies to Gmail, Drive, Calendar, Directory, Buckets — all split-pane views across all services. |
-| **Sidebar Slogan** | Low | Show the Ninken slogan ("Track. Hunt. Retrieve.") in red below the Ninken name in the sidebar header. Hidden when sidebar is collapsed to icon-only mode via `group-data-[collapsible=icon]:hidden`. |
-| **Alert System** | Medium | Unified notification/alert system across all services. See detailed spec below. |
+| Feature | Priority | Status | Description |
+|---------|----------|--------|-------------|
+| **Global Token Refresher** | Medium | Implemented | Background system that auto-refreshes all refreshable tokens at 45min interval. Per-profile toggle via localStorage. Runs across all providers. Files: `src/lib/token-refresher.ts`, `src/hooks/use-token-refresher.ts`. |
+| **Token Lifecycle Panel** | Medium | Implemented | Sidebar footer widget showing access token countdown (color-coded), scope count, manual refresh button. API: `/api/auth/token-info`. Files: `src/components/layout/token-lifecycle.tsx`, `src/hooks/use-token-info.ts`. |
+| **Per-Service Layouts** | Built-in | Architecture ready | Google/Microsoft share workspace-style layout (sidebar + content). Each provider's route group has its own `layout.tsx`. |
+| **AI Partner** | Low | Planned | AI assistant for data exploration. Anthropic API key stored in `.env`. Defer until after Microsoft + Studio are solid. |
+| **Studio Module** | After Microsoft | Planned | Token Intelligence Hub — deferred until solid multi-provider foundation. |
+| **Resizable Panels** | Medium | Implemented | `react-resizable-panels` on Gmail (3-panel), Drive (file list + preview), Calendar (sidebar + view), Buckets (sidebar + browser). File: `src/components/ui/resize-handle.tsx`. |
+| **Adaptive Empty States** | Medium | Implemented | Gmail: message list expands full-width when no message selected, detail panel appears only when a message is clicked. |
+| **Sidebar Slogan** | Low | Implemented | "Track. Hunt. Retrieve." in red below Ninken logo, hidden when collapsed via `group-data-[collapsible=icon]:hidden`. |
+| **Alert System** | Medium | Implemented | IndexedDB alert store, bell icon badge with unread count, dropdown panel, full `/alerts` page with filters. Files: `src/lib/alert-store.ts`, `src/hooks/use-alerts.ts`, `src/components/layout/alert-badge.tsx`, `src/components/layout/alert-panel.tsx`, `src/app/alerts/`. |
+| **Collection Mode** | High | Planned | Cross-service artifact collection. Third mode alongside Operate/Audit. "Send to Collection" on emails (with attachments), Drive files/folders, bucket objects, etc. Items downloaded in background and stored locally for offline access. Zip download of entire collection or individual items. Survives token revocation and offline. Massive feature — requires local storage engine, background download manager, cross-service item registry. |
+| **Global Refresh Button** | Low | Planned | Refresh icon/badge in top-right header that triggers a full content refresh across all visible data (messages, files, events, etc.). |
 
 ### Alert System
 
@@ -364,6 +367,13 @@ All modules will support:
 - Download all attachments/files
 - Search across all loaded services
 - Activity timeline (cross-service chronological view)
+
+### Known Bugs
+
+| Bug | Severity | Status | Description |
+|-----|----------|--------|-------------|
+| **Sign out button does not work** | High | Open | Clicking "Sign out" in the sidebar footer does not properly clear the session. The `handleSignOut` function calls `cacheClear()` + `DELETE /api/auth` + `router.push("/")`, but navigation doesn't redirect properly or cookies are not cleared. Needs investigation. |
+| **Horizontal overflow on responsive views** | Medium | Open | Some pages (Gmail message list, alert center filters) may cause horizontal scrolling on narrower viewports. Need to add `overflow-x-hidden` guards and ensure all content truncates properly. |
 
 ## Dual-Mode Architecture: Operate & Audit
 

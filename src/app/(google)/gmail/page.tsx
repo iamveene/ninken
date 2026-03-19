@@ -203,7 +203,7 @@ export default function GmailPage() {
 
   // Shared message list content
   const messageListContent = (
-    <div className="flex flex-col h-full border-r border-border/60">
+    <div className="flex flex-col h-full min-w-0 border-r border-border/60 overflow-hidden">
       <div className="flex items-center gap-2 p-3 border-b border-border/60">
         <div className="flex-1">
           <SearchBar
@@ -320,7 +320,7 @@ export default function GmailPage() {
         </>
       ) : selectedMessageId ? (
         <PanelGroup orientation="horizontal" id="gmail-panels">
-          <Panel defaultSize={15} minSize={10} maxSize={25}>
+          <Panel defaultSize={12} minSize={8} maxSize={20}>
             <LabelSidebar
               labels={labels}
               activeLabel={activeLabel}
@@ -330,7 +330,7 @@ export default function GmailPage() {
             />
           </Panel>
           <ResizeHandle />
-          <Panel defaultSize={30} minSize={20} maxSize={50}>
+          <Panel defaultSize={33} minSize={25} maxSize={50}>
             {messageListContent}
           </Panel>
           <ResizeHandle />
