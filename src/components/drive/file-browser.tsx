@@ -68,6 +68,7 @@ import {
   type SortDirection,
 } from "@/hooks/use-drive"
 import { Users, HardDrive } from "lucide-react"
+import { ServiceError } from "@/components/ui/service-error"
 
 export function FileBrowser() {
   const [view, setView] = useState<"grid" | "list">("list")
@@ -105,14 +106,14 @@ export function FileBrowser() {
   const [dragOver, setDragOver] = useState(false)
 
   const isSearching = !!searchTerm.trim()
-  const { drives: sharedDrives, loading: sharedDrivesLoading } = useSharedDrives()
-  const { files, loading, refetch } = useFiles(
+  const { drives: sharedDrives, loading: sharedDrivesLoading, error: sharedDrivesError } = useSharedDrives()
+  const { files, loading, error: filesError, refetch } = useFiles(
     isSearching ? undefined : folderId,
     undefined,
     50,
     activeDrive?.id
   )
-  const { results: searchResults, loading: searchLoading } = useSearchFiles(searchTerm, searchType || undefined)
+  const { results: searchResults, loading: searchLoading, error: searchError } = useSearchFiles(searchTerm, searchType || undefined)
   const { copy } = useCopyFile()
   const { trash } = useTrashFile()
   const { deleteFile: permanentDelete } = useDeleteFile()
@@ -349,7 +350,9 @@ export function FileBrowser() {
 
         {/* Shared drives list */}
         {activeTab === "shared" && !activeDrive && !isSearching ? (
-          sharedDrivesLoading ? (
+          sharedDrivesError ? (
+            <ServiceError error={sharedDrivesError} />
+          ) : sharedDrivesLoading ? (
             <LoadingSkeleton view={view} />
           ) : sharedDrives.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
@@ -422,7 +425,9 @@ export function FileBrowser() {
         ) : null}
 
         {/* File content */}
-        {(activeTab === "my" || activeDrive || isSearching) && (isLoading ? (
+        {(activeTab === "my" || activeDrive || isSearching) && ((isSearching ? searchError : filesError) ? (
+          <ServiceError error={(isSearching ? searchError : filesError)} onRetry={isSearching ? undefined : refetch} />
+        ) : isLoading ? (
           <LoadingSkeleton view={view} />
         ) : sortedFiles.length === 0 ? (
           <EmptyState isSearching={isSearching} />

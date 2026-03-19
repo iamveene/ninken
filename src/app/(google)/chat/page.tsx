@@ -9,7 +9,7 @@ import { SearchBar } from "@/components/chat/search-bar"
 import { useSpaces, useSpaceMessages, extractSpaceId } from "@/hooks/use-chat"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, MessageSquare, Hash } from "lucide-react"
+import { ArrowLeft, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function ChatPage() {
@@ -19,7 +19,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [mobileView, setMobileView] = useState<"spaces" | "messages" | "thread">("spaces")
 
-  const { spaces, loading: spacesLoading } = useSpaces()
+  const { spaces, loading: spacesLoading, error: spacesError, refetch: refetchSpaces } = useSpaces()
   const selectedSpaceId = selectedSpaceName ? extractSpaceId(selectedSpaceName) : null
   const { messages, loading: messagesLoading } = useSpaceMessages(selectedSpaceId)
 
@@ -70,15 +70,17 @@ export default function ChatPage() {
   const spacesColumn = (
     <div className="flex flex-col h-full border-r border-border/60">
       <div className="px-3 py-2.5 border-b flex items-center gap-2">
-        <Hash className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold">Spaces</h2>
+        <MessageSquare className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold">Chats</h2>
       </div>
-      <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search spaces..." />
+      <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search conversations..." />
       <SpaceList
         spaces={filteredSpaces}
         selectedId={selectedSpaceName}
         onSelect={handleSpaceSelect}
         loading={spacesLoading}
+        error={spacesError}
+        onRetry={refetchSpaces}
       />
     </div>
   )
@@ -89,7 +91,7 @@ export default function ChatPage() {
       {isMobile && selectedSpaceName && (
         <div className="px-2 py-1.5 border-b">
           <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={handleBackToSpaces}>
-            <ArrowLeft className="h-3.5 w-3.5" /> Spaces
+            <ArrowLeft className="h-3.5 w-3.5" /> Chats
           </Button>
         </div>
       )}
@@ -103,7 +105,7 @@ export default function ChatPage() {
       ) : (
         <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 h-full">
           <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground text-center">Select a space to view messages</p>
+          <p className="text-sm text-muted-foreground text-center">Select a conversation to view messages</p>
         </div>
       )}
     </div>
