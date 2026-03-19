@@ -189,7 +189,6 @@ export default function AuthPage() {
         <div className="flex flex-col items-center">
           <NinkenLogo
             className="text-center text-neutral-50"
-            tagline="Track. Hunt. Retrieve."
           />
         </div>
 

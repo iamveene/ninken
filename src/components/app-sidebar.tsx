@@ -46,6 +46,8 @@ export function AppSidebar() {
 
   const handleSignOut = async () => {
     await cacheClear()
+    const { clearAllProfiles } = await import("@/lib/token-store")
+    await clearAllProfiles()
     await fetch("/api/auth", { method: "DELETE" })
     router.push("/")
   }
