@@ -60,8 +60,8 @@ export function proxy(request: NextRequest) {
     "/gmail", "/drive", "/buckets", "/calendar", "/directory", "/audit", "/chat",
     // Microsoft
     "/outlook", "/onedrive", "/teams", "/entra", "/m365-audit",
-    // Cross-service
-    "/studio", "/collection", "/alerts",
+    // Cross-service (Studio is intentionally NOT here — accessible without auth)
+    "/collection", "/alerts",
   ]
 
   if (protectedPrefixes.some((p) => pathname.startsWith(p))) {
