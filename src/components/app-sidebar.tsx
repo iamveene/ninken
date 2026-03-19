@@ -63,6 +63,13 @@ const ROUTE_PROVIDER_MAP: [string, ProviderId][] = [
   ["/entra", "microsoft"],
   ["/m365-dashboard", "microsoft"],
   ["/m365-audit", "microsoft"],
+  // GitHub routes
+  ["/github-dashboard", "github"],
+  ["/repos", "github"],
+  ["/orgs", "github"],
+  ["/actions", "github"],
+  ["/gists", "github"],
+  ["/github-audit", "github"],
   // Slack routes
   ["/channels", "slack"],
   ["/slack-dashboard", "slack"],
