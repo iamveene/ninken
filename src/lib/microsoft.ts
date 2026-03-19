@@ -181,6 +181,8 @@ type GraphFetchOptions = RequestInit & {
   resource?: string
 }
 
+const GRAPH_MAX_RETRIES = 3
+
 /**
  * Authenticated fetch to Microsoft Graph API.
  * Handles token refresh, rate limiting (429), and error responses.
@@ -188,7 +190,8 @@ type GraphFetchOptions = RequestInit & {
 export async function graphFetch(
   credential: MicrosoftCredential,
   path: string,
-  options?: GraphFetchOptions
+  options?: GraphFetchOptions,
+  _retryCount = 0
 ): Promise<Response> {
   const accessToken = await getAccessToken(credential, options?.resource)
 
@@ -211,11 +214,16 @@ export async function graphFetch(
     },
   })
 
-  // Handle rate limiting — retry once after Retry-After
+  // Handle rate limiting — retry after Retry-After, up to max retries
   if (res.status === 429) {
+    if (_retryCount >= GRAPH_MAX_RETRIES) {
+      throw new Error(
+        `Microsoft Graph API rate limited after ${GRAPH_MAX_RETRIES} retries (${path})`
+      )
+    }
     const retryAfter = parseInt(res.headers.get("Retry-After") || "5", 10)
     await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000))
-    return graphFetch(credential, path, options)
+    return graphFetch(credential, path, options, _retryCount + 1)
   }
 
   return res
