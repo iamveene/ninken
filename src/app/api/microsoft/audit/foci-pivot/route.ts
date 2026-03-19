@@ -24,6 +24,14 @@ export async function POST() {
   }
 
   try {
+    if (!credential.refresh_token) {
+      return NextResponse.json(
+        { error: "FOCI pivot requires a refresh token credential" },
+        { status: 400 },
+      )
+    }
+
+    const refreshToken = credential.refresh_token
     const tokenUri =
       credential.token_uri ||
       `https://login.microsoftonline.com/${credential.tenant_id}/oauth2/v2.0/token`
@@ -35,7 +43,7 @@ export async function POST() {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({
             grant_type: "refresh_token",
-            refresh_token: credential.refresh_token,
+            refresh_token: refreshToken,
             client_id: fociClient.clientId,
             scope: "https://graph.microsoft.com/.default offline_access",
           }),

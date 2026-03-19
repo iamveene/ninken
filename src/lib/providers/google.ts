@@ -3,58 +3,17 @@ import type {
   GoogleCredential,
   ServiceProvider,
 } from "./types"
+import type { CredentialStrategy } from "./credential-strategy"
+import { googleOAuthStrategy } from "./strategies/google-oauth"
+import { googleServiceAccountStrategy } from "./strategies/google-service-account"
 
-/**
- * Normalize raw credential JSON into a flat object with the fields we need.
- * Handles ADC format, nested "installed"/"web" wrappers, and service account keys.
- */
-function normalizeGoogleRaw(
-  raw: Record<string, unknown>
-): Record<string, unknown> {
-  // Unwrap "installed" wrapper (gcloud client_secrets format)
-  if (raw.installed && typeof raw.installed === "object") {
-    const inner = raw.installed as Record<string, unknown>
-    return { ...inner, ...raw, installed: undefined }
-  }
-  // Unwrap "web" wrapper (web app client_secrets format)
-  if (raw.web && typeof raw.web === "object") {
-    const inner = raw.web as Record<string, unknown>
-    return { ...inner, ...raw, web: undefined }
-  }
-  return raw
-}
+const strategies: CredentialStrategy[] = [
+  googleOAuthStrategy,
+  googleServiceAccountStrategy,
+]
 
-const SERVICE_ACCOUNT_ERROR =
-  "Service account keys are not yet supported. Please provide an OAuth refresh token (type: authorized_user)"
-
-function isGoogleShape(obj: Record<string, unknown>): boolean {
-  const norm = normalizeGoogleRaw(obj)
-
-  // Reject service account keys early
-  if (norm.type === "service_account") return false
-
-  // Must have the three required OAuth fields
-  if (
-    typeof norm.refresh_token !== "string" || !norm.refresh_token ||
-    typeof norm.client_id !== "string" || !norm.client_id ||
-    typeof norm.client_secret !== "string" || !norm.client_secret
-  ) {
-    return false
-  }
-
-  // Positive discriminator: type "authorized_user" is always Google
-  if (norm.type === "authorized_user") return true
-
-  // Positive discriminator: if token_uri is present, it must be Google's
-  const tokenUri = typeof norm.token_uri === "string" ? norm.token_uri : ""
-  if (tokenUri && !tokenUri.includes("googleapis.com") && !tokenUri.includes("accounts.google.com")) {
-    return false
-  }
-
-  // Negative discriminator: reject if Microsoft-specific fields are present
-  if ("tenant_id" in norm || "tenantId" in norm) return false
-
-  return true
+function strategyForKind(credential: BaseCredential) {
+  return strategies.find((s) => s.kind === credential.credentialKind)
 }
 
 export const googleProvider: ServiceProvider = {
@@ -64,73 +23,35 @@ export const googleProvider: ServiceProvider = {
   iconName: "Globe",
 
   detectCredential(raw: unknown): boolean {
-    if (!raw || typeof raw !== "object") return false
-    return isGoogleShape(raw as Record<string, unknown>)
+    return strategies.some((s) => s.detect(raw))
   },
 
   validateCredential(
-    raw: unknown
+    raw: unknown,
   ):
-    | { valid: true; credential: GoogleCredential; email?: string }
+    | { valid: true; credential: BaseCredential; email?: string }
     | { valid: false; error: string } {
-    if (!raw || typeof raw !== "object") {
-      return { valid: false, error: "Invalid JSON" }
+    const strategy = strategies.find((s) => s.detect(raw))
+    if (!strategy) {
+      return { valid: false, error: "Unrecognized Google credential format" }
     }
-
-    const obj = normalizeGoogleRaw(raw as Record<string, unknown>)
-
-    // Reject service account keys with a clear message
-    if (obj.type === "service_account") {
-      return { valid: false, error: SERVICE_ACCOUNT_ERROR }
-    }
-
-    const requiredFields = ["refresh_token", "client_id", "client_secret"] as const
-
-    for (const field of requiredFields) {
-      if (typeof obj[field] !== "string" || !obj[field]) {
-        return { valid: false, error: `Missing required field: ${field}` }
-      }
-    }
-
-    const credential: GoogleCredential = {
-      provider: "google",
-      credentialKind: "oauth",
-      refresh_token: obj.refresh_token as string,
-      client_id: obj.client_id as string,
-      client_secret: obj.client_secret as string,
-      token: typeof obj.token === "string" ? obj.token : undefined,
-      token_uri: typeof obj.token_uri === "string" ? obj.token_uri : undefined,
-    }
-
-    const email = typeof obj.email === "string" ? obj.email : undefined
-
-    return { valid: true, credential, email }
+    return strategy.validate(raw)
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
-    // Uses raw fetch to avoid importing google-auth-library in client bundles
-    const cred = credential as GoogleCredential
-    const tokenUri = cred.token_uri || "https://oauth2.googleapis.com/token"
-    const res = await fetch(tokenUri, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: cred.refresh_token,
-        client_id: cred.client_id,
-        client_secret: cred.client_secret,
-      }),
-    })
-    if (!res.ok) throw new Error("Failed to refresh Google access token")
-    const data = await res.json()
-    if (!data.access_token) throw new Error("No access_token in refresh response")
-    return data.access_token as string
+    const strategy = strategyForKind(credential)
+    if (!strategy) {
+      throw new Error(
+        `No Google strategy for credential kind: ${credential.credentialKind}`,
+      )
+    }
+    return strategy.getAccessToken(credential)
   },
 
   async fetchScopes(credential: BaseCredential): Promise<string[]> {
     const accessToken = await this.getAccessToken(credential)
     const res = await fetch(
-      `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`
+      `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`,
     )
     if (!res.ok) return []
     const info = await res.json()
@@ -288,19 +209,26 @@ export const googleProvider: ServiceProvider = {
   },
 
   canRefresh(credential: BaseCredential): boolean {
-    return credential.credentialKind !== "access-token"
+    const strategy = strategyForKind(credential)
+    if (!strategy) return credential.credentialKind !== "access-token"
+    return strategy.canRefresh(credential)
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
-    const c = credential as GoogleCredential
-    return {
-      provider: "google",
-      credentialKind: c.credentialKind,
-      refresh_token: c.refresh_token,
-      client_id: c.client_id,
-      client_secret: c.client_secret,
-      token_uri: c.token_uri,
-    } as GoogleCredential
+    const strategy = strategyForKind(credential)
+    if (!strategy) {
+      // Fallback for access-token or unknown kinds
+      const c = credential as GoogleCredential
+      return {
+        provider: "google",
+        credentialKind: c.credentialKind,
+        refresh_token: c.refresh_token,
+        client_id: c.client_id,
+        client_secret: c.client_secret,
+        token_uri: c.token_uri,
+      } as GoogleCredential
+    }
+    return strategy.minimalCredential(credential)
   },
 
   defaultRoute: "/dashboard",
