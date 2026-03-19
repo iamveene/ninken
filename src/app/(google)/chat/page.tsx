@@ -6,9 +6,9 @@ import { SpaceList } from "@/components/chat/space-list"
 import { MessageList } from "@/components/chat/message-list"
 import { ThreadPanel } from "@/components/chat/thread-panel"
 import { SearchBar } from "@/components/chat/search-bar"
+import { SidebarSlotContent } from "@/components/sidebar-slot"
 import { useSpaces, useSpaceMessages, extractSpaceId } from "@/hooks/use-chat"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { cn } from "@/lib/utils"
 import { ArrowLeft, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -66,13 +66,9 @@ export default function ChatPage() {
     return selectedSpace.displayName || "Space"
   }
 
-  // Spaces column
-  const spacesColumn = (
-    <div className="flex flex-col h-full border-r border-border/60">
-      <div className="px-3 py-2.5 border-b flex items-center gap-2">
-        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold">Chats</h2>
-      </div>
+  // Space list for the sidebar slot
+  const spacesContent = (
+    <div className="flex flex-col h-full">
       <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search conversations..." />
       <SpaceList
         spaces={filteredSpaces}
@@ -105,13 +101,13 @@ export default function ChatPage() {
       ) : (
         <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 h-full">
           <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground text-center">Select a conversation to view messages</p>
+          <p className="text-sm text-muted-foreground text-center">Select a conversation from the sidebar</p>
         </div>
       )}
     </div>
   )
 
-  // Thread column (only shown when thread is active)
+  // Thread column
   const threadColumn = activeThreadName ? (
     <div className="flex flex-col h-full">
       {isMobile && (
@@ -133,7 +129,7 @@ export default function ChatPage() {
   if (isMobile) {
     return (
       <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
-        {mobileView === "spaces" && spacesColumn}
+        {mobileView === "spaces" && spacesContent}
         {mobileView === "messages" && messagesColumn}
         {mobileView === "thread" && threadColumn}
       </div>
@@ -142,23 +138,24 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
-      <PanelGroup orientation="horizontal" className="h-full">
-        <ResizablePanel id="cs" defaultSize="260px" minSize="180px" maxSize="360px">
-          {spacesColumn}
-        </ResizablePanel>
-        <ResizeHandle />
-        <ResizablePanel id="cm" defaultSize="1fr" minSize="300px">
-          {messagesColumn}
-        </ResizablePanel>
-        {activeThreadName && (
-          <>
-            <ResizeHandle />
-            <ResizablePanel id="ct" defaultSize="320px" minSize="240px" maxSize="500px">
-              {threadColumn}
-            </ResizablePanel>
-          </>
-        )}
-      </PanelGroup>
+      {/* Inject space list into the main sidebar */}
+      <SidebarSlotContent>
+        {spacesContent}
+      </SidebarSlotContent>
+
+      {activeThreadName ? (
+        <PanelGroup orientation="horizontal" className="h-full">
+          <ResizablePanel id="cm" defaultSize="1fr" minSize="300px">
+            {messagesColumn}
+          </ResizablePanel>
+          <ResizeHandle />
+          <ResizablePanel id="ct" defaultSize="320px" minSize="240px" maxSize="500px">
+            {threadColumn}
+          </ResizablePanel>
+        </PanelGroup>
+      ) : (
+        messagesColumn
+      )}
     </div>
   )
 }

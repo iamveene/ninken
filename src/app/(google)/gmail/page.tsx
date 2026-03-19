@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { Suspense, useState, useCallback, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
-import { LabelSidebar } from "@/components/gmail/label-sidebar"
 import { MessageList } from "@/components/gmail/message-list"
 import { MessageView } from "@/components/gmail/message-view"
 import { ThreadView } from "@/components/gmail/thread-view"
@@ -11,11 +11,12 @@ import { ComposeDialog } from "@/components/gmail/compose-dialog"
 import { SearchBar } from "@/components/gmail/search-bar"
 import { SearchFilters } from "@/components/gmail/search-filters"
 import { Toolbar } from "@/components/gmail/toolbar"
+import { Button } from "@/components/ui/button"
+import { PenLine } from "lucide-react"
 import {
   useMessages,
   useMessage,
   useThread,
-  useLabels,
   useTrashMessage,
   useModifyLabels,
 } from "@/hooks/use-gmail"
@@ -46,10 +47,21 @@ type ComposeState = {
   }
 }
 
-export default function GmailPage() {
-  const isMobile = useIsMobile()
+export default function GmailPageWrapper() {
+  return (
+    <Suspense>
+      <GmailPage />
+    </Suspense>
+  )
+}
 
-  const [activeLabel, setActiveLabel] = useState("INBOX")
+function GmailPage() {
+  const isMobile = useIsMobile()
+  const searchParams = useSearchParams()
+
+  // Read active label from URL search params (set by sidebar sub-nav)
+  const labelFromUrl = searchParams.get("label")
+  const [activeLabel, setActiveLabel] = useState(labelFromUrl || "INBOX")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
@@ -61,23 +73,24 @@ export default function GmailPage() {
   })
   const [mobileView, setMobileView] = useState<"list" | "detail">("list")
 
+  // Sync label from URL when sidebar nav changes
+  useEffect(() => {
+    if (labelFromUrl && labelFromUrl !== activeLabel) {
+      setActiveLabel(labelFromUrl)
+      setSearchQuery("")
+      setSelectedMessageId(null)
+      setSelectedThreadId(null)
+      setShowThread(false)
+      setSelectedIds(new Set())
+    }
+  }, [labelFromUrl]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const effectiveQuery = searchQuery || LABEL_QUERIES[activeLabel] || `label:${activeLabel}`
   const { data: messages, loading: messagesLoading, error: messagesError, totalEstimate, nextPageToken, refetch } = useMessages(effectiveQuery)
   const { data: selectedMessage, loading: messageLoading, error: messageError } = useMessage(selectedMessageId)
   const { data: thread, loading: threadLoading } = useThread(showThread ? selectedThreadId : null)
-  const { data: labels, loading: labelsLoading } = useLabels()
   const { trash } = useTrashMessage()
   const { modify } = useModifyLabels()
-
-  const handleLabelChange = useCallback((labelId: string) => {
-    setActiveLabel(labelId)
-    setSearchQuery("")
-    setSelectedMessageId(null)
-    setSelectedThreadId(null)
-    setShowThread(false)
-    setSelectedIds(new Set())
-    if (isMobile) setMobileView("list")
-  }, [isMobile])
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -200,10 +213,15 @@ export default function GmailPage() {
   const showMobileList = !isMobile || mobileView === "list"
   const showMobileDetail = !isMobile || mobileView === "detail"
 
-  // Shared message list content
+  // Message list content (no internal label sidebar — handled by main sidebar)
   const messageListContent = (
-    <div className="flex flex-col h-full min-w-0 border-r border-border/60 overflow-hidden">
+    <div className="flex flex-col h-full min-w-0 overflow-hidden">
+      {/* Compose button + Search */}
       <div className="flex items-center gap-2 p-3 border-b border-border/60">
+        <Button size="sm" onClick={handleCompose} className="shrink-0">
+          <PenLine className="h-3.5 w-3.5 mr-1.5" />
+          Compose
+        </Button>
         <div className="flex-1">
           <SearchBar
             onSearch={handleSearch}
@@ -216,10 +234,10 @@ export default function GmailPage() {
 
       {isMobile && (
         <div className="flex items-center gap-2 px-3 py-1.5 border-b overflow-x-auto">
-          {Object.entries(LABEL_QUERIES).map(([id, _]) => (
+          {Object.entries(LABEL_QUERIES).map(([id]) => (
             <button
               key={id}
-              onClick={() => handleLabelChange(id)}
+              onClick={() => setActiveLabel(id)}
               className={cn(
                 "px-2.5 py-1 text-xs rounded-full whitespace-nowrap transition-colors",
                 activeLabel === id
@@ -265,19 +283,7 @@ export default function GmailPage() {
           onClick={handleCompose}
           className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
         >
-          <svg
-            className="size-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-            />
-          </svg>
+          <PenLine className="size-6" />
         </button>
       )}
     </div>
@@ -319,16 +325,6 @@ export default function GmailPage() {
         </>
       ) : selectedMessageId ? (
         <PanelGroup orientation="horizontal" className="h-full">
-          <ResizablePanel id="gl" defaultSize="200px" minSize="150px" maxSize="250px">
-            <LabelSidebar
-              labels={labels}
-              activeLabel={activeLabel}
-              onLabelChange={handleLabelChange}
-              onCompose={handleCompose}
-              loading={labelsLoading}
-            />
-          </ResizablePanel>
-          <ResizeHandle />
           <ResizablePanel id="gm" defaultSize="400px" minSize="300px">
             {messageListContent}
           </ResizablePanel>
@@ -338,21 +334,7 @@ export default function GmailPage() {
           </ResizablePanel>
         </PanelGroup>
       ) : (
-        <PanelGroup orientation="horizontal" className="h-full">
-          <ResizablePanel id="gle" defaultSize="200px" minSize="150px" maxSize="250px">
-            <LabelSidebar
-              labels={labels}
-              activeLabel={activeLabel}
-              onLabelChange={handleLabelChange}
-              onCompose={handleCompose}
-              loading={labelsLoading}
-            />
-          </ResizablePanel>
-          <ResizeHandle />
-          <ResizablePanel id="gme" defaultSize="1fr" minSize="500px">
-            {messageListContent}
-          </ResizablePanel>
-        </PanelGroup>
+        messageListContent
       )}
 
       <ComposeDialog

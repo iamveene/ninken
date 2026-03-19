@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { Suspense, useState, useCallback, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
-import { FolderSidebar } from "@/components/outlook/folder-sidebar"
 import {
   useOutlookMessages,
   useOutlookMessage,
@@ -15,7 +15,7 @@ import {
 import type { OutlookMessage } from "@/hooks/use-outlook"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatDistanceToNow } from "date-fns"
-import { Search, Loader2, Mail, Paperclip, Star, ArrowLeft, Reply, Forward, Trash2, MailOpen, X } from "lucide-react"
+import { Search, Loader2, Mail, Paperclip, Star, ArrowLeft, Reply, Forward, Trash2, MailOpen, X, PenLine } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -60,8 +60,18 @@ type ComposeState = {
   prefill?: { to?: string; cc?: string; subject?: string; body?: string; conversationId?: string }
 }
 
-export default function OutlookPage() {
+export default function OutlookPageWrapper() {
+  return (
+    <Suspense>
+      <OutlookPage />
+    </Suspense>
+  )
+}
+
+function OutlookPage() {
   const isMobile = useIsMobile()
+  const searchParams = useSearchParams()
+  const folderFromUrl = searchParams.get("folder")
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
@@ -80,6 +90,20 @@ export default function OutlookPage() {
   const { send, loading: sendLoading } = useSendOutlookMessage()
   const { trash } = useTrashOutlookMessage()
   const { modify } = useModifyOutlookMessage()
+
+  // Sync folder from URL when sidebar nav changes
+  useEffect(() => {
+    if (folderFromUrl && folders.length > 0) {
+      const matchedFolder = folders.find(
+        (f) => f.displayName.toLowerCase() === folderFromUrl.toLowerCase()
+      )
+      if (matchedFolder && matchedFolder.id !== activeFolderId) {
+        setActiveFolderId(matchedFolder.id)
+        setSelectedMessageId(null)
+        setSearchQuery("")
+      }
+    }
+  }, [folderFromUrl, folders]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-select Inbox on first load
   const effectiveFolderId = activeFolderId || folders.find((f) => f.displayName.toLowerCase() === "inbox")?.id || null
@@ -167,8 +191,12 @@ export default function OutlookPage() {
 
   // Message list panel
   const messageListContent = (
-    <div className="flex flex-col h-full min-w-0 border-r border-border/60 overflow-hidden">
+    <div className="flex flex-col h-full min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 p-3 border-b border-border/60">
+        <Button size="sm" onClick={handleCompose} className="shrink-0">
+          <PenLine className="h-3.5 w-3.5 mr-1.5" />
+          Compose
+        </Button>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -417,16 +445,6 @@ export default function OutlookPage() {
         </>
       ) : selectedMessageId ? (
         <PanelGroup orientation="horizontal" className="h-full">
-          <ResizablePanel id="ol" defaultSize="200px" minSize="150px" maxSize="250px">
-            <FolderSidebar
-              folders={folders}
-              activeFolderId={effectiveFolderId}
-              onFolderChange={handleFolderChange}
-              onCompose={handleCompose}
-              loading={foldersLoading}
-            />
-          </ResizablePanel>
-          <ResizeHandle />
           <ResizablePanel id="om" defaultSize="400px" minSize="300px">
             {messageListContent}
           </ResizablePanel>
@@ -436,21 +454,7 @@ export default function OutlookPage() {
           </ResizablePanel>
         </PanelGroup>
       ) : (
-        <PanelGroup orientation="horizontal" className="h-full">
-          <ResizablePanel id="ole" defaultSize="200px" minSize="150px" maxSize="250px">
-            <FolderSidebar
-              folders={folders}
-              activeFolderId={effectiveFolderId}
-              onFolderChange={handleFolderChange}
-              onCompose={handleCompose}
-              loading={foldersLoading}
-            />
-          </ResizablePanel>
-          <ResizeHandle />
-          <ResizablePanel id="ome" defaultSize="1fr" minSize="500px">
-            {messageListContent}
-          </ResizablePanel>
-        </PanelGroup>
+        messageListContent
       )}
 
       {/* Compose Dialog */}

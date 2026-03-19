@@ -11,6 +11,7 @@ import {
 import { CalendarView } from "@/components/calendar/calendar-view"
 import { CalendarSidebar } from "@/components/calendar/calendar-sidebar"
 import { EventDialog } from "@/components/calendar/event-dialog"
+import { SidebarSlotContent } from "@/components/sidebar-slot"
 import {
   useCalendars,
   useEvents,
@@ -21,7 +22,7 @@ import {
 import type { CalendarEvent } from "@/hooks/use-calendar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
+
 
 function getWeekBounds(date: Date) {
   const day = date.getDay()
@@ -186,37 +187,32 @@ export default function CalendarPage() {
           />
         </div>
       ) : (
-        <PanelGroup orientation="horizontal" className="h-full">
-          <ResizablePanel id="cal-sidebar" defaultSize="200px" minSize="150px" maxSize="280px">
-            <div className="h-full overflow-y-auto">
-              <CalendarSidebar
-                calendars={calendars}
-                enabledCalendars={enabledCalendars}
-                onToggleCalendar={handleToggleCalendar}
-                loading={calendarsLoading}
-              />
-            </div>
-          </ResizablePanel>
-          <ResizeHandle />
-          <ResizablePanel id="cal-main" defaultSize="1fr" minSize="500px">
-            <div className="flex-1 min-w-0 flex flex-col h-full">
-              {calendarsError && (
-                <CalendarError error={calendarsError} />
-              )}
-              <CalendarView
-                weekStart={weekStart}
-                events={events}
-                calendars={calendars}
-                onSlotClick={handleSlotClick}
-                onEventClick={handleEventClick}
-                onPrevWeek={handlePrevWeek}
-                onNextWeek={handleNextWeek}
-                onToday={handleToday}
-                loading={eventsLoading}
-              />
-            </div>
-          </ResizablePanel>
-        </PanelGroup>
+        <>
+          <SidebarSlotContent>
+            <CalendarSidebar
+              calendars={calendars}
+              enabledCalendars={enabledCalendars}
+              onToggleCalendar={handleToggleCalendar}
+              loading={calendarsLoading}
+            />
+          </SidebarSlotContent>
+          <div className="flex-1 min-w-0 flex flex-col h-full">
+            {calendarsError && (
+              <CalendarError error={calendarsError} />
+            )}
+            <CalendarView
+              weekStart={weekStart}
+              events={events}
+              calendars={calendars}
+              onSlotClick={handleSlotClick}
+              onEventClick={handleEventClick}
+              onPrevWeek={handlePrevWeek}
+              onNextWeek={handleNextWeek}
+              onToday={handleToday}
+              loading={eventsLoading}
+            />
+          </div>
+        </>
       )}
 
       <EventDialog

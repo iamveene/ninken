@@ -12,6 +12,7 @@ import { getProvider } from "@/lib/providers/registry"
 import { resolveIcon } from "@/lib/icon-resolver"
 import { studioNavItems } from "@/lib/studio/nav"
 import { collectionNavItems } from "@/lib/collection/nav"
+import { useSidebarSlot } from "@/components/sidebar-slot"
 import "@/lib/providers"
 
 import {
@@ -67,6 +68,8 @@ export function AppSidebar() {
   const { provider } = useProvider()
   const mode = getMode(pathname)
 
+  const { content: sidebarSlotContent } = useSidebarSlot()
+
   const providerConfig = getProvider(provider)
   const operateNavItems = providerConfig?.operateNavItems ?? []
   const auditNavItems = providerConfig?.auditNavItems ?? []
@@ -94,7 +97,9 @@ export function AppSidebar() {
   const isLoading = (mode === "operate" || mode === "audit") && loading
 
   // For non-operate modes or operate without active service (dashboard)
-  let navItems = visibleItems
+  const dashboardRoute = providerConfig?.defaultRoute ?? "/dashboard"
+  const dashboardItem = { id: "dashboard", title: "Dashboard", href: dashboardRoute, iconName: "LayoutDashboard" }
+  let navItems = [dashboardItem, ...visibleItems]
   let groupLabel = "Apps"
 
   if (mode === "audit") {
@@ -202,27 +207,33 @@ export function AppSidebar() {
               </DropdownMenu>
             </div>
 
-            {/* Service Sub-Navigation */}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {activeSubNav.map((item) => {
-                  const Icon = resolveIcon(item.iconName)
-                  const isActive = pathname === item.href || (item.href.includes("?") && pathname === item.href.split("?")[0])
-                  return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        render={<Link href={item.href} />}
-                        tooltip={item.title}
-                      >
-                        <Icon />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
+            {/* Service Sub-Navigation or custom slot content */}
+            {sidebarSlotContent ? (
+              <SidebarGroupContent className="group-data-[collapsible=icon]:hidden">
+                {sidebarSlotContent}
+              </SidebarGroupContent>
+            ) : activeSubNav ? (
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {activeSubNav.map((item) => {
+                    const Icon = resolveIcon(item.iconName)
+                    const isActive = pathname === item.href || (item.href.includes("?") && pathname === item.href.split("?")[0])
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          render={<Link href={item.href} />}
+                          tooltip={item.title}
+                        >
+                          <Icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            ) : null}
           </SidebarGroup>
         ) : (
           /* ─── Standard Mode (Dashboard / Audit / Studio / Collection) ─── */
@@ -272,12 +283,6 @@ export function AppSidebar() {
           <CacheIndicator />
         </div>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Home" render={<Link href="/" />}>
-              <Home />
-              <span>Home</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
               <LogOut />

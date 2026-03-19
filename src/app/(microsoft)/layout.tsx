@@ -9,6 +9,7 @@ import { AITrigger } from "@/components/ai/ai-trigger";
 import { AIContextProvider } from "@/components/ai/ai-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { ProviderContextProvider } from "@/components/providers/provider-context";
+import { SidebarSlotProvider } from "@/components/sidebar-slot";
 
 export default function MicrosoftLayout({
   children,
@@ -18,6 +19,7 @@ export default function MicrosoftLayout({
   return (
     <ProviderContextProvider>
       <AIContextProvider>
+        <SidebarSlotProvider>
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset className="overflow-x-hidden">
@@ -37,6 +39,7 @@ export default function MicrosoftLayout({
             <AITrigger />
           </SidebarInset>
         </SidebarProvider>
+        </SidebarSlotProvider>
       </AIContextProvider>
     </ProviderContextProvider>
   );
