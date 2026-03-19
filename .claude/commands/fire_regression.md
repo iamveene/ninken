@@ -56,32 +56,62 @@ Launch ONE frontend agent that tests ALL providers sequentially. **Do NOT launch
 - `read_console_messages` with `onlyErrors: true, clear: true` BETWEEN EVERY PAGE
 - ALL console errors are findings (except expected 403s for scope-denied features)
 
-#### C. Interactive Elements
-- **Click every tab** — verify content changes
-- **Click filter buttons** — verify filtering works
-- **Type in search bars** — verify results update
-- **Click expandable rows** — verify detail opens
-- **Test pagination** — if present, click next/prev
-- **Click action buttons**: Export, Refresh, Copy, Send to Collection, Start Probe
-- **Test mode toggle**: Operate → Audit → Collection → Studio
+#### C. Interactive Elements (READ-ONLY ONLY)
+**CRITICAL — NO DESTRUCTIVE ACTIONS:**
+- Do NOT send/compose/reply to emails
+- Do NOT delete anything (files, messages, items)
+- Do NOT modify labels, folders, or permissions
+- Do NOT create/upload files
+- Do NOT trash messages
+- Do NOT post messages in Teams/Slack/Chat
+- DO test all read-only interactions: view messages, browse folders, expand rows, switch tabs, filter, search, export, copy, refresh
+
+**Test every interactive element:**
+- **Click every tab** — verify content changes (e.g., Login/Admin/Token/Drive/Mobile on admin-reports, All/Critical/High/Medium/Low on alert-center)
+- **Click filter buttons** — verify filtering actually changes the displayed items
+- **Type in search bars** — verify results update or filter
+- **Click expandable rows** — verify detail panel opens with content
+- **Test pagination** — if present, click next/prev and verify data changes
+- **Click action buttons**: Export (verify download triggers or menu opens), Refresh (verify reload), Copy (verify no crash)
+- **Test mode toggle**: Operate → Audit → Collection → Studio — verify sidebar nav changes for each
 
 #### D. Sidebar Verification (per provider)
-- Correct nav items for the active provider
-- Click at least 3 sidebar links — verify navigation
+- Correct nav items for the active provider (not another provider's nav)
+- Click at least 3 sidebar links — verify correct navigation
 - Sidebar collapse/expand works
-- Active item is highlighted
+- Active item is highlighted for current page
 
-#### E. Feature-Specific Tests
+#### E. Content Reasoning
+- **Reason about every piece of visible content** — does it make sense?
+- Messages should show subjects, senders, dates — not empty rows
+- Files should show names, sizes, types
+- Users should show emails, display names
+- If you see "0 items" but the token has access to that service → BUG
+- If you see raw JSON, stack traces, or "[object Object]" → BUG
+- If a scope-denied message appears, check: does the token actually lack that scope? (reference the audit dashboard scope list)
 
-**Gmail**: Send to Collection button on a message? Compose dialog opens?
-**Drive**: Context menu on a file? Share dialog? Breadcrumbs update on folder navigation?
-**Calendar**: Week navigation (prev/next)? Event detail on click?
-**Outlook**: Folder switching? Message read/unread toggle?
-**Teams**: Team → channel → messages drill-down?
-**Collection**: Queue Start/Stop buttons work? Export ZIP button? Item cards render?
-**FOCI Pivot**: Click "Start Probe" → does it actually run and show results?
-**Resource Pivot**: Click "Re-probe" → does it refresh?
-**Query**: Select a query from library → does search execute?
+#### F. Collection Testing
+- On Gmail/Drive/Buckets/Teams pages: verify "Send to Collection" or collect buttons EXIST on data items (DON'T click them — that's a write action — just verify they're present)
+- Navigate to `/collection`: verify page loads with queue controls (Start/Stop/Retry Errors), Export ZIP button, Clear All button, stats display, filter controls
+- Reason: if no collected items, that's expected (nothing was collected). The page structure should still be complete.
+
+#### G. Feature-Specific Tests
+
+**Gmail**: Messages load with subjects? Click a message → detail view opens? Label sidebar present? "Send to Collection" button visible on a message?
+**Drive**: Files load with names/sizes? Navigate into a folder → breadcrumbs update? "Send to Collection" on files?
+**Calendar**: Events or calendars visible? Week navigation (prev/next) works?
+**Chat**: Spaces listed? Click a space → messages appear?
+**Outlook**: Messages load? Folder sidebar (Inbox/Sent/Drafts) works?
+**OneDrive**: Files load? Navigate folders?
+**Teams**: Teams listed? Click team → channels? Click channel → messages?
+**Entra**: Users/Groups/Roles tabs all load data?
+**Collection**: Page structure with queue controls + export + stats?
+**FOCI Pivot**: "Start Probe" button present? Click it → results render?
+**Resource Pivot**: Probe cards with status? "Re-probe" button works?
+**Query**: Query library loads (37+ queries)? Click a query → search runs?
+**Admin Reports**: All 5 application tabs switch content?
+**Alert Center**: Severity cards clickable? Filter tabs switch content?
+**Studio Converter**: FOCI client list renders? NO hydration errors?
 
 ### Provider-Specific Page Lists:
 
