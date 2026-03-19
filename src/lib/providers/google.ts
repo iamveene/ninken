@@ -154,6 +154,7 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },
     { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
     { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
+    { id: "audit-reports", title: "Admin Reports", href: "/audit/admin-reports", iconName: "FileText" },
   ],
 
   scopeAppMap: {
@@ -192,6 +193,10 @@ export const googleProvider: ServiceProvider = {
       "https://www.googleapis.com/auth/chat.messages",
       "https://www.googleapis.com/auth/chat.spaces.readonly",
       "https://www.googleapis.com/auth/chat.spaces",
+    ],
+    "admin-reports": [
+      "https://www.googleapis.com/auth/admin.reports.audit.readonly",
+      "https://www.googleapis.com/auth/admin.reports.usage.readonly",
     ],
   },
 
