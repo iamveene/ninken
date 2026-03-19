@@ -23,13 +23,11 @@ export function serverError(error: unknown) {
   // Detect Google API errors with specific status codes
   if (error && typeof error === "object" && "code" in error) {
     const apiError = error as { code: number; message?: string }
-    if (apiError.code === 404) {
-      return notFound(apiError.message || "Resource not found")
-    }
-    if (apiError.code === 403) {
+    const status = apiError.code
+    if (status >= 400 && status < 600) {
       return NextResponse.json(
-        { error: apiError.message || "Forbidden" },
-        { status: 403 }
+        { error: apiError.message || "Request failed" },
+        { status }
       )
     }
   }

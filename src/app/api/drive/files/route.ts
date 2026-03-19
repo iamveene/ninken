@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const q = searchParams.get("q") || undefined
     const limit = Math.min(Number(searchParams.get("limit")) || 20, 100)
-    const folder = searchParams.get("folder") || undefined
+    const folder = searchParams.get("folder") || searchParams.get("folderId") || undefined
     const ALLOWED_ORDER_FIELDS = ["name", "modifiedTime", "createdTime", "folder", "quotaBytesUsed"]
     const rawOrderBy = searchParams.get("orderBy") || "modifiedTime desc"
     const orderBy = ALLOWED_ORDER_FIELDS.some((f) => rawOrderBy.startsWith(f)) ? rawOrderBy : "modifiedTime desc"

@@ -11,7 +11,12 @@ export async function POST(
 
   try {
     const { id } = await ctx.params
-    const body = await request.json()
+    let body: { name?: string; folder?: string }
+    try {
+      body = await request.json()
+    } catch {
+      body = {}
+    }
     const { name, folder } = body
 
     const drive = createDriveService(token)

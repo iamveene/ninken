@@ -10,11 +10,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("query") || undefined
     const domain = searchParams.get("domain") || undefined
-    const maxResults = Math.min(Number(searchParams.get("maxResults")) || 50, 500)
+    const maxResults = Math.min(Math.max(1, Number(searchParams.get("maxResults")) || 50), 500)
     const pageToken = searchParams.get("pageToken") || undefined
 
     const admin = createDirectoryService(token)
     const res = await admin.users.list({
+      customer: domain ? undefined : "my_customer",
       domain,
       query,
       maxResults,
