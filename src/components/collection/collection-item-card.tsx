@@ -6,8 +6,10 @@ import {
   FileText,
   HardDrive,
   MessageSquare,
-  GitBranch,
+GitBranch,
   ShieldAlert,
+
+BookMarked,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -26,9 +28,12 @@ const TYPE_CONFIG: Record<CollectionItem["type"], { icon: typeof Mail; color: st
   file: { icon: FileText, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/40" },
   object: { icon: HardDrive, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
   "chat-message": { icon: MessageSquare, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/40" },
-  repo: { icon: GitBranch, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/40" },
+repo: { icon: GitBranch, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/40" },
   "audit-finding": { icon: ShieldAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
 }
+
+repo: { icon: BookMarked, color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/40" },
+} satisfies Record<import("@/lib/collection-store").CollectionItemType, { icon: typeof Mail; color: string; bg: string }>
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, label: "Pending", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
