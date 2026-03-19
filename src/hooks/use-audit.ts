@@ -77,7 +77,10 @@ export function useAuditUsers(query?: string) {
     const params = new URLSearchParams()
     if (query) params.set("query", query)
     const res = await fetch(`/api/audit/users?${params}`)
-    if (!res.ok) throw new Error("Failed to fetch audit users")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit users (${res.status})`)
+    }
     return res.json()
   }, [query])
 
@@ -98,7 +101,10 @@ export function useAuditUsers(query?: string) {
 export function useAuditGroups() {
   const fetcher = useCallback(async (): Promise<AuditGroupsResult> => {
     const res = await fetch("/api/audit/groups")
-    if (!res.ok) throw new Error("Failed to fetch audit groups")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit groups (${res.status})`)
+    }
     return res.json()
   }, [])
 
@@ -119,7 +125,10 @@ export function useAuditGroups() {
 export function useAuditRoles() {
   const fetcher = useCallback(async (): Promise<AuditRolesResult> => {
     const res = await fetch("/api/audit/roles")
-    if (!res.ok) throw new Error("Failed to fetch audit roles")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit roles (${res.status})`)
+    }
     return res.json()
   }, [])
 
@@ -140,7 +149,10 @@ export function useAuditRoles() {
 export function useAuditApps() {
   const fetcher = useCallback(async (): Promise<AuditAppsResult> => {
     const res = await fetch("/api/audit/apps")
-    if (!res.ok) throw new Error("Failed to fetch audit apps")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit apps (${res.status})`)
+    }
     return res.json()
   }, [])
 
@@ -151,7 +163,8 @@ export function useAuditApps() {
   )
 
   return {
-    data: data ?? { apps: [] },
+    apps: data?.apps ?? [],
+    note: data?.note,
     loading,
     error,
     refetch,
@@ -161,7 +174,10 @@ export function useAuditApps() {
 export function useAuditDelegation() {
   const fetcher = useCallback(async (): Promise<AuditDelegationResult> => {
     const res = await fetch("/api/audit/delegation")
-    if (!res.ok) throw new Error("Failed to fetch audit delegation")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit delegation (${res.status})`)
+    }
     return res.json()
   }, [])
 
@@ -172,7 +188,8 @@ export function useAuditDelegation() {
   )
 
   return {
-    data: data ?? { delegations: [] },
+    delegations: data?.delegations ?? [],
+    note: data?.note,
     loading,
     error,
     refetch,
