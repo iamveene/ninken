@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { bootstrapToken } from "@/lib/slack"
+import { getCredentialFromRequest, unauthorized } from "../../_helpers"
 
 export const dynamic = "force-dynamic"
 
@@ -9,8 +10,13 @@ export const dynamic = "force-dynamic"
  * workspace page server-side and extracting the token from boot_data.
  *
  * Returns a complete credential object ready for validateCredential.
+ *
+ * Requires an existing authenticated session (any provider).
  */
 export async function POST(request: Request) {
+  const session = await getCredentialFromRequest()
+  if (!session) return unauthorized()
+
   let body: { d_cookie?: string }
   try {
     body = await request.json()
