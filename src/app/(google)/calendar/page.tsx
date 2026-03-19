@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { AlertCircle } from "lucide-react"
 import {
   Card,
@@ -21,6 +21,8 @@ import {
 import type { CalendarEvent } from "@/hooks/use-calendar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { Panel, Group as PanelGroup } from "react-resizable-panels"
+import { ResizeHandle } from "@/components/ui/resize-handle"
 
 function getWeekBounds(date: Date) {
   const day = date.getDay()
@@ -55,10 +57,12 @@ export default function CalendarPage() {
   const { data: calendars, loading: calendarsLoading, error: calendarsError } = useCalendars()
 
   // Auto-enable all calendars on first load
-  if (!initialized && calendars.length > 0) {
-    setEnabledCalendars(new Set(calendars.map((c) => c.id)))
-    setInitialized(true)
-  }
+  useEffect(() => {
+    if (!initialized && calendars.length > 0) {
+      setEnabledCalendars(new Set(calendars.map((c) => c.id)))
+      setInitialized(true)
+    }
+  }, [initialized, calendars])
 
   const bounds = useMemo(() => getWeekBounds(weekStart), [weekStart])
   const enabledIds = useMemo(() => Array.from(enabledCalendars), [enabledCalendars])
@@ -165,49 +169,56 @@ export default function CalendarPage() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
-      {/* Calendar list sidebar */}
-      {!isMobile && (
-        <div className="w-[200px] border-r shrink-0 overflow-y-auto">
-          <CalendarSidebar
+      {isMobile ? (
+        <div className="flex-1 min-w-0 flex flex-col">
+          {calendarsError && (
+            <CalendarError error={calendarsError} />
+          )}
+          <CalendarView
+            weekStart={weekStart}
+            events={events}
             calendars={calendars}
-            enabledCalendars={enabledCalendars}
-            onToggleCalendar={handleToggleCalendar}
-            loading={calendarsLoading}
+            onSlotClick={handleSlotClick}
+            onEventClick={handleEventClick}
+            onPrevWeek={handlePrevWeek}
+            onNextWeek={handleNextWeek}
+            onToday={handleToday}
+            loading={eventsLoading}
           />
         </div>
+      ) : (
+        <PanelGroup orientation="horizontal" id="calendar-panels">
+          <Panel defaultSize={15} minSize={10} maxSize={25}>
+            <div className="h-full overflow-y-auto">
+              <CalendarSidebar
+                calendars={calendars}
+                enabledCalendars={enabledCalendars}
+                onToggleCalendar={handleToggleCalendar}
+                loading={calendarsLoading}
+              />
+            </div>
+          </Panel>
+          <ResizeHandle />
+          <Panel defaultSize={85} minSize={60}>
+            <div className="flex-1 min-w-0 flex flex-col h-full">
+              {calendarsError && (
+                <CalendarError error={calendarsError} />
+              )}
+              <CalendarView
+                weekStart={weekStart}
+                events={events}
+                calendars={calendars}
+                onSlotClick={handleSlotClick}
+                onEventClick={handleEventClick}
+                onPrevWeek={handlePrevWeek}
+                onNextWeek={handleNextWeek}
+                onToday={handleToday}
+                loading={eventsLoading}
+              />
+            </div>
+          </Panel>
+        </PanelGroup>
       )}
-
-      {/* Main calendar view */}
-      <div className={cn("flex-1 min-w-0 flex flex-col")}>
-        {calendarsError && (
-          <div className="px-4 pt-3">
-            <Card className="border-destructive/30 bg-destructive/5">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  Unable to load calendars
-                </CardTitle>
-                <CardDescription>
-                  {calendarsError.includes("403") || calendarsError.includes("Forbidden") || calendarsError.includes("insufficient") || calendarsError.includes("scope")
-                    ? "Calendar access requires additional permissions. Please re-authenticate with Calendar scope enabled."
-                    : calendarsError}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        )}
-        <CalendarView
-          weekStart={weekStart}
-          events={events}
-          calendars={calendars}
-          onSlotClick={handleSlotClick}
-          onEventClick={handleEventClick}
-          onPrevWeek={handlePrevWeek}
-          onNextWeek={handleNextWeek}
-          onToday={handleToday}
-          loading={eventsLoading}
-        />
-      </div>
 
       <EventDialog
         open={dialogOpen}
@@ -219,6 +230,26 @@ export default function CalendarPage() {
         onDelete={handleDelete}
         saving={creating || updating}
       />
+    </div>
+  )
+}
+
+function CalendarError({ error }: { error: string }) {
+  return (
+    <div className="px-4 pt-3">
+      <Card className="border-destructive/30 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            Unable to load calendars
+          </CardTitle>
+          <CardDescription>
+            {error.includes("403") || error.includes("Forbidden") || error.includes("insufficient") || error.includes("scope")
+              ? "Calendar access requires additional permissions. Please re-authenticate with Calendar scope enabled."
+              : error}
+          </CardDescription>
+        </CardHeader>
+      </Card>
     </div>
   )
 }

@@ -45,6 +45,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 
+import { Panel, Group as PanelGroup } from "react-resizable-panels"
+import { ResizeHandle } from "@/components/ui/resize-handle"
 import { FileCard, getFileConfig, formatFileSize } from "@/components/drive/file-card"
 import { FileContextMenu } from "@/components/drive/context-menu"
 import { DriveBreadcrumbs, type BreadcrumbSegment } from "@/components/drive/breadcrumbs"
@@ -239,9 +241,10 @@ export function FileBrowser() {
   const isLoading = isSearching ? searchLoading : loading
 
   return (
-    <div className="flex h-full">
+    <PanelGroup orientation="horizontal" id="drive-panels">
+      <Panel defaultSize={showInfoPanel ? 70 : 100} minSize={40}>
       <div
-        className={cn("flex flex-1 flex-col gap-4 relative overflow-y-auto p-1")}
+        className={cn("flex flex-1 flex-col gap-4 relative overflow-y-auto p-1 h-full")}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false) }}
@@ -545,12 +548,18 @@ export function FileBrowser() {
         ))}
       </div>
 
+      </Panel>
       {/* Info panel */}
       {showInfoPanel && (
-        <FilePreview
-          fileId={previewFileId}
-          onClose={() => { setShowInfoPanel(false); setPreviewFileId(null) }}
-        />
+        <>
+          <ResizeHandle />
+          <Panel defaultSize={30} minSize={20} maxSize={50}>
+            <FilePreview
+              fileId={previewFileId}
+              onClose={() => { setShowInfoPanel(false); setPreviewFileId(null) }}
+            />
+          </Panel>
+        </>
       )}
 
       {/* Dialogs */}
@@ -586,7 +595,7 @@ export function FileBrowser() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PanelGroup>
   )
 }
 

@@ -23,6 +23,7 @@ import {
   syncActiveProfile,
   migrateFromCookies,
 } from "@/lib/token-sync"
+import { startTokenRefresher, stopTokenRefresher } from "@/lib/token-refresher"
 
 type ProviderContextValue = {
   provider: ProviderId
@@ -82,6 +83,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
 
         if (!cancelled) {
           await refreshProfiles()
+          startTokenRefresher()
         }
       } catch {
         // Non-critical — will just show empty state
@@ -93,6 +95,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
     init()
     return () => {
       cancelled = true
+      stopTokenRefresher()
     }
   }, [refreshProfiles])
 

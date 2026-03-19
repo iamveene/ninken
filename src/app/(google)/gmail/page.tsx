@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { Panel, Group as PanelGroup } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
+import { ResizeHandle } from "@/components/ui/resize-handle"
 import { LabelSidebar } from "@/components/gmail/label-sidebar"
 import { MessageList } from "@/components/gmail/message-list"
 import { MessageView } from "@/components/gmail/message-view"
@@ -199,129 +201,159 @@ export default function GmailPage() {
   const showMobileList = !isMobile || mobileView === "list"
   const showMobileDetail = !isMobile || mobileView === "detail"
 
-  return (
-    <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
-      {/* Label sidebar - hidden on mobile */}
-      {!isMobile && (
-        <LabelSidebar
-          labels={labels}
-          activeLabel={activeLabel}
-          onLabelChange={handleLabelChange}
-          onCompose={handleCompose}
-          loading={labelsLoading}
+  // Shared message list content
+  const messageListContent = (
+    <div className="flex flex-col h-full border-r border-border/60">
+      <div className="flex items-center gap-2 p-3 border-b border-border/60">
+        <div className="flex-1">
+          <SearchBar
+            onSearch={handleSearch}
+            resultCount={searchQuery ? totalEstimate : undefined}
+            currentQuery={searchQuery}
+          />
+        </div>
+        <SearchFilters onApply={handleSearch} />
+      </div>
+
+      {isMobile && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b overflow-x-auto">
+          {Object.entries(LABEL_QUERIES).map(([id, _]) => (
+            <button
+              key={id}
+              onClick={() => handleLabelChange(id)}
+              className={cn(
+                "px-2.5 py-1 text-xs rounded-full whitespace-nowrap transition-colors",
+                activeLabel === id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              {id.charAt(0) + id.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <Toolbar
+        selectedCount={selectedIds.size}
+        totalMessages={messages.length}
+        onSelectAll={handleSelectAll}
+        onDeselectAll={handleDeselectAll}
+        allSelected={allSelected}
+        onRefresh={() => refetch()}
+        onMarkRead={handleMarkRead}
+        onMarkUnread={handleMarkUnread}
+        onTrash={handleBulkTrash}
+        hasNextPage={!!nextPageToken}
+        hasPrevPage={false}
+        pageInfo={totalEstimate > 0 ? `1-${messages.length} of ${totalEstimate.toLocaleString()}` : undefined}
+      />
+
+      <MessageList
+        messages={messages}
+        loading={messagesLoading}
+        error={messagesError}
+        selectedId={selectedMessageId}
+        onSelect={handleSelectMessage}
+        onStarToggle={handleStarToggle}
+        selectedIds={selectedIds}
+        onToggleSelect={handleToggleSelect}
+        onRetry={() => refetch()}
+      />
+
+      {isMobile && (
+        <button
+          onClick={handleCompose}
+          className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+        >
+          <svg
+            className="size-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+            />
+          </svg>
+        </button>
+      )}
+    </div>
+  )
+
+  // Detail panel content
+  const detailContent = (
+    <div className="flex flex-1 flex-col min-w-0 h-full">
+      {showThread && thread ? (
+        <ThreadView
+          thread={thread}
+          loading={threadLoading}
+          onReply={handleReply}
+          onForward={handleForward}
+          onBack={handleBack}
+        />
+      ) : (
+        <MessageView
+          message={selectedMessage}
+          loading={messageLoading}
+          error={messageError}
+          onReply={handleReply}
+          onForward={handleForward}
+          onTrash={handleTrash}
+          onMarkUnread={handleMarkSingleUnread}
+          onArchive={handleArchive}
+          onBack={isMobile ? handleBack : undefined}
         />
       )}
+    </div>
+  )
 
-      {/* Message list column */}
-      {showMobileList && (
-        <div className={cn("flex flex-col border-r border-border/60", isMobile ? "flex-1" : "w-[380px]")}>
-          <div className="flex items-center gap-2 p-3 border-b border-border/60">
-            <div className="flex-1">
-              <SearchBar
-                onSearch={handleSearch}
-                resultCount={searchQuery ? totalEstimate : undefined}
-                currentQuery={searchQuery}
-              />
-            </div>
-            <SearchFilters onApply={handleSearch} />
-          </div>
-
-          {/* Mobile label filter */}
-          {isMobile && (
-            <div className="flex items-center gap-2 px-3 py-1.5 border-b overflow-x-auto">
-              {Object.entries(LABEL_QUERIES).map(([id, _]) => (
-                <button
-                  key={id}
-                  onClick={() => handleLabelChange(id)}
-                  className={cn(
-                    "px-2.5 py-1 text-xs rounded-full whitespace-nowrap transition-colors",
-                    activeLabel === id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {id.charAt(0) + id.slice(1).toLowerCase()}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <Toolbar
-            selectedCount={selectedIds.size}
-            totalMessages={messages.length}
-            onSelectAll={handleSelectAll}
-            onDeselectAll={handleDeselectAll}
-            allSelected={allSelected}
-            onRefresh={() => refetch()}
-            onMarkRead={handleMarkRead}
-            onMarkUnread={handleMarkUnread}
-            onTrash={handleBulkTrash}
-            hasNextPage={!!nextPageToken}
-            hasPrevPage={false}
-            pageInfo={totalEstimate > 0 ? `1-${messages.length} of ${totalEstimate.toLocaleString()}` : undefined}
-          />
-
-          <MessageList
-            messages={messages}
-            loading={messagesLoading}
-            error={messagesError}
-            selectedId={selectedMessageId}
-            onSelect={handleSelectMessage}
-            onStarToggle={handleStarToggle}
-            selectedIds={selectedIds}
-            onToggleSelect={handleToggleSelect}
-            onRetry={() => refetch()}
-          />
-
-          {/* Mobile compose FAB */}
-          {isMobile && (
-            <button
-              onClick={handleCompose}
-              className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
-            >
-              <svg
-                className="size-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Detail panel */}
-      {showMobileDetail && (
-        <div className="flex flex-1 flex-col min-w-0">
-          {showThread && thread ? (
-            <ThreadView
-              thread={thread}
-              loading={threadLoading}
-              onReply={handleReply}
-              onForward={handleForward}
-              onBack={handleBack}
+  return (
+    <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
+      {isMobile ? (
+        <>
+          {showMobileList && messageListContent}
+          {showMobileDetail && detailContent}
+        </>
+      ) : selectedMessageId ? (
+        <PanelGroup orientation="horizontal" id="gmail-panels">
+          <Panel defaultSize={15} minSize={10} maxSize={25}>
+            <LabelSidebar
+              labels={labels}
+              activeLabel={activeLabel}
+              onLabelChange={handleLabelChange}
+              onCompose={handleCompose}
+              loading={labelsLoading}
             />
-          ) : (
-            <MessageView
-              message={selectedMessage}
-              loading={messageLoading}
-              error={messageError}
-              onReply={handleReply}
-              onForward={handleForward}
-              onTrash={handleTrash}
-              onMarkUnread={handleMarkSingleUnread}
-              onArchive={handleArchive}
-              onBack={isMobile ? handleBack : undefined}
+          </Panel>
+          <ResizeHandle />
+          <Panel defaultSize={30} minSize={20} maxSize={50}>
+            {messageListContent}
+          </Panel>
+          <ResizeHandle />
+          <Panel defaultSize={55} minSize={30}>
+            {detailContent}
+          </Panel>
+        </PanelGroup>
+      ) : (
+        <PanelGroup orientation="horizontal" id="gmail-expanded">
+          <Panel defaultSize={15} minSize={10} maxSize={25}>
+            <LabelSidebar
+              labels={labels}
+              activeLabel={activeLabel}
+              onLabelChange={handleLabelChange}
+              onCompose={handleCompose}
+              loading={labelsLoading}
             />
-          )}
-        </div>
+          </Panel>
+          <ResizeHandle />
+          <Panel defaultSize={85} minSize={60}>
+            {messageListContent}
+          </Panel>
+        </PanelGroup>
       )}
 
       <ComposeDialog

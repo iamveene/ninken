@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
+import { TokenLifecycle } from "@/components/layout/token-lifecycle"
 import { useScopes } from "@/hooks/use-scopes"
 import { useProvider } from "@/components/providers/provider-context"
 import { getProvider } from "@/lib/providers/registry"
@@ -64,6 +65,9 @@ export function AppSidebar() {
             <NinkenLogoCompact />
           </span>
         </div>
+        <p className="text-[11px] font-medium tracking-widest text-red-500/80 uppercase group-data-[collapsible=icon]:hidden">
+          Track. Hunt. Retrieve.
+        </p>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -132,6 +136,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <TokenLifecycle />
         <div className="group-data-[collapsible=icon]:hidden">
           <CacheIndicator />
         </div>
