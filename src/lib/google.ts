@@ -93,4 +93,7 @@ export function createAlertCenterServiceFromToken(accessToken: string) {
 
 export function createDriveActivityServiceFromToken(accessToken: string) {
   return google.driveactivity({ version: "v2", auth: createBearerClient(accessToken) })
+
+export function createGroupsSettingsServiceFromToken(accessToken: string) {
+  return google.groupssettings({ version: "v1", auth: createBearerClient(accessToken) })
 }

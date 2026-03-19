@@ -190,6 +190,7 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-policies", title: "Policies", href: "/audit/policies", iconName: "Settings" },
     { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },
     { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
+    { id: "audit-groups-settings", title: "Groups Settings", href: "/audit/groups-settings", iconName: "Settings2" },
     { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
 { id: "audit-reports", title: "Admin Reports", href: "/audit/admin-reports", iconName: "FileText" },
     { id: "audit-alert-center", title: "Alert Center", href: "/audit/alert-center", iconName: "Bell" },
@@ -245,6 +246,9 @@ export const googleProvider: ServiceProvider = {
 "drive-activity": [
       "https://www.googleapis.com/auth/drive.activity.readonly",
       "https://www.googleapis.com/auth/drive.activity",
+
+"groups-settings": [
+      "https://www.googleapis.com/auth/apps.groups.settings",
     ],
   },
 
