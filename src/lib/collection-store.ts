@@ -4,6 +4,9 @@ export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive
 
 export type CollectionItemType = "email" | "file" | "object" | "chat-message" | "repo"
 export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
+
+export type CollectionItemType = "email" | "file" | "object" | "chat-message" | "audit-finding"
+export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
 export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "github"
 
 export type CollectionItem = {

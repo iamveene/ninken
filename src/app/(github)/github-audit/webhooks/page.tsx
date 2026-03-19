@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { CollectButton } from "@/components/collection/collect-button"
 import { Webhook, AlertTriangle } from "lucide-react"
 import { CACHE_TTL_LIST } from "@/lib/cache"
 
@@ -152,6 +153,7 @@ export default function WebhooksAuditPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-xs w-8" />
                 <TableHead className="text-xs">Name</TableHead>
                 <TableHead className="text-xs">URL</TableHead>
                 <TableHead className="text-xs">Active</TableHead>
@@ -163,7 +165,7 @@ export default function WebhooksAuditPage() {
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 6 }).map((__, j) => (
                       <TableCell key={j}>
                         <div className="h-4 animate-pulse rounded bg-muted" />
                       </TableCell>
@@ -172,13 +174,33 @@ export default function WebhooksAuditPage() {
                 ))
               ) : !hooks || hooks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
                     No webhooks found
                   </TableCell>
                 </TableRow>
               ) : (
                 hooks.map((h) => (
                   <TableRow key={h.id}>
+                    <TableCell className="px-1">
+                      <CollectButton
+                        variant="icon-xs"
+                        params={{
+                          type: "audit-finding",
+                          source: "github",
+                          title: `Webhook: ${h.url || h.name}`,
+                          subtitle: selected,
+                          sourceId: `webhook:${selected}:${h.id}`,
+                          metadata: {
+                            findingType: "webhook",
+                            source: selected,
+                            url: h.url,
+                            events: h.events,
+                            active: h.active,
+                            sslVerification: h.insecureSsl,
+                          },
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs font-medium">{h.name}</TableCell>
                     <TableCell>
                       <span className="text-xs font-mono text-muted-foreground truncate max-w-[200px] block">

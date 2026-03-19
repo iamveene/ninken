@@ -10,6 +10,8 @@ GitBranch,
   ShieldAlert,
 
 BookMarked,
+
+ShieldAlert,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -29,6 +31,8 @@ const TYPE_CONFIG: Record<CollectionItem["type"], { icon: typeof Mail; color: st
   object: { icon: HardDrive, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
   "chat-message": { icon: MessageSquare, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/40" },
 repo: { icon: GitBranch, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/40" },
+
+
   "audit-finding": { icon: ShieldAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
 }
 
