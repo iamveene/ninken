@@ -4,24 +4,55 @@ import type {
   ServiceProvider,
 } from "./types"
 
+/**
+ * Normalize raw credential JSON into a flat object with the fields we need.
+ * Handles ADC format, nested "installed"/"web" wrappers, and service account keys.
+ */
+function normalizeGoogleRaw(
+  raw: Record<string, unknown>
+): Record<string, unknown> {
+  // Unwrap "installed" wrapper (gcloud client_secrets format)
+  if (raw.installed && typeof raw.installed === "object") {
+    const inner = raw.installed as Record<string, unknown>
+    return { ...inner, ...raw, installed: undefined }
+  }
+  // Unwrap "web" wrapper (web app client_secrets format)
+  if (raw.web && typeof raw.web === "object") {
+    const inner = raw.web as Record<string, unknown>
+    return { ...inner, ...raw, web: undefined }
+  }
+  return raw
+}
+
+const SERVICE_ACCOUNT_ERROR =
+  "Service account keys are not yet supported. Please provide an OAuth refresh token (type: authorized_user)"
+
 function isGoogleShape(obj: Record<string, unknown>): boolean {
+  const norm = normalizeGoogleRaw(obj)
+
+  // Reject service account keys early
+  if (norm.type === "service_account") return false
+
   // Must have the three required OAuth fields
   if (
-    typeof obj.refresh_token !== "string" || !obj.refresh_token ||
-    typeof obj.client_id !== "string" || !obj.client_id ||
-    typeof obj.client_secret !== "string" || !obj.client_secret
+    typeof norm.refresh_token !== "string" || !norm.refresh_token ||
+    typeof norm.client_id !== "string" || !norm.client_id ||
+    typeof norm.client_secret !== "string" || !norm.client_secret
   ) {
     return false
   }
 
+  // Positive discriminator: type "authorized_user" is always Google
+  if (norm.type === "authorized_user") return true
+
   // Positive discriminator: if token_uri is present, it must be Google's
-  const tokenUri = typeof obj.token_uri === "string" ? obj.token_uri : ""
+  const tokenUri = typeof norm.token_uri === "string" ? norm.token_uri : ""
   if (tokenUri && !tokenUri.includes("googleapis.com") && !tokenUri.includes("accounts.google.com")) {
     return false
   }
 
   // Negative discriminator: reject if Microsoft-specific fields are present
-  if ("tenant_id" in obj || "tenantId" in obj) return false
+  if ("tenant_id" in norm || "tenantId" in norm) return false
 
   return true
 }
@@ -46,7 +77,13 @@ export const googleProvider: ServiceProvider = {
       return { valid: false, error: "Invalid JSON" }
     }
 
-    const obj = raw as Record<string, unknown>
+    const obj = normalizeGoogleRaw(raw as Record<string, unknown>)
+
+    // Reject service account keys with a clear message
+    if (obj.type === "service_account") {
+      return { valid: false, error: SERVICE_ACCOUNT_ERROR }
+    }
+
     const requiredFields = ["refresh_token", "client_id", "client_secret"] as const
 
     for (const field of requiredFields) {
