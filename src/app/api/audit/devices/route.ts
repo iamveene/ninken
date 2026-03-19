@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 /**
  * GET /api/audit/devices
@@ -9,15 +9,15 @@ import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
  * Falls back gracefully if admin access is denied.
  */
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
     const pageToken = searchParams.get("pageToken") || undefined
     const type = searchParams.get("type") || "all" // "chromeos", "mobile", or "all"
 
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
 
     const chromeDevices: Array<Record<string, unknown>> = []
     const mobileDevices: Array<Record<string, unknown>> = []

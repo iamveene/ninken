@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createChatService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createChatServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 /**
  * GET /api/chat/spaces
@@ -8,15 +8,15 @@ import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
  * Lists Google Chat spaces the authenticated user is a member of.
  */
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
     const pageSize = Math.min(Number(searchParams.get("pageSize")) || 100, 1000)
     const pageToken = searchParams.get("pageToken") || undefined
 
-    const chat = createChatService(token)
+    const chat = createChatServiceFromToken(accessToken)
     const res = await chat.spaces.list({
       pageSize,
       pageToken,

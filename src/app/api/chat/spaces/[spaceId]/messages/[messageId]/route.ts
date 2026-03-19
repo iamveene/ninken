@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createChatService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../../_helpers"
+import { createChatServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
 /**
  * GET /api/chat/spaces/[spaceId]/messages/[messageId]
@@ -11,13 +11,13 @@ export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/chat/spaces/[spaceId]/messages/[messageId]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { spaceId, messageId } = await ctx.params
 
-    const chat = createChatService(token)
+    const chat = createChatServiceFromToken(accessToken)
     const res = await chat.spaces.messages.get({
       name: `spaces/${spaceId}/messages/${messageId}`,
     })

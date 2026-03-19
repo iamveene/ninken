@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 /**
  * GET /api/audit/access-policies
@@ -9,11 +9,11 @@ import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
  * API client access, and security settings from the admin directory.
  */
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
     let scope: "organization" | "limited" = "organization"
 
     // Fetch domain-wide delegation (service account authorizations)

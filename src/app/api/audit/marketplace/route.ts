@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 /**
  * GET /api/audit/marketplace
@@ -10,11 +10,11 @@ import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
  * Falls back gracefully if admin access is denied.
  */
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
     let scope: "organization" | "limited" = "organization"
 
     // First, get user list to enumerate tokens per user
