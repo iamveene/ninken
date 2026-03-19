@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server"
-import { createCalendarService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../_helpers"
+import { createCalendarServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../_helpers"
 
 export async function GET(
   request: Request,
   ctx: RouteContext<"/api/calendar/events/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
     const { searchParams } = new URL(request.url)
     const calendarId = searchParams.get("calendarId") || "primary"
 
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     const res = await calendar.events.get({
       calendarId,
       eventId: id,
@@ -30,15 +30,15 @@ export async function PATCH(
   request: Request,
   ctx: RouteContext<"/api/calendar/events/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
     const body = await request.json()
     const { calendarId, summary, description, start, end, location } = body
 
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     const res = await calendar.events.patch({
       calendarId: calendarId || "primary",
       eventId: id,
@@ -61,15 +61,15 @@ export async function DELETE(
   request: Request,
   ctx: RouteContext<"/api/calendar/events/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
     const { searchParams } = new URL(request.url)
     const calendarId = searchParams.get("calendarId") || "primary"
 
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     await calendar.events.delete({
       calendarId,
       eventId: id,

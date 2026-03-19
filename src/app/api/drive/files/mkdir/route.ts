@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../../_helpers"
 
 export async function POST(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const body = await request.json()
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       return badRequest("Missing required field: name")
     }
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.create({
       requestBody: {
         name,

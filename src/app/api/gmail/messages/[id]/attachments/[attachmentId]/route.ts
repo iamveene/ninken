@@ -1,16 +1,16 @@
-import { createGmailService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../../_helpers"
+import { createGmailServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
 export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/gmail/messages/[id]/attachments/[attachmentId]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id, attachmentId } = await ctx.params
-    const gmail = createGmailService(token)
+    const gmail = createGmailServiceFromToken(accessToken)
 
     // First get the message to find attachment metadata
     const message = await gmail.users.messages.get({

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { createGmailService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createGmailServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     const limit = Math.min(Number(searchParams.get("limit")) || 20, 100)
     const pageToken = searchParams.get("pageToken") || undefined
 
-    const gmail = createGmailService(token)
+    const gmail = createGmailServiceFromToken(accessToken)
     const res = await gmail.users.messages.list({
       userId: "me",
       q,
@@ -44,8 +44,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const body = await request.json()
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       .replace(/\//g, "_")
       .replace(/=+$/, "")
 
-    const gmail = createGmailService(token)
+    const gmail = createGmailServiceFromToken(accessToken)
     const res = await gmail.users.messages.send({
       userId: "me",
       requestBody: { raw },

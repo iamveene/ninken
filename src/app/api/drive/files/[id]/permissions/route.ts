@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../../../_helpers"
 
 export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/permissions">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.permissions.list({
       fileId: id,
       fields: "permissions(id, type, role, emailAddress, displayName, domain)",
@@ -29,8 +29,8 @@ export async function POST(
   request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/permissions">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
@@ -53,7 +53,7 @@ export async function POST(
       return badRequest("Email is required for user/group permissions")
     }
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.permissions.create({
       fileId: id,
       requestBody: {

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
 import { Readable } from "stream"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     const driveId = searchParams.get("driveId") || undefined
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.list({
       q: query,
       pageSize: limit,
@@ -61,8 +61,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const contentType = request.headers.get("content-type") || ""
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       return badRequest("File size exceeds maximum allowed size of 100MB")
     }
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
