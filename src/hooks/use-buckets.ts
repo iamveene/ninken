@@ -61,6 +61,7 @@ export type Bucket = {
   updated?: string
   selfLink?: string
   hasObjects?: boolean
+  readable?: boolean
 }
 
 export type StorageObject = {
@@ -105,6 +106,7 @@ export function useBuckets(project: string) {
 type ObjectsResult = {
   objects: StorageObject[]
   prefixes: string[]
+  canDownload: boolean
 }
 
 export function useObjects(bucket: string, prefix?: string) {
@@ -114,11 +116,16 @@ export function useObjects(bucket: string, prefix?: string) {
     const params = new URLSearchParams()
     if (prefix) params.set("prefix", prefix)
     const res = await fetch(`/api/gcp/buckets/${encodeURIComponent(bucket)}/objects?${params}`)
+    if (res.status === 403) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || "Access denied")
+    }
     if (!res.ok) throw new Error("Failed to fetch objects")
     const data = await res.json()
     return {
       objects: data.objects || [],
       prefixes: data.prefixes || [],
+      canDownload: data.canDownload !== false,
     }
   }, [bucket, prefix])
 
@@ -131,8 +138,10 @@ export function useObjects(bucket: string, prefix?: string) {
   return {
     objects: data?.objects ?? [],
     prefixes: data?.prefixes ?? [],
+    canDownload: data?.canDownload ?? true,
     loading,
     error,
+    accessDenied: error?.message?.includes("Access denied") || error?.message?.includes("403") || false,
     refetch,
   }
 }

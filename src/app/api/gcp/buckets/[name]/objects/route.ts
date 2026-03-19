@@ -27,10 +27,24 @@ export async function GET(
       maxResults,
     })
 
+    const objects = res.data.items || []
+
+    // Quick download permission check: try to get metadata of first object
+    let canDownload = true
+    if (objects.length > 0) {
+      try {
+        await storage.objects.get({ bucket: name, object: objects[0].name! })
+      } catch (err) {
+        const code = err && typeof err === "object" && "code" in err ? (err as { code: number }).code : 0
+        if (code === 403) canDownload = false
+      }
+    }
+
     return NextResponse.json({
-      objects: res.data.items || [],
+      objects,
       prefixes: res.data.prefixes || [],
       nextPageToken: res.data.nextPageToken,
+      canDownload,
     })
   } catch (error) {
     return serverError(error)

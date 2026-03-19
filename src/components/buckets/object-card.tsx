@@ -47,6 +47,7 @@ type ObjectCardProps = {
   prefix?: string
   view: "grid" | "list"
   selected?: boolean
+  disabled?: boolean
   onClick?: () => void
   onDoubleClick?: () => void
   onDownload?: () => void
@@ -57,6 +58,7 @@ export function ObjectCard({
   prefix,
   view,
   selected,
+  disabled,
   onClick,
   onDoubleClick,
   onDownload,
@@ -77,7 +79,8 @@ export function ObjectCard({
     <div
       className={cn(
         "group relative flex flex-col items-center gap-2.5 rounded-xl border bg-card p-4 transition-all duration-150 cursor-pointer hover:shadow-lg hover:shadow-black/5 hover:border-primary/30 hover:-translate-y-0.5 dark:hover:shadow-black/20",
-        selected && "border-primary bg-primary/5 shadow-md ring-2 ring-primary/25"
+        selected && "border-primary bg-primary/5 shadow-md ring-2 ring-primary/25",
+        disabled && !isFolder && "opacity-50 cursor-default hover:shadow-none hover:border-border hover:translate-y-0"
       )}
       onClick={onClick}
       onDoubleClick={onDoubleClick}

@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const res = await storage.buckets.list({ project })
     const buckets = res.data.items || []
 
-    // Check which buckets have objects (request 1 item to keep it fast)
+    // Check which buckets have objects and whether we can read them
     const objectChecks = await Promise.allSettled(
       buckets.map(async (bucket) => {
         try {
@@ -24,19 +24,23 @@ export async function GET(request: Request) {
             maxResults: 1,
           })
           const hasObjects = (objRes.data.items?.length ?? 0) > 0
-          return { ...bucket, hasObjects }
-        } catch {
-          return { ...bucket, hasObjects: false }
+          return { ...bucket, hasObjects, readable: true }
+        } catch (err) {
+          const code = err && typeof err === "object" && "code" in err ? (err as { code: number }).code : 0
+          // 403 = we can see the bucket but can't read its objects
+          return { ...bucket, hasObjects: false, readable: code !== 403 }
         }
       })
     )
 
     const enriched = objectChecks.map((result) =>
-      result.status === "fulfilled" ? result.value : { hasObjects: false }
+      result.status === "fulfilled" ? result.value : { hasObjects: false, readable: false }
     )
 
-    // Sort: buckets with files first, then empty buckets
+    // Sort: readable with objects first, readable empty, then unreadable
     enriched.sort((a, b) => {
+      if (a.readable && !b.readable) return -1
+      if (!a.readable && b.readable) return 1
       if (a.hasObjects && !b.hasObjects) return -1
       if (!a.hasObjects && b.hasObjects) return 1
       return (a.name || "").localeCompare(b.name || "")

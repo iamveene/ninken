@@ -11,6 +11,7 @@ import {
   Info,
   Upload,
   Search,
+  ShieldX,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -67,7 +68,7 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
   const [showInfoPanel, setShowInfoPanel] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
-  const { objects, prefixes, loading, refetch } = useObjects(bucket, prefix || undefined)
+  const { objects, prefixes, loading, accessDenied, canDownload, refetch } = useObjects(bucket, prefix || undefined)
   const { download } = useDownloadObject()
 
   // Sort objects (prefixes first, then files)
@@ -162,6 +163,14 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
           </div>
         </div>
 
+        {/* Access warning */}
+        {!loading && !accessDenied && !canDownload && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <ShieldX className="h-4 w-4 shrink-0" />
+            <span>Read-only access &mdash; you can browse but not download files from this bucket.</span>
+          </div>
+        )}
+
         {/* Breadcrumbs */}
         <BucketBreadcrumbs
           bucket={bucket}
@@ -173,6 +182,8 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
         {/* Content */}
         {loading ? (
           <LoadingSkeleton view={view} />
+        ) : accessDenied ? (
+          <AccessDeniedState />
         ) : prefixes.length === 0 && sortedObjects.length === 0 ? (
           <EmptyState />
         ) : view === "grid" ? (
@@ -192,9 +203,10 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
                 object={obj}
                 view="grid"
                 selected={selectedObject?.name === obj.name}
+                disabled={!canDownload}
                 onClick={() => handleObjectClick(obj)}
-                onDoubleClick={() => handleDownload(obj)}
-                onDownload={() => handleDownload(obj)}
+                onDoubleClick={canDownload ? () => handleDownload(obj) : undefined}
+                onDownload={canDownload ? () => handleDownload(obj) : undefined}
               />
             ))}
           </div>
@@ -264,10 +276,11 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
                     key={obj.name}
                     className={cn(
                       "cursor-pointer transition-colors",
+                      !canDownload && "opacity-50",
                       selectedObject?.name === obj.name ? "bg-primary/8 hover:bg-primary/10" : "hover:bg-muted/50"
                     )}
                     onClick={() => handleObjectClick(obj)}
-                    onDoubleClick={() => handleDownload(obj)}
+                    onDoubleClick={canDownload ? () => handleDownload(obj) : undefined}
                   >
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -336,6 +349,22 @@ function LoadingSkeleton({ view }: { view: "grid" | "list" }) {
           <Skeleton className="h-4 w-16 ml-auto" />
         </div>
       ))}
+    </div>
+  )
+}
+
+function AccessDeniedState() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+        <ShieldX className="h-10 w-10 text-destructive/60" />
+      </div>
+      <div className="text-center">
+        <p className="text-lg font-medium">Access Denied</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          You don&apos;t have permission to list objects in this bucket.
+        </p>
+      </div>
     </div>
   )
 }

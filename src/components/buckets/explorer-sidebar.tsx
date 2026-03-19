@@ -202,28 +202,56 @@ function ProjectNode({
               No buckets
             </div>
           ) : (
-            buckets.map((bucket) => {
-              const isSelected = selectedBucket?.name === bucket.name
+            (() => {
+              const readable = buckets.filter((b) => b.readable !== false)
+              const unreadable = buckets.filter((b) => b.readable === false)
               return (
-                <button
-                  key={bucket.name}
-                  className={cn(
-                    "flex w-full items-center gap-1.5 px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors rounded-sm mx-1",
-                    isSelected && "bg-primary/10 text-primary font-medium"
+                <>
+                  {readable.map((bucket) => {
+                    const isSelected = selectedBucket?.name === bucket.name
+                    return (
+                      <button
+                        key={bucket.name}
+                        className={cn(
+                          "flex w-full items-center gap-1.5 px-2 py-1.5 text-sm hover:bg-muted/50 transition-colors rounded-sm mx-1",
+                          isSelected && "bg-primary/10 text-primary font-medium"
+                        )}
+                        onClick={() => onSelectBucket(bucket, project.projectId)}
+                      >
+                        {isSelected ? (
+                          <FolderOpen className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                        ) : (
+                          <Folder className={cn("h-3.5 w-3.5 shrink-0", bucket.hasObjects ? "text-amber-500" : "text-muted-foreground/50")} />
+                        )}
+                        <span className={cn("truncate", !bucket.hasObjects && "text-muted-foreground")}>
+                          {bucket.name}
+                        </span>
+                      </button>
+                    )
+                  })}
+                  {unreadable.length > 0 && (
+                    <>
+                      {readable.length > 0 && (
+                        <div className="px-2 pt-2 pb-0.5">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                            No read access
+                          </p>
+                        </div>
+                      )}
+                      {unreadable.map((bucket) => (
+                        <div
+                          key={bucket.name}
+                          className="flex w-full items-center gap-1.5 px-2 py-1.5 text-sm opacity-40 cursor-not-allowed mx-1"
+                        >
+                          <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          <span className="truncate text-muted-foreground">{bucket.name}</span>
+                        </div>
+                      ))}
+                    </>
                   )}
-                  onClick={() => onSelectBucket(bucket, project.projectId)}
-                >
-                  {isSelected ? (
-                    <FolderOpen className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-                  ) : (
-                    <Folder className={cn("h-3.5 w-3.5 shrink-0", bucket.hasObjects ? "text-amber-500" : "text-muted-foreground/50")} />
-                  )}
-                  <span className={cn("truncate", !bucket.hasObjects && "text-muted-foreground")}>
-                    {bucket.name}
-                  </span>
-                </button>
+                </>
               )
-            })
+            })()
           )}
         </div>
       )}
