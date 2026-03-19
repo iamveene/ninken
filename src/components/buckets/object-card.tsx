@@ -97,7 +97,7 @@ export function ObjectCard({
                 title: displayName,
                 subtitle: object.bucket,
                 sourceId: `${object.bucket}/${object.name}`,
-                downloadUrl: `/api/storage/buckets/${object.bucket}/objects/${encodeURIComponent(object.name)}/download`,
+                downloadUrl: `/api/gcp/buckets/${object.bucket}/objects/download?path=${encodeURIComponent(object.name)}`,
                 mimeType: object.contentType,
                 sizeBytes: object.size ? parseInt(object.size, 10) : undefined,
                 metadata: {
