@@ -16,6 +16,12 @@ Agents brainstorm, collaborate, avoid race conditions (no parallel edits to the 
 - Build must pass (`npm run build`) after every significant change
 - No feature is done until visually verified in the browser
 - Agents must cross-validate: if one agent says something works, another verifies
+- **After every significant implementation** (new features, batch work, major refactors): run `/fire_regression` to catch issues, then `/fire_remediation` to fix them. This is mandatory — no implementation is complete without a regression pass.
+
+### Regression & Remediation Commands
+- **`/fire_regression`** — Comprehensive hybrid regression test. Launches parallel agents: backend (build, types, API audit) + frontend (Playwright MCP visits every page, checks rendering, errors, console, UX). Produces `REGRESSION_BUGS.md` bug tracker. Run this after every significant change.
+- **`/fire_remediation`** — Reads `REGRESSION_BUGS.md`, spawns agent teams to fix bugs in priority order (critical > high > medium > low), merges fixes, runs verification regression. The two commands form a sequential pipeline: regression finds, remediation fixes.
+- Both commands are defined in `.claude/commands/` and use agent teams with roles, cross-validation, and Playwright MCP browser testing.
 
 ### Multi-Service Architecture
 - Provider abstraction: `src/lib/providers/` — ServiceProvider interface + registry
