@@ -3,11 +3,14 @@ import type { MicrosoftCredential } from "./providers/types"
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 const LOGIN_BASE = "https://login.microsoftonline.com"
 
+/** Default OAuth2 scope for Microsoft Graph API */
+export const DEFAULT_RESOURCE = "https://graph.microsoft.com/.default"
+
 // In-memory access token cache: credential hash → { token, expiresAt }
 const tokenCache = new Map<string, { token: string; expiresAt: number }>()
 
-function credentialKey(cred: MicrosoftCredential): string {
-  return `${cred.tenant_id}:${cred.client_id}:${cred.refresh_token.slice(0, 16)}`
+function credentialKey(cred: MicrosoftCredential, resource: string = DEFAULT_RESOURCE): string {
+  return `${cred.tenant_id}:${cred.client_id}:${cred.refresh_token.slice(0, 16)}:${resource}`
 }
 
 /**
@@ -43,7 +46,8 @@ export function decodeScopesFromJwt(jwt: string): string[] {
  * Refresh the access token using the refresh token (public client — no client_secret).
  */
 export async function refreshAccessToken(
-  credential: MicrosoftCredential
+  credential: MicrosoftCredential,
+  resource: string = DEFAULT_RESOURCE
 ): Promise<{ access_token: string; expires_in: number; refresh_token?: string }> {
   const tokenUri =
     credential.token_uri ||
@@ -56,7 +60,7 @@ export async function refreshAccessToken(
       grant_type: "refresh_token",
       refresh_token: credential.refresh_token,
       client_id: credential.client_id,
-      scope: "https://graph.microsoft.com/.default offline_access",
+      scope: `${resource} offline_access`,
     }),
   })
 
@@ -80,8 +84,11 @@ export async function refreshAccessToken(
 /**
  * Get a valid access token, using cache if available (5-min buffer before expiry).
  */
-export async function getAccessToken(credential: MicrosoftCredential): Promise<string> {
-  const key = credentialKey(credential)
+export async function getAccessToken(
+  credential: MicrosoftCredential,
+  resource: string = DEFAULT_RESOURCE
+): Promise<string> {
+  const key = credentialKey(credential, resource)
   const cached = tokenCache.get(key)
   const now = Date.now()
 
@@ -90,7 +97,7 @@ export async function getAccessToken(credential: MicrosoftCredential): Promise<s
     return cached.token
   }
 
-  const result = await refreshAccessToken(credential)
+  const result = await refreshAccessToken(credential, resource)
   tokenCache.set(key, {
     token: result.access_token,
     expiresAt: now + result.expires_in * 1000,
@@ -123,6 +130,8 @@ type GraphFetchOptions = RequestInit & {
   raw?: boolean
   /** Additional headers to merge */
   extraHeaders?: Record<string, string>
+  /** Override the default Graph scope (e.g., for Azure Management API) */
+  resource?: string
 }
 
 /**
@@ -134,7 +143,7 @@ export async function graphFetch(
   path: string,
   options?: GraphFetchOptions
 ): Promise<Response> {
-  const accessToken = await getAccessToken(credential)
+  const accessToken = await getAccessToken(credential, options?.resource)
 
   const url = path.startsWith("http") ? path : `${GRAPH_BASE}${path}`
   const headers: Record<string, string> = {
