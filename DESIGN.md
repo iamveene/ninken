@@ -422,25 +422,32 @@ All modules will support:
 | **Slack d_cookie import requires manual bootstrap** | Medium | Open | When a user pastes a Slack `d_cookie` credential, the landing page shows "Missing xoxc_token — credential must be bootstrapped before validation". The d_cookie must first be sent to `/api/slack/bootstrap` to extract the xoxc token, but this step is not automated in the import flow. **Fix needed**: The landing page should automatically call `/api/slack/bootstrap` when it detects a Slack d_cookie credential, extract the xoxc token, and then proceed with normal validation — all transparent to the user. |
 | **"Token invalid" on GitHub pages sidebar** | Medium | Open | The token lifecycle panel in the sidebar shows "Token invalid" on all GitHub pages because it tries to decode the PAT as a JWT (GitHub PATs are opaque `ghp_` strings, not JWTs). **Fix needed**: Token lifecycle should detect non-JWT tokens and show "PAT (no expiry)" instead of "Token invalid". |
 | **Flash error on GitHub token load** | Low | Open | Brief error flash appears when initially loading a GitHub PAT credential before the page renders. Likely the capability probing or token info endpoint returning an error momentarily. |
-| **Collection: missing Send to Collection on most services** | Medium | Open | Only Gmail, Drive, Buckets, and Teams have "Send to Collection" buttons. Missing from: Outlook, OneDrive, Calendar, Chat, Directory/Entra, GitHub (repos, gists, audit findings), Audit Query results. See Collection Expansion roadmap below. |
+| **Collection: missing Send to Collection on most services** | Medium | Fixed | Expanded from 4 to 9 services: added Outlook, OneDrive, GitHub Repos, GitHub Audit (secrets/deploy-keys/webhooks), Audit Query results. Fixed Gmail raw download 404, Buckets download URL path. E2E tested Gmail + Drive collection flow. |
 
-### Collection Expansion Roadmap
+### Collection System
 
-Currently implemented:
-- Gmail messages (`gmail/message-view.tsx`)
-- Drive files (`drive/file-card.tsx`)
-- GCS objects (`buckets/object-card.tsx`)
-- Teams messages (`teams/message-card.tsx`)
+**9 services with Send to Collection — all implemented:**
 
-Needs implementation (focus on downloadable artifacts only):
+| Service | Component | Collectible | Download | E2E Tested | Status |
+|---------|-----------|-------------|----------|------------|--------|
+| Gmail | `gmail/message-view.tsx` | Email messages | `/api/gmail/messages/[id]/raw` (.eml) | YES — 152.3 KB downloaded | **Implemented** |
+| Drive | `drive/file-card.tsx` | Files | `/api/drive/files/[id]/download` | YES — 819.2 KB downloaded | **Implemented** |
+| GCS Buckets | `buckets/object-card.tsx` | Objects | `/api/gcp/buckets/[name]/objects/download` | Code verified | **Implemented** |
+| Teams | `teams/message-card.tsx` | Messages | Metadata-only (no download) | Code verified | **Implemented** |
+| Outlook | `outlook/page.tsx` | Emails | Metadata-only (no raw EML endpoint yet) | Button verified | **Implemented** |
+| OneDrive | `onedrive/page.tsx` | Files | `/api/microsoft/drive/files/[id]/download` | Button verified | **Implemented** |
+| GitHub Repos | `repos/page.tsx` | Repo metadata | Metadata-only | Button verified | **Implemented** |
+| GitHub Audit | `secrets/deploy-keys/webhooks` | Findings | Metadata-only | Code verified | **Implemented** |
+| Audit Query | `audit/query/result-item.tsx` | Search hits | Metadata-only | Code verified | **Implemented** |
 
-| Service | Collectible Items | Priority | Notes |
-|---------|------------------|----------|-------|
-| **Outlook** | Email messages + attachments | High | Mirror Gmail collect pattern — add CollectButton to outlook message view |
-| **OneDrive** | Files | High | Mirror Drive collect pattern — add CollectButton to onedrive file card |
-| **GitHub Audit** | Secrets, deploy keys, webhooks | High | Collect sensitive findings from security audit |
-| **Audit Query** | Search result hits | High | Collect credential/secret findings from cross-service queries |
-| **GitHub Repos** | Private repo metadata + README | High | Collect private repo details with sensitive config/secrets |
+**Collection infrastructure**: CollectButton component, useCollectAction hook, IndexedDB collection-store (encrypted), download queue manager (1 concurrent, 2s delay, 3 retries), Export ZIP, Clear All, queue controls (Start/Stop/Retry), By Service view, stats dashboard.
+
+**Types**: `CollectionItemType = "email" | "file" | "object" | "chat-message" | "repo" | "audit-finding"`, `CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "github" | "audit-query"`
+
+**Bugs fixed**:
+- Gmail raw download endpoint was missing (404) — created `/api/gmail/messages/[id]/raw/route.ts`
+- Buckets download URL pointed to `/api/storage/` (nonexistent) — fixed to `/api/gcp/`
+- CollectButton had button-in-button hydration error (TooltipTrigger wrapping Button) — replaced Tooltip with native `title` attribute
 
 ### Token Refresher & Lifecycle Testing Gaps
 
