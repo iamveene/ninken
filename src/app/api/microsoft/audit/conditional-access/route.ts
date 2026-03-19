@@ -13,8 +13,14 @@ type ConditionalAccessPolicy = {
   sessionControls: Record<string, unknown> | null
 }
 
-type GraphListResponse = {
-  value: ConditionalAccessPolicy[]
+type NamedLocation = {
+  id: string
+  displayName: string
+  isTrusted?: boolean
+}
+
+type GraphListResponse<T> = {
+  value: T[]
 }
 
 export async function GET() {
@@ -22,15 +28,20 @@ export async function GET() {
   if (!credential) return unauthorized()
 
   try {
-    // Conditional access policies endpoint does not support $orderby or pagination via @odata.nextLink
-    // in the same way as other endpoints, so we use graphJson directly.
-    const result = await graphJson<GraphListResponse>(
-      credential,
-      "/identity/conditionalAccess/policies"
-    )
+    const [policiesResult, namedLocationsResult] = await Promise.all([
+      graphJson<GraphListResponse<ConditionalAccessPolicy>>(
+        credential,
+        "/identity/conditionalAccess/policies"
+      ),
+      graphJson<GraphListResponse<NamedLocation>>(
+        credential,
+        "/identity/conditionalAccess/namedLocations"
+      ).catch(() => ({ value: [] as NamedLocation[] })),
+    ])
 
     return NextResponse.json({
-      policies: result.value || [],
+      policies: policiesResult.value || [],
+      namedLocations: namedLocationsResult.value || [],
     })
   } catch (error) {
     return serverError(error, "microsoft")
