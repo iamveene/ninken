@@ -77,8 +77,8 @@ export async function GET() {
       ),
       probeResource(
         credential,
-        "https://app.vscode.dev/.default",
-        "https://app.vscode.dev/_apis/projects?api-version=7.0"
+        "499b84ac-1321-427f-aa17-267ca6975798/.default"
+        // No probe URL — org is unknown; token-only check like Storage
       ),
     ])
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
-import { graphPaginated, graphFetch, getAccessToken } from "@/lib/microsoft"
+import { graphPaginated, getAccessToken } from "@/lib/microsoft"
 
 export async function GET(request: Request) {
   const credential = await getMicrosoftCredential()
@@ -68,16 +68,14 @@ export async function POST(request: Request) {
         ? `/me/drive/root:/${encodeURIComponent(filename)}:/content`
         : `/me/drive/items/${parent}:/${encodeURIComponent(filename)}:/content`
 
-    const res = await graphFetch(credential, uploadPath, {
+    const uploadUrl = `https://graph.microsoft.com/v1.0${uploadPath}`
+    const res = await fetch(uploadUrl, {
       method: "PUT",
-      body: Buffer.from(arrayBuffer),
-      extraHeaders: {
-        "Content-Type": file.type || "application/octet-stream",
-      },
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": file.type || "application/octet-stream",
       },
+      body: Buffer.from(arrayBuffer),
     })
 
     if (!res.ok) {
