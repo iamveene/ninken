@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { CollectButton } from "@/components/collection/collect-button"
 import type { GmailMessage } from "@/hooks/use-gmail"
 import { formatRelativeDate, getInitials, getAvatarColor, formatFileSize, sanitizeHtml } from "./utils"
 
@@ -183,6 +184,23 @@ export function MessageView({
           <Button variant="ghost" size="icon-sm" title="Label" className="hover:bg-accent">
             <Tag className="size-[18px]" />
           </Button>
+          <CollectButton
+            params={{
+              type: "email",
+              source: "gmail",
+              title: message.subject || "(no subject)",
+              subtitle: `From: ${message.from}`,
+              sourceId: message.id,
+              downloadUrl: `/api/gmail/messages/${message.id}/raw`,
+              mimeType: "message/rfc822",
+              metadata: {
+                from: message.from,
+                to: message.to,
+                date: message.date,
+                threadId: message.threadId,
+              },
+            }}
+          />
         </div>
       </div>
 

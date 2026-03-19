@@ -11,12 +11,17 @@ export async function GET(request: Request) {
     const top = Math.min(Number(searchParams.get("top")) || 25, 100)
     const select = searchParams.get("select") || "id,subject,from,toRecipients,receivedDateTime,bodyPreview,isRead,hasAttachments,flag"
     const pageToken = searchParams.get("pageToken") || undefined
+    const search = searchParams.get("search") || undefined
+    const filter = searchParams.get("filter") || undefined
 
     const result = await graphPaginated(credential, "/me/messages", {
       top,
       select,
-      orderby: "receivedDateTime desc",
+      orderby: search ? undefined : "receivedDateTime desc",
+      search,
+      filter,
       pageToken,
+      extraHeaders: search ? { ConsistencyLevel: "eventual" } : undefined,
     })
 
     return NextResponse.json({

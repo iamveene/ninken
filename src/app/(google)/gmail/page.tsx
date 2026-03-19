@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { Panel, Group as PanelGroup } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
-import { ResizeHandle } from "@/components/ui/resize-handle"
+import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
 import { LabelSidebar } from "@/components/gmail/label-sidebar"
 import { MessageList } from "@/components/gmail/message-list"
 import { MessageView } from "@/components/gmail/message-view"
@@ -319,8 +318,8 @@ export default function GmailPage() {
           {showMobileDetail && detailContent}
         </>
       ) : selectedMessageId ? (
-        <PanelGroup orientation="horizontal" id="gmail-panels">
-          <Panel defaultSize={12} minSize={8} maxSize={20}>
+        <PanelGroup orientation="horizontal" className="h-full">
+          <ResizablePanel id="gl" defaultSize="200px" minSize="150px" maxSize="250px">
             <LabelSidebar
               labels={labels}
               activeLabel={activeLabel}
@@ -328,19 +327,19 @@ export default function GmailPage() {
               onCompose={handleCompose}
               loading={labelsLoading}
             />
-          </Panel>
+          </ResizablePanel>
           <ResizeHandle />
-          <Panel defaultSize={43} minSize={25}>
+          <ResizablePanel id="gm" defaultSize="400px" minSize="300px">
             {messageListContent}
-          </Panel>
+          </ResizablePanel>
           <ResizeHandle />
-          <Panel defaultSize={45} minSize={20}>
+          <ResizablePanel id="gd" defaultSize="1fr" minSize="300px">
             {detailContent}
-          </Panel>
+          </ResizablePanel>
         </PanelGroup>
       ) : (
-        <PanelGroup orientation="horizontal" id="gmail-expanded">
-          <Panel defaultSize={15} minSize={10} maxSize={25}>
+        <PanelGroup orientation="horizontal" className="h-full">
+          <ResizablePanel id="gle" defaultSize="200px" minSize="150px" maxSize="250px">
             <LabelSidebar
               labels={labels}
               activeLabel={activeLabel}
@@ -348,11 +347,11 @@ export default function GmailPage() {
               onCompose={handleCompose}
               loading={labelsLoading}
             />
-          </Panel>
+          </ResizablePanel>
           <ResizeHandle />
-          <Panel defaultSize={85} minSize={60}>
+          <ResizablePanel id="gme" defaultSize="1fr" minSize="500px">
             {messageListContent}
-          </Panel>
+          </ResizablePanel>
         </PanelGroup>
       )}
 

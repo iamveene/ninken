@@ -1,0 +1,67 @@
+[     131ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="outlook/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+            <RedirectBoundary>
+              <RedirectErrorBoundary router={{...}}>
+                <InnerLayoutRouter url="/outlook" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                  <SegmentViewNode type="page" pagePath="(microsoft...">
+                    <SegmentTrieNode>
+                    <ClientPageRoot Component={function OutlookPage} serverProvidedParams={{...}}>
+                      <OutlookPage params={Promise} searchParams={Promise}>
+                        <div className="flex h-[ca...">
+                          <Group orientation="horizontal" className="h-full">
+                            <div
++                             className="h-full"
+-                             className={null}
+                              data-group={true}
++                             data-testid="_R_1inebnqitmlb_"
+-                             data-testid="outlook-expanded"
++                             id="_R_1inebnqitmlb_"
+-                             id="outlook-expanded"
+                              ref={function}
+                              style={{height:"100%",width:"100%",overflow:"hidden",display:"flex",flexDirection:"row",flexWrap:"nowrap", ...}}
+                            >
+                              <Panel id="ole" defaultSize="200px" minSize="150px" maxSize="250px">
+                                <div
+                                  aria-disabled={undefined}
+                                  data-panel={true}
++                                 data-testid="ole"
+-                                 data-testid="_R_dinebnqitmlb_"
++                                 id="ole"
+-                                 id="_R_dinebnqitmlb_"
+                                  ref={function}
+                                  style={{minHeight:0,maxHeight:"100%",height:"auto",minWidth:0,maxWidth:"100%",width:"auto",border:"none", ...}}
+                                >
+                              <ResizeHandle>
+                              <Panel id="ome" defaultSize="1fr" minSize="500px">
+                                <div
+                                  aria-disabled={undefined}
+                                  data-panel={true}
++                                 data-testid="ome"
+-                                 data-testid="_R_tinebnqitmlb_"
++                                 id="ome"
+-                                 id="_R_tinebnqitmlb_"
+                                  ref={function}
+                                  style={{minHeight:0,maxHeight:"100%",height:"auto",minWidth:0,maxWidth:"100%",width:"auto",border:"none", ...}}
+                                >
+                          ...
+                  ...
+                ...
+      ...
+ @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[     209ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[     215ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0

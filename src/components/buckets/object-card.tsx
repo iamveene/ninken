@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { CollectButton } from "@/components/collection/collect-button"
 import { formatFileSize } from "@/components/drive/file-card"
 import type { StorageObject } from "@/hooks/use-buckets"
 
@@ -85,16 +86,38 @@ export function ObjectCard({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
     >
-      {!isFolder && onDownload && (
+      {!isFolder && (
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            aria-label={`Download ${displayName}`}
-            onClick={(e) => { e.stopPropagation(); onDownload() }}
-          >
-            <Download />
-          </Button>
+          {object && (
+            <CollectButton
+              variant="icon-xs"
+              params={{
+                type: "object",
+                source: "gcs",
+                title: displayName,
+                subtitle: object.bucket,
+                sourceId: `${object.bucket}/${object.name}`,
+                downloadUrl: `/api/storage/buckets/${object.bucket}/objects/${encodeURIComponent(object.name)}/download`,
+                mimeType: object.contentType,
+                sizeBytes: object.size ? parseInt(object.size, 10) : undefined,
+                metadata: {
+                  bucket: object.bucket,
+                  fullPath: object.name,
+                  storageClass: object.storageClass,
+                },
+              }}
+            />
+          )}
+          {onDownload && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={`Download ${displayName}`}
+              onClick={(e) => { e.stopPropagation(); onDownload() }}
+            >
+              <Download />
+            </Button>
+          )}
         </div>
       )}
 

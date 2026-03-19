@@ -5,6 +5,8 @@ import { ProfileSelector } from "@/components/layout/profile-selector";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { ServiceIndicator } from "@/components/layout/service-indicator";
 import { AlertBadge } from "@/components/layout/alert-badge";
+import { AITrigger } from "@/components/ai/ai-trigger";
+import { AIContextProvider } from "@/components/ai/ai-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { ProviderContextProvider } from "@/components/providers/provider-context";
 
@@ -15,24 +17,27 @@ export default function AppLayout({
 }) {
   return (
     <ProviderContextProvider>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset className="overflow-x-hidden">
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-            <ModeToggle />
-            <GlobalRefreshButton />
-            <div className="ml-auto flex items-center gap-3">
-              <ServiceIndicator />
-              <AlertBadge />
-              <ProfileSelector />
+      <AIContextProvider>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="overflow-x-hidden">
+            <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+              <ModeToggle />
+              <GlobalRefreshButton />
+              <div className="ml-auto flex items-center gap-3">
+                <AITrigger />
+                <ServiceIndicator />
+                <AlertBadge />
+                <ProfileSelector />
+              </div>
+            </header>
+            <OfflineBanner />
+            <div className="flex-1 p-4 min-w-0 overflow-hidden">
+              {children}
             </div>
-          </header>
-          <OfflineBanner />
-          <div className="flex-1 p-4 min-w-0 overflow-hidden">
-            {children}
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+          </SidebarInset>
+        </SidebarProvider>
+      </AIContextProvider>
     </ProviderContextProvider>
   );
 }

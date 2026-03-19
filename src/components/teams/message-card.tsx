@@ -2,6 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { CollectButton } from "@/components/collection/collect-button"
 import type { ChannelMessage } from "@/hooks/use-teams"
 
 type MessageCardProps = {
@@ -44,7 +45,7 @@ export function MessageCard({ message }: MessageCardProps) {
   const isHtml = message.body.contentType === "html"
 
   return (
-    <div className="flex gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+    <div className="flex gap-3 px-4 py-3 hover:bg-muted/30 transition-colors group">
       <Avatar className="size-8 shrink-0">
         <AvatarFallback className={getAvatarColor(senderName)}>
           {getInitials(senderName)}
@@ -54,6 +55,25 @@ export function MessageCard({ message }: MessageCardProps) {
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-semibold truncate">{senderName}</span>
           <span className="text-[11px] text-muted-foreground shrink-0">{timestamp}</span>
+          <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+            <CollectButton
+              variant="icon-xs"
+              params={{
+                type: "chat-message",
+                source: "teams",
+                title: `${senderName}: ${message.body.content.slice(0, 80)}`,
+                subtitle: senderName,
+                sourceId: message.id,
+                metadata: {
+                  sender: senderName,
+                  senderId: message.from?.user?.id,
+                  createdDateTime: message.createdDateTime,
+                  contentType: message.body.contentType,
+                  content: message.body.content,
+                },
+              }}
+            />
+          </span>
         </div>
         {isHtml ? (
           <div

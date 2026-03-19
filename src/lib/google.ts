@@ -36,3 +36,7 @@ export function createResourceManagerService(token: TokenData) {
 export function createDirectoryService(token: TokenData) {
   return google.admin({ version: "directory_v1", auth: createOAuth2Client(token) })
 }
+
+export function createChatService(token: TokenData) {
+  return google.chat({ version: "v1", auth: createOAuth2Client(token) })
+}

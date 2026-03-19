@@ -1,0 +1,481 @@
+[     174ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+      <LoadingBoundary name="gmail/" loading={null}>
+        <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/gmail" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="(google)/g...">
+                  <SegmentTrieNode>
+                  <ClientPageRoot Component={function GmailPage} serverProvidedParams={{...}}>
+                    <GmailPage params={Promise} searchParams={Promise}>
+                      <div className="flex h-[ca...">
+                        <PanelGroup orientation="horizontal" defaultLayout={{...}}>
+                          <Group className="h-full" orientation="horizontal" defaultLayout={{...}}>
+                            <div
+                              className="h-full"
+                              data-group={true}
++                             data-testid="_R_1inebnqitmlb_"
+-                             data-testid="gmail-expanded"
++                             id="_R_1inebnqitmlb_"
+-                             id="gmail-expanded"
+                              ref={function}
+                              style={{height:"100%",width:"100%",overflow:"hidden",display:"flex",flexDirection:"row",flexWrap:"nowrap", ...}}
+                            >
+                              <ResizablePanel id="gmail-labe..." minSize={10} maxSize={20}>
+                                <Panel id="gmail-labe..." minSize={10} maxSize={20}>
+                                  <div
+                                    aria-disabled={undefined}
+                                    data-panel={true}
++                                   data-testid="gmail-labels-exp"
+-                                   data-testid="_R_dinebnqitmlb_"
++                                   id="gmail-labels-exp"
+-                                   id="_R_dinebnqitmlb_"
+                                    ref={function}
+                                    style={{
++                                     minHeight: 0
++                                     maxHeight: "100%"
++                                     height: "auto"
+-                                     height: "auto"
++                                     minWidth: 0
++                                     maxWidth: "100%"
++                                     width: "auto"
+-                                     width: "auto"
++                                     border: "none"
++                                     borderWidth: 0
++                                     padding: 0
++                                     margin: 0
++                                     display: "flex"
+-                                     display: "flex"
++                                     flexBasis: 0
++                                     flexShrink: 1
++                                     overflow: "visible"
++                                     flexGrow: 13
+-                                     min-height: "0px"
+-                                     max-height: "100%"
+-                                     min-width: "0px"
+-                                     max-width: "100%"
+-                                     border-top-style: "none"
+-                                     border-right-style: "none"
+-                                     border-bottom-style: "none"
+-                                     border-left-style: "none"
+-                                     border-top-color: "initial"
+-                                     border-right-color: "initial"
+-                                     border-bottom-color: "initial"
+-                                     border-left-color: "initial"
+-                                     border-image-source: "initial"
+-                                     border-image-slice: "initial"
+-                                     border-image-width: "initial"
+-                                     border-image-outset: "initial"
+-                                     border-image-repeat: "initial"
+-                                     border-top-width: "0px"
+-                                     border-right-width: "0px"
+-                                     border-bottom-width: "0px"
+-                                     border-left-width: "0px"
+-                                     padding-top: "0px"
+-                                     padding-right: "0px"
+-                                     padding-bottom: "0px"
+-                                     padding-left: "0px"
+-                                     margin-top: "0px"
+-                                     margin-right: "0px"
+-                                     margin-bottom: "0px"
+-                                     margin-left: "0px"
+-                                     flex-basis: "0px"
+-                                     flex-shrink: "1"
+-                                     overflow-x: "visible"
+-                                     overflow-y: "visible"
+-                                     flex-grow: "1"
+                                    }}
+                                  >
+                                    <div className={undefined} style={{...}}>
+                                      <div
++                                       className="w-full h-full min-w-0 overflow-hidden"
+-                                       className="h-full min-w-0 overflow-hidden"
+                                      >
+                                        <LabelSidebar labels={[...]} activeLabel="INBOX" ...>
+                                          <div
++                                           className="flex h-full flex-col gap-2 border-r bg-muted/30 p-3"
+-                                           className="flex w-[200px] flex-col gap-2 border-r bg-muted/30 p-3"
+                                          >
+                              <ResizeHandle>
+                              <ResizablePanel id="gmail-list..." minSize={60}>
+                                <Panel id="gmail-list..." minSize={60}>
+                                  <div
+                                    aria-disabled={undefined}
+                                    data-panel={true}
++                                   data-testid="gmail-list-exp"
+-                                   data-testid="_R_tinebnqitmlb_"
++                                   id="gmail-list-exp"
+-                                   id="_R_tinebnqitmlb_"
+                                    ref={function}
+                                    style={{
++                                     minHeight: 0
++                                     maxHeight: "100%"
++                                     height: "auto"
+-                                     height: "auto"
++                                     minWidth: 0
++                                     maxWidth: "100%"
++                                     width: "auto"
+-                                     width: "auto"
++                                     border: "none"
++                                     borderWidth: 0
++                                     padding: 0
++                                     margin: 0
++                                     display: "flex"
+-                                     display: "flex"
++                                     flexBasis: 0
++                                     flexShrink: 1
++                                     overflow: "visible"
++                                     flexGrow: 87
+-                                     min-height: "0px"
+-                                     max-height: "100%"
+-                                     min-width: "0px"
+-                                     max-width: "100%"
+-                                     border-top-style: "none"
+-                                     border-right-style: "none"
+-                                     border-bottom-style: "none"
+-                                     border-left-style: "none"
+-                                     border-top-color: "initial"
+-                                     border-right-color: "initial"
+-                                     border-bottom-color: "initial"
+-                                     border-left-color: "initial"
+-                                     border-image-source: "initial"
+-                                     border-image-slice: "initial"
+-                                     border-image-width: "initial"
+-                                     border-image-outset: "initial"
+-                                     border-image-repeat: "initial"
+-                                     border-top-width: "0px"
+-                                     border-right-width: "0px"
+-                                     border-bottom-width: "0px"
+-                                     border-left-width: "0px"
+-                                     padding-top: "0px"
+-                                     padding-right: "0px"
+-                                     padding-bottom: "0px"
+-                                     padding-left: "0px"
+-                                     margin-top: "0px"
+-                                     margin-right: "0px"
+-                                     margin-bottom: "0px"
+-                                     margin-left: "0px"
+-                                     flex-basis: "0px"
+-                                     flex-shrink: "1"
+-                                     overflow-x: "visible"
+-                                     overflow-y: "visible"
+-                                     flex-grow: "1"
+                                    }}
+                                  >
+                                    <div className={undefined} style={{...}}>
+                                      <div
++                                       className="w-full h-full min-w-0 overflow-hidden"
+-                                       className="h-full min-w-0 overflow-hidden"
+                                      >
+                        ...
+                ...
+              ...
+ @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[   35169ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+      <LoadingBoundary name="gmail/" loading={null}>
+        <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+          <RedirectBoundary>
+            <RedirectErrorBoundary router={{...}}>
+              <InnerLayoutRouter url="/gmail" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                <SegmentViewNode type="page" pagePath="(google)/g...">
+                  <SegmentTrieNode>
+                  <ClientPageRoot Component={function GmailPage} serverProvidedParams={{...}}>
+                    <GmailPage params={Promise} searchParams={Promise}>
+                      <div className="flex h-[ca...">
+                        <PanelGroup orientation="horizontal" defaultLayout={{...}}>
+                          <Group className="h-full" orientation="horizontal" defaultLayout={{...}}>
+                            <div
+                              className="h-full"
+                              data-group={true}
++                             data-testid="_R_1inebnqitmlb_"
+-                             data-testid="gmail-expanded"
++                             id="_R_1inebnqitmlb_"
+-                             id="gmail-expanded"
+                              ref={function}
+                              style={{height:"100%",width:"100%",overflow:"hidden",display:"flex",flexDirection:"row",flexWrap:"nowrap", ...}}
+                            >
+                              <ResizablePanel id="gmail-labe..." minSize={10} maxSize={20}>
+                                <Panel id="gmail-labe..." minSize={10} maxSize={20}>
+                                  <div
+                                    aria-disabled={undefined}
+                                    data-panel={true}
++                                   data-testid="gmail-labels-exp"
+-                                   data-testid="_R_dinebnqitmlb_"
++                                   id="gmail-labels-exp"
+-                                   id="_R_dinebnqitmlb_"
+                                    ref={function}
+                                    style={{
++                                     minHeight: 0
++                                     maxHeight: "100%"
++                                     height: "auto"
+-                                     height: "auto"
++                                     minWidth: 0
++                                     maxWidth: "100%"
++                                     width: "auto"
+-                                     width: "auto"
++                                     border: "none"
++                                     borderWidth: 0
++                                     padding: 0
++                                     margin: 0
++                                     display: "flex"
+-                                     display: "flex"
++                                     flexBasis: 0
++                                     flexShrink: 1
++                                     overflow: "visible"
++                                     flexGrow: 13
+-                                     min-height: "0px"
+-                                     max-height: "100%"
+-                                     min-width: "0px"
+-                                     max-width: "100%"
+-                                     border-top-style: "none"
+-                                     border-right-style: "none"
+-                                     border-bottom-style: "none"
+-                                     border-left-style: "none"
+-                                     border-top-color: "initial"
+-                                     border-right-color: "initial"
+-                                     border-bottom-color: "initial"
+-                                     border-left-color: "initial"
+-                                     border-image-source: "initial"
+-                                     border-image-slice: "initial"
+-                                     border-image-width: "initial"
+-                                     border-image-outset: "initial"
+-                                     border-image-repeat: "initial"
+-                                     border-top-width: "0px"
+-                                     border-right-width: "0px"
+-                                     border-bottom-width: "0px"
+-                                     border-left-width: "0px"
+-                                     padding-top: "0px"
+-                                     padding-right: "0px"
+-                                     padding-bottom: "0px"
+-                                     padding-left: "0px"
+-                                     margin-top: "0px"
+-                                     margin-right: "0px"
+-                                     margin-bottom: "0px"
+-                                     margin-left: "0px"
+-                                     flex-basis: "0px"
+-                                     flex-shrink: "1"
+-                                     overflow-x: "visible"
+-                                     overflow-y: "visible"
+-                                     flex-grow: "1"
+                                    }}
+                                  >
+                                    <div className={undefined} style={{...}}>
+                                      <div
++                                       className="w-full h-full min-w-0 overflow-hidden"
+-                                       className="h-full min-w-0 overflow-hidden"
+                                      >
+                                        <LabelSidebar labels={[...]} activeLabel="INBOX" ...>
+                                          <div
++                                           className="flex h-full flex-col gap-2 border-r bg-muted/30 p-3"
+-                                           className="flex w-[200px] flex-col gap-2 border-r bg-muted/30 p-3"
+                                          >
+                              <ResizeHandle>
+                              <ResizablePanel id="gmail-list..." minSize={60}>
+                                <Panel id="gmail-list..." minSize={60}>
+                                  <div
+                                    aria-disabled={undefined}
+                                    data-panel={true}
++                                   data-testid="gmail-list-exp"
+-                                   data-testid="_R_tinebnqitmlb_"
++                                   id="gmail-list-exp"
+-                                   id="_R_tinebnqitmlb_"
+                                    ref={function}
+                                    style={{
++                                     minHeight: 0
++                                     maxHeight: "100%"
++                                     height: "auto"
+-                                     height: "auto"
++                                     minWidth: 0
++                                     maxWidth: "100%"
++                                     width: "auto"
+-                                     width: "auto"
++                                     border: "none"
++                                     borderWidth: 0
++                                     padding: 0
++                                     margin: 0
++                                     display: "flex"
+-                                     display: "flex"
++                                     flexBasis: 0
++                                     flexShrink: 1
++                                     overflow: "visible"
++                                     flexGrow: 87
+-                                     min-height: "0px"
+-                                     max-height: "100%"
+-                                     min-width: "0px"
+-                                     max-width: "100%"
+-                                     border-top-style: "none"
+-                                     border-right-style: "none"
+-                                     border-bottom-style: "none"
+-                                     border-left-style: "none"
+-                                     border-top-color: "initial"
+-                                     border-right-color: "initial"
+-                                     border-bottom-color: "initial"
+-                                     border-left-color: "initial"
+-                                     border-image-source: "initial"
+-                                     border-image-slice: "initial"
+-                                     border-image-width: "initial"
+-                                     border-image-outset: "initial"
+-                                     border-image-repeat: "initial"
+-                                     border-top-width: "0px"
+-                                     border-right-width: "0px"
+-                                     border-bottom-width: "0px"
+-                                     border-left-width: "0px"
+-                                     padding-top: "0px"
+-                                     padding-right: "0px"
+-                                     padding-bottom: "0px"
+-                                     padding-left: "0px"
+-                                     margin-top: "0px"
+-                                     margin-right: "0px"
+-                                     margin-bottom: "0px"
+-                                     margin-left: "0px"
+-                                     flex-basis: "0px"
+-                                     flex-shrink: "1"
+-                                     overflow-x: "visible"
+-                                     overflow-y: "visible"
+-                                     flex-grow: "1"
+                                    }}
+                                  >
+                                    <div className={undefined} style={{...}}>
+                                      <div
++                                       className="w-full h-full min-w-0 overflow-hidden"
+-                                       className="h-full min-w-0 overflow-hidden"
+                                      >
+                        ...
+                ...
+              ...
+ @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[   80758ms] ReferenceError: Upload is not defined
+    at AddAccountDialog (http://localhost:4000/_next/static/chunks/src_0z.v8w7._.js:5014:247)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[   85979ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[   86259ms] ReferenceError: Upload is not defined
+    at AddAccountDialog (http://localhost:4000/_next/static/chunks/src_0z.v8w7._.js:5015:247)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[   90985ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[   91265ms] ReferenceError: Upload is not defined
+    at AddAccountDialog (http://localhost:4000/_next/static/chunks/src_0z.v8w7._.js:5015:247)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[   96252ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[   96534ms] ReferenceError: showAddDialog is not defined
+    at ProfileSelector (http://localhost:4000/_next/static/chunks/src_0z.v8w7._.js:4805:23)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[  100772ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  117875ms] ReferenceError: PanelGroup is not defined
+    at GmailPage (http://localhost:4000/_next/static/chunks/src_0nxiuh_._.js?id=%255Bproject%255D%252Fsrc%252Fapp%252F%2528google%2529%252Fgmail%252Fpage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:488:227)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:186)
+    at performSyncWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at processRootScheduleInMicrotask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10200:106)
+    at http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10274:158
+[  125139ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[  125140ms] [ERROR] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  125155ms] ReferenceError: PanelGroup is not defined
+    at GmailPage (http://localhost:4000/_next/static/chunks/src_0nxiuh_._.js?id=%255Bproject%255D%252Fsrc%252Fapp%252F%2528google%2529%252Fgmail%252Fpage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:488:227)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:299:13)
+    at http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:384:38)
+    at applyUpdate (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:878:31)
+    at http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:886:13
+[  125301ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:4000/gmail:0
+[  125326ms] [ERROR] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[  125376ms] ReferenceError: PanelGroup is not defined
+    at GmailPage (http://localhost:4000/_next/static/chunks/src_0nxiuh_._.js:4072:227)
+    at Object.react_stack_bottom_frame (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:15037:24)
+    at renderWithHooks (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:4620:24)
+    at updateFunctionComponent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6081:21)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9449:40)
+    at renderRootSync (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9433:13)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9098:47)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[  129628ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431

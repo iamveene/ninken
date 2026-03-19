@@ -1,8 +1,11 @@
 "use client"
 
-import { Separator } from "react-resizable-panels"
+import { Separator, Panel, Group } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
 
+/**
+ * Styled resize handle between panels.
+ */
 export function ResizeHandle({
   className,
   ...props
@@ -21,3 +24,8 @@ export function ResizeHandle({
     />
   )
 }
+
+// Re-export raw Panel and Group — no wrappers needed.
+// The library handles overflow internally.
+// IMPORTANT: use pixel strings for sizes (e.g. "200px"), not plain numbers.
+export { Panel as ResizablePanel, Group as PanelGroup }

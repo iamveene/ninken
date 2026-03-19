@@ -10,7 +10,7 @@ out/
 .env.*
 
 # Credentials & tokens — NEVER commit these
-.secrets/
+secrets/
 
 # Internal project docs — not for the repo
 CLAUDE.md

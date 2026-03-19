@@ -1,0 +1,74 @@
+[     116ms] [ERROR] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[     151ms] Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <RedirectErrorBoundary router={{...}}>
+      <InnerLayoutRouter url="/gmail" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+        <SegmentViewNode type="page" pagePath="(google)/g...">
+          <SegmentTrieNode>
+          <ClientPageRoot Component={function GmailPage} serverProvidedParams={{...}}>
+            <GmailPage params={Promise} searchParams={Promise}>
+              <div className="flex h-[ca...">
+                <PanelGroup orientation="horizontal" id="gmail-expa...">
+                  <Group className="h-full" orientation="horizontal" id="gmail-expa...">
+                    <div className="h-full" data-group={true} data-testid="gmail-expa..." id="gmail-expa..." ...>
+                      <ResizablePanel defaultSize={15} minSize={10} maxSize={25}>
+                        <Panel style={{overflow:"..."}} defaultSize={15} minSize={10} maxSize={25}>
+                          <div aria-disabled={undefined} data-panel={true} data-testid="_R_dinebnq..." id="_R_dinebnq..." ...>
+                            <div
+                              className={undefined}
+                              style={{
++                               maxHeight: "100%"
++                               maxWidth: "100%"
++                               flexGrow: 1
++                               overflow: "hidden"
++                               touchAction: "pan-y"
+-                               max-height: "100%"
+-                               max-width: "100%"
+-                               flex-grow: "1"
+-                               overflow-x: "auto"
+-                               overflow-y: "auto"
+-                               touch-action: "pan-y"
+                              }}
+                            >
+                              <LabelSidebar labels={[...]} activeLabel="INBOX" ...>
+                                <div
++                                 className="flex h-full flex-col gap-2 border-r bg-muted/30 p-3"
+-                                 className="h-full min-w-0 overflow-hidden"
+                                >
+                                  <Skeleton className="h-9 w-full...">
+                                    <div
++                                     data-slot="skeleton"
+-                                     data-slot={null}
++                                     className="animate-pulse bg-muted h-9 w-full rounded-lg"
+-                                     className="flex w-[200px] flex-col gap-2 border-r bg-muted/30 p-3"
+                                    >
+-                                     <div data-slot="skeleton" className="animate-pulse bg-muted h-9 w-full rounded-lg">
+-                                     <div className="mt-2 space-y-1">
+                                  ...
+                      ...
+                ...
+        ...
+      ...
+
+    at throwOnHydrationMismatch (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at popHydrationState (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3403:13)
+    at completeWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6922:25)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at completeUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)

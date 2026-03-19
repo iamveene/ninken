@@ -1,0 +1,189 @@
+[     114ms] [ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="outlook/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+            <RedirectBoundary>
+              <RedirectErrorBoundary router={{...}}>
+                <InnerLayoutRouter url="/outlook" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                  <SegmentViewNode type="page" pagePath="(microsoft...">
+                    <SegmentTrieNode>
+                    <ClientPageRoot Component={function OutlookPage} serverProvidedParams={{...}}>
+                      <OutlookPage params={Promise} searchParams={Promise}>
+                        <div className="flex h-[ca...">
+                          <Group orientation="horizontal" className="h-full">
+                            <div
++                             className="h-full"
+-                             className={null}
+                              data-group={true}
++                             data-testid="_R_1inebnqitmlb_"
+-                             data-testid="outlook-expanded"
++                             id="_R_1inebnqitmlb_"
+-                             id="outlook-expanded"
+                              ref={function}
+                              style={{height:"100%",width:"100%",overflow:"hidden",display:"flex",flexDirection:"row",flexWrap:"nowrap", ...}}
+                            >
+                              <Panel id="ole" defaultSize="200px" minSize="150px" maxSize="250px">
+                                <div
+                                  aria-disabled={undefined}
+                                  data-panel={true}
++                                 data-testid="ole"
+-                                 data-testid="_R_dinebnqitmlb_"
++                                 id="ole"
+-                                 id="_R_dinebnqitmlb_"
+                                  ref={function}
+                                  style={{minHeight:0,maxHeight:"100%",height:"auto",minWidth:0,maxWidth:"100%",width:"auto",border:"none", ...}}
+                                >
+                              <ResizeHandle>
+                              <Panel id="ome" defaultSize="1fr" minSize="500px">
+                                <div
+                                  aria-disabled={undefined}
+                                  data-panel={true}
++                                 data-testid="ome"
+-                                 data-testid="_R_tinebnqitmlb_"
++                                 id="ome"
+-                                 id="_R_tinebnqitmlb_"
+                                  ref={function}
+                                  style={{minHeight:0,maxHeight:"100%",height:"auto",minWidth:0,maxWidth:"100%",width:"auto",border:"none", ...}}
+                                >
+                          ...
+                  ...
+                ...
+      ...
+ @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[     168ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[     175ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1223018ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1223025ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1259161ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1259183ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1296134ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[ 1296558ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1296565ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1298341ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[ 1299667ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1299674ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1303236ms] [WARNING] [Fast Refresh] performing full reload
+
+Fast Refresh will perform a full reload when you edit a file that's imported by modules outside of the React rendering tree.
+You might have a file which exports a React component but also exports a value that is imported by a non-React component file.
+Consider migrating the non-React component export to a separate file and importing it into both files.
+
+It is also possible the parent component of the component you edited is a class component, which disables Fast Refresh.
+Fast Refresh requires at least one parent function component in your React tree. @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[ 1304105ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1304129ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1339242ms] [ERROR] In HTML, %s cannot be a descendant of <%s>.
+This will cause a hydration error.%s <button> button 
+
+  ...
+    <script>
+    <script>
+    <script>
+    <script>
+    <script>
+    <script>
+    <MicrosoftLayout>
+      <ProviderContextProvider>
+        <SidebarProvider>
+          <div data-slot="sidebar-wr..." style={{...}} className="group/side...">
+            <AppSidebar>
+            <SidebarInset className="overflow-x...">
+              <main data-slot="sidebar-inset" className="relative f...">
+                <header className="flex h-12 ...">
+                  <ModeToggle>
+                  <GlobalRefreshButton>
+                    <Tooltip>
+                      <TooltipRoot data-slot="tooltip">
+                        <TooltipTrigger asChild={true}>
+                          <TooltipTrigger data-slot="tooltip-tr..." asChild={true}>
+>                           <button
+>                             type="button"
+>                             onPointerDown={function}
+>                             onPointerEnter={function setPointerRef}
+>                             onMouseMove={function onMouseMove}
+>                             onMouseLeave={function onMouseLeave}
+>                             onFocus={function onFocus}
+>                             onBlur={function onBlur}
+>                             id="base-ui-_R_sqitmlb_"
+>                             data-trigger-disabled={undefined}
+>                             data-slot="tooltip-trigger"
+>                             asChild={true}
+>                             ref={function}
+>                           >
+                              <Button variant="ghost" size="icon" className="h-7 w-7" ...>
+                                <Button data-slot="button" className={"group/bu..."} ...>
+>                                 <button
+>                                   type="button"
+>                                   onClick={function onClick}
+>                                   onMouseDown={function onMouseDown}
+>                                   onKeyDown={function}
+>                                   onKeyUp={function onKeyUp}
+>                                   onPointerDown={function onPointerDown}
+>                                   tabIndex={0}
+>                                   disabled={false}
+>                                   data-slot="button"
+>                                   aria-label="Refresh all data"
+>                                   ref={function}
+>                                   className={"group/button inline-flex shrink-0 items-center justify-center rounded..."}
+>                                 >
+                        ...
+                  ...
+                ...
+ @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[ 1339243ms] [ERROR] <%s> cannot contain a nested %s.
+See this log for the ancestor stack trace. button <button> @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[ 1339246ms] [ERROR] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[ 1339251ms] [ERROR] React does not recognize the `%s` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `%s` instead. If you accidentally passed it from a parent component, remove it from the DOM element. asChild aschild @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[ 1339280ms] Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+    at throwOnHydrationMismatch (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at beginWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6758:918)
+    at runWithFiberInDEV (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at performUnitOfWork (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9555:97)
+    at workLoopConcurrentByScheduler (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:4000/_next/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+[ 1339427ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1339448ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1339490ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1339496ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0
+[ 1959613ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/folders:0
+[ 1959619ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ http://localhost:4000/api/microsoft/mail/messages?limit=50:0

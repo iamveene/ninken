@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Panel, Group as PanelGroup } from "react-resizable-panels"
-import { ResizeHandle } from "@/components/ui/resize-handle"
+import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ExplorerSidebar } from "@/components/buckets/explorer-sidebar"
 import { ObjectBrowser } from "@/components/buckets/object-browser"
@@ -21,17 +20,17 @@ export default function BucketsPage() {
   return (
     <TooltipProvider>
       <div className="flex h-[calc(100vh-3rem)] -m-4">
-        <PanelGroup orientation="horizontal" id="buckets-panels">
-          <Panel defaultSize={20} minSize={12} maxSize={35}>
+        <PanelGroup orientation="horizontal" className="h-full">
+          <ResizablePanel id="bkt-sidebar" defaultSize="240px" minSize="180px" maxSize="350px">
             <div className="h-full bg-background">
               <ExplorerSidebar
                 selectedBucket={selectedBucket}
                 onSelectBucket={handleSelectBucket}
               />
             </div>
-          </Panel>
+          </ResizablePanel>
           <ResizeHandle />
-          <Panel defaultSize={80} minSize={40}>
+          <ResizablePanel id="bkt-main" defaultSize="1fr" minSize="400px">
             <div className="flex-1 min-w-0 overflow-hidden h-full">
               {selectedBucket ? (
                 <div className="h-full p-4">
@@ -52,7 +51,7 @@ export default function BucketsPage() {
                 </div>
               )}
             </div>
-          </Panel>
+          </ResizablePanel>
         </PanelGroup>
       </div>
     </TooltipProvider>

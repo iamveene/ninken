@@ -276,8 +276,8 @@ src/components/buckets/
 ### Future Service Roadmap
 | Priority | Service | Credential | UI Views |
 |----------|---------|------------|----------|
-| v1.0 | Google Workspace | OAuth token.json | Gmail, Drive, GCP Buckets (Cloud Storage) |
-| **v2.0** | **Microsoft 365** | **FOCI public client OAuth2 refresh token** | **Outlook, OneDrive, Teams, Entra ID, M365 Audit — Implemented** |
+| v1.0 | Google Workspace | OAuth token.json | Gmail, Drive, GCP Buckets, Calendar, Directory, Chat — **Implemented** |
+| **v2.0** | **Microsoft 365** | **FOCI public client OAuth2 refresh token** | **Outlook, OneDrive, Teams, Entra ID, M365 Audit (Sign-ins, Risky Users, Conditional Access) — Implemented** |
 | v3.0 | GitHub | PAT (ghp_/github_pat_) | Repos, Issues, PRs, Actions, Secrets, Orgs, Gists |
 | v3.0 | GitLab | PAT (glpat-) | Projects, Issues, MRs, CI/CD, Secrets, Groups |
 | v4.0 | Slack | Bot/User token (xoxb/xoxp) | Channels, Messages, Files, Users, Search |
@@ -293,15 +293,20 @@ src/components/buckets/
 | **Global Token Refresher** | Medium | Implemented | Background system that auto-refreshes all refreshable tokens at 45min interval. Per-profile toggle via localStorage. Runs across all providers. Files: `src/lib/token-refresher.ts`, `src/hooks/use-token-refresher.ts`. |
 | **Token Lifecycle Panel** | Medium | Implemented | Sidebar footer widget showing access token countdown (color-coded), scope count, manual refresh button. API: `/api/auth/token-info`. Files: `src/components/layout/token-lifecycle.tsx`, `src/hooks/use-token-info.ts`. |
 | **Per-Service Layouts** | Built-in | Implemented | Google `(google)` and Microsoft `(microsoft)` route groups each have their own `layout.tsx` with service-specific sidebar navigation. Workspace-style layout (sidebar + content) shared across both. |
-| **AI Partner** | Low | Planned | AI assistant for data exploration. Anthropic API key stored in `.env`. Defer until after Microsoft + Studio are solid. |
-| **Studio Module** | Medium | Planned | Token Intelligence Hub — multi-provider foundation now in place (Google + Microsoft live). Ready for implementation. |
+| **AI Partner** | Low | **Implemented** | Anthropic Claude streaming chat assistant (`claude-opus-4-6` default, configurable via `NINKEN_AI_MODEL`). Context-aware system prompt, 6 tool definitions (search_gmail, list_drive_files, search_drive, search_outlook, list_onedrive_files, list_entra_users). SSE streaming chat API at `/api/ai/chat`. Right-side Sheet panel with quick actions per page. Files: `src/lib/ai/`, `src/components/ai/`, `src/hooks/use-ai-partner.ts`, `src/app/api/ai/chat/route.ts`. |
+| **Studio Module** | Medium | **Implemented** | Token Intelligence Hub with 6 pages: Token Analyzer (JWT decode, claims table, capabilities), Service Map (Google + Microsoft API catalogs), Extraction Guide (12 techniques across Windows/macOS/Linux), Token Converter (FOCI pivot), OPSEC Stealth Dashboard (5-tier scoring), Scope Calculator (forward + reverse + gap analysis). Static reference data in `src/lib/studio/`. Route group: `(studio)`. API routes: `/api/studio/analyze`, `/api/studio/exchange`. |
 | **Resizable Panels** | Medium | Implemented | `react-resizable-panels` on Gmail (3-panel), Drive (file list + preview), Calendar (sidebar + view), Buckets (sidebar + browser), Outlook (3-panel), Teams (3-column). **CRITICAL: Use pixel strings for sizes (`"200px"`, `"1fr"`), NOT plain numbers. Add unique `id` props to each panel for persistence. Use `className="h-full"` on PanelGroup, NOT `id`.** File: `src/components/ui/resize-handle.tsx`. |
 | **Adaptive Empty States** | Medium | Implemented | Gmail: message list expands full-width when no message selected, detail panel appears only when a message is clicked. |
 | **Sidebar Slogan** | Low | Implemented | "Track. Hunt. Retrieve." in red below Ninken logo, hidden when collapsed via `group-data-[collapsible=icon]:hidden`. |
 | **Alert System** | Medium | Implemented | IndexedDB alert store, bell icon badge with unread count, dropdown panel, full `/alerts` page with filters. Files: `src/lib/alert-store.ts`, `src/hooks/use-alerts.ts`, `src/components/layout/alert-badge.tsx`, `src/components/layout/alert-panel.tsx`, `src/app/alerts/`. |
-| **Collection Mode** | High | Planned | Cross-service artifact collection. Third mode alongside Operate/Audit. "Send to Collection" on emails (with attachments), Drive files/folders, bucket objects, etc. Items downloaded in background and stored locally for offline access. Zip download of entire collection or individual items. Survives token revocation and offline. Massive feature — requires local storage engine, background download manager, cross-service item registry. |
-| **Global Refresh Button** | Low | Planned | Refresh icon/badge in top-right header that triggers a full content refresh across all visible data (messages, files, events, etc.). |
-| **Google Chat** | Medium | Planned | Browse chat history (DMs, spaces, rooms), search through messages, view attachments and threads. Uses Google Chat API (`chat.googleapis.com`). Scopes: `chat.messages.readonly`, `chat.spaces.readonly`. UI: space/room list sidebar, message thread view, search with filters. Route: `/chat`. Nav item under Google Operate. |
+| **Collection Mode** | High | **Implemented** | Cross-service artifact collection as fourth mode. IndexedDB `ninken-collection` store with items + blobs. Singleton download manager with 1-at-a-time OPSEC queue, 2s delay, 3 retries. "Send to Collection" buttons on Gmail messages, Drive files, GCS objects, Teams messages. Collection page at `/collection` with stats, filters, queue controls, JSZip export. Files: `src/lib/collection-store.ts`, `src/lib/collection-manager.ts`, `src/hooks/use-collection.ts`, `src/hooks/use-collect-action.ts`, `src/components/collection/`, `src/app/collection/`. |
+| **Global Refresh Button** | Low | **Implemented** | `RefreshCw` icon button in header that calls `cacheClear()` + `router.refresh()`. Spin animation during refresh. Files: `src/components/layout/global-refresh.tsx`. |
+| **Google Chat** | Medium | **Implemented** | Chat API v1 integration: spaces list (DMs, rooms, groups), messages, members, threads. 3-column resizable layout mirroring Microsoft Teams. 4 API routes, hook with 3 data fetchers, 5 components. Route: `/chat`. Scopes: `chat.messages.readonly`, `chat.spaces.readonly`. Files: `src/app/api/chat/`, `src/hooks/use-chat.ts`, `src/components/chat/`, `src/app/(google)/chat/page.tsx`. |
+| **Audit Query** | High | **Implemented** | Cross-service intelligence search with 35 pre-built red team queries across 8 categories (credentials, API keys, infrastructure, PII, etc.). 6 service adapters (Gmail, Drive, Outlook, OneDrive, Calendar, Buckets). Parallel search engine with progressive results. Query library browser, history, stealth indicators. Pages: `/audit/query` (Google) and `/m365-audit/query` (Microsoft). Files: `src/lib/audit/`, `src/components/audit/query/`, `src/hooks/use-audit-query.ts`. |
+| **Cross-Service Data Export** | Medium | **Implemented** | JSON/CSV export utility with `ExportButton` dropdown component. Added to all audit tables. Files: `src/lib/export.ts`, `src/components/layout/export-button.tsx`. |
+| **4-Mode Toggle** | Built-in | **Implemented** | Expanded from Operate/Audit to Operate/Audit/Collection/Studio. Per-mode last-visited path in sessionStorage. Sidebar dynamically renders provider, audit, studio, or collection nav items. Files: `src/components/layout/mode-toggle.tsx`, `src/components/app-sidebar.tsx`. |
+| **Google Audit P1** | High | **Implemented** | Device Inventory (Chrome OS + mobile), OU Policy Mapping, Marketplace Apps (OAuth scope analysis), Context-Aware Access Policies (role assignments, 2FA stats, custom schemas). All with graceful degradation. Files: `src/app/api/audit/{devices,policies,marketplace,access-policies}/`, `src/app/(google)/audit/{devices,policies,marketplace,access-policies}/`. |
+| **M365 Audit Completion** | High | **Implemented** | Sign-in Logs (`/auditLogs/signIns`), Risky Users (`/identityProtection/riskyUsers`), Conditional Access Policies. Color-coded risk badges, filterable tables, export. Files: `src/app/api/microsoft/audit/{sign-ins,risky-users,conditional-access}/`, `src/app/(microsoft)/m365-audit/{sign-ins,risky-users,conditional-access}/`. |
 
 ### Alert System
 
@@ -873,25 +878,24 @@ workspace-ui/
 | Ninken rebrand | designer | SVG logo, kanji, favicon, dark default, stealth aesthetic |
 | Drive E2E tests | tester-drive | Playwright tests |
 | Microsoft 365 — Phase 1 | multi-agent | Full M365 provider: FOCI public client tokens, Graph API client (`src/lib/microsoft.ts`), ServiceProvider (`src/lib/providers/microsoft.ts`). Outlook (7 API routes, 3-panel email UI), OneDrive (5 routes, file browser), Teams (3 routes, 3-column UI), Entra ID (5 routes, tabbed Users/Groups/Roles), M365 Audit (1 route, dashboard + 4 sub-pages). Service switching via profile dropdown + `/?add=true`. Cookie size fix for large refresh tokens. |
-
-### IN PROGRESS
-| Task | Agent | Notes |
-|------|-------|-------|
-| Gmail E2E tests | tester-gmail | Playwright testing all Gmail features |
-| Multi-profile + paste JSON + red palette | designer | Account switcher, color swap to black+red |
+| Google Chat | ws2-google-chat | Chat API v1: spaces, messages, members, threads. 3-column resizable UI, 4 API routes, 5 components. |
+| Google Audit P1 | ws2-google-chat | Devices, OU Policies, Marketplace Apps, Context-Aware Access Policies. All with graceful degradation. |
+| M365 Audit Completion | ws7-m365-audit | Sign-in Logs, Risky Users, Conditional Access. 3 API routes, 3 pages with risk badges and filters. |
+| Studio Module | ws3-studio | Token Intelligence Hub: 6 pages (Analyzer, Service Map, Extraction, Converter, Stealth, Scopes), 8 static data files, API routes for analyze + exchange. |
+| Collection Mode | ws4-collection | IndexedDB storage, download manager, collect buttons in Gmail/Drive/Buckets/Teams, collection page with JSZip export. |
+| AI Partner | ws5-ai-partner | Anthropic Claude streaming chat with 6 tools, context-aware system prompt, right-side chat panel, quick actions. |
+| Audit Query | ws6-audit-query | 35 pre-built red team queries, 6 service adapters, parallel engine, query library, history, stealth indicators. |
+| Foundation | main | 4-mode toggle, global refresh, export utilities, provider config updates, icon registry. |
 
 ### TODO (Roadmap)
 | Task | Priority |
 |------|----------|
-| Local cache + offline resilience (IndexedDB) | Next |
 | Docker Compose containerization | Next |
-| GCP Buckets (Cloud Storage) explorer | v1.0 |
 | GitHub module (PAT → repos, issues, PRs, secrets) | v3.0 |
 | GitLab module (PAT → projects, MRs, CI/CD, secrets) | v3.0 |
 | Slack module (token → channels, messages, files) | v4.0 |
 | Microsoft 365 — Phase 2: PRT, browser session cookies, advanced token flows, SharePoint | v4.1 |
 | NinLoader — universal token collector CLI (Python + PowerShell), service-agnostic plugin architecture | v4.2 |
-| Studio module — multi-platform Token Analyzer, Service Map, Extraction Guide, Converter, OPSEC Stealth Scores, Scope Calculator (Google + Microsoft + future platforms) | v4.3 |
 | AWS module (access key → S3, IAM, Lambda, Secrets Manager) | v5.0 |
 | Custom REST API explorer | v6.0 |
 | Credential auto-detection (paste anything, Ninken detects type) | v3.0 |

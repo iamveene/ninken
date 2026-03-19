@@ -58,7 +58,7 @@ export function LabelSidebar({
 
   if (loading) {
     return (
-      <div className="flex w-[200px] flex-col gap-2 border-r bg-muted/30 p-3">
+      <div className="flex h-full flex-col gap-2 border-r bg-muted/30 p-3">
         <Skeleton className="h-9 w-full rounded-lg" />
         <div className="mt-2 space-y-1">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -73,7 +73,7 @@ export function LabelSidebar({
   }
 
   return (
-    <div className="flex w-[200px] flex-col border-r bg-muted/30">
+    <div className="flex h-full flex-col border-r bg-muted/30">
       <div className="p-3 pb-2">
         <Button className="w-full gap-2 shadow-sm" size="default" onClick={onCompose}>
           <Plus className="size-4" />
