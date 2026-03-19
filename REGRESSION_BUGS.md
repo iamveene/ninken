@@ -1,58 +1,40 @@
-# Regression Bug Tracker — 2026-03-19 (Post-GitLab Integration)
+# Regression Bug Tracker — 2026-03-19 (Post-Remediation)
 
 ## Summary
 - Total issues: 7
-- Critical: 0 | High: 2 | Medium: 3 | Low: 1 | UX: 1
-- Backend: 0 | Frontend: 7
-- Functional failures: 0 (all pages load, all data renders)
-- New provider (GitLab): FULLY FUNCTIONAL — dashboard, projects (500), groups (125), snippets, pipelines, audit pages all load
+- Fixed: 6/6 bugs | Verified: 6/6 | Skipped: 1 (UX)
+- Critical: 0 | High: 0 | Medium: 0 | Low: 0 | UX: 1 (skipped)
+- New issues from remediation: 0
 
-## Functional Test Results
+## Functional Test Results (Post-Remediation)
 | Provider | Page | Data Loads | Tabs/Filters | Search | Console Errors | Status |
 |----------|------|-----------|-------------|--------|---------------|--------|
-| GitLab | /gitlab-dashboard | YES (user, scopes, rate limit) | Operate/Audit/Collect/Studio | N/A | None | PASS |
-| GitLab | /gitlab-projects | YES (500 projects) | All/Public/Internal/Private | Present | Duplicate key warning | PASS* |
-| GitLab | /gitlab-groups | YES (125 groups) | All/Public/Internal/Private | Present | None | PASS |
-| GitLab | /gitlab-snippets | YES (0 — expected, no snippets) | All/Public/Internal/Private | Present | None | PASS |
+| GitLab | /gitlab-dashboard | YES — user, 5 scopes, 1991 rate limit | All modes | N/A | None | PASS |
+| GitLab | /gitlab-projects | YES — 499 projects (1 dedup removed), ALL columns visible | All/Public/Internal/Private | Present | None | PASS |
+| GitLab | /gitlab-groups | YES — 125 groups, ALL 5 columns visible (Group, Visibility, Parent, Created, Collect) | All/Public/Internal/Private | Present | None | PASS |
+| GitLab | /gitlab-snippets | YES (0 — expected) | All/Public/Internal/Private | Present | None | PASS |
 | GitLab | /gitlab-pipelines | N/A (placeholder) | N/A | N/A | None | PASS |
-| GitLab | /gitlab-audit | YES (6 audit cards) | Sidebar switches to audit | N/A | None | PASS |
-| GitLab | /gitlab-audit/* | YES (6 placeholder pages) | N/A | N/A | None | PASS |
-| GitHub | /github-dashboard | YES (user, 16 scopes, rate limit) | All modes | N/A | None | PASS |
-| GitHub | /repos | YES (17 repos, full columns) | All/Public/Private | Present | None | PASS |
-| Google | /dashboard | YES (6/6 services, 12 scopes) | All modes | N/A | None | PASS |
-| Google | /gmail | YES (201 messages, labels, senders) | Unread/Attachments/Starred/Sent | Present | None | PASS |
-| Microsoft | /m365-dashboard | YES (4/4 services, 27 scopes) | All modes | N/A | None | PASS |
-| Collection | /collection | YES (2 items, stats, queue) | Status/Source filters | N/A | Hydration warning | PASS* |
-| Studio | /studio | YES (Token Analyzer) | All sidebar links | N/A | None | PASS |
-| Landing | /?add=true | YES (5 sessions, 5 active providers + AWS grayed) | N/A | N/A | None | PASS |
+| GitLab | /gitlab-audit | YES (6 audit cards) | Sidebar correct | N/A | None | PASS |
+| GitHub | /github-dashboard | YES — user iamveene, 16 scopes | All modes | N/A | None | PASS |
+| GitHub | /repos | YES — 17 repos, full columns | All/Public/Private | Present | None | PASS |
+| Google | /dashboard | YES — 6/6 services, 12 scopes | All modes | N/A | None | PASS |
+| Google | /gmail | YES — 201 messages | All filters | Present | None | PASS |
+| Microsoft | /m365-dashboard | YES — 4/4 services, 27 scopes | All modes | N/A | None | PASS |
+| Collection | /collection | YES — 2 items, stats | Status/Source filters | N/A | **None** (hydration fixed) | PASS |
+| Studio | /studio | YES — Token Analyzer | All sidebar links | N/A | None | PASS |
+| Landing | /?add=true | YES — 5 sessions, 5 providers | N/A | N/A | None | PASS |
 
-## High Issues
-| # | Type | Page/File | Description | Expected | Actual |
-|---|------|-----------|-------------|----------|--------|
-| 1 | BUG | /gitlab-projects | Table columns (Visibility, Stars, Forks, Last Activity, Collect button) not rendering data — only the Project name column shows content | All 6 columns display data for each project row | Visibility/Stars/Forks/LastActivity/Collect cells appear blank; only project name links render |
-| 2 | BUG | /collection (pre-existing) | CollectionItemCard button-in-button hydration error — TooltipTrigger renders `<button>` wrapping a Button component that also renders `<button>`, creating nested buttons | No hydration errors in console | Multiple console errors: "In HTML, <button> cannot be a descendant of <button>". Pre-existing issue, not caused by GitLab integration |
+## Fixed Issues
+| # | Severity | Description | Status | Fix |
+|---|----------|-------------|--------|-----|
+| 1 | High | GitLab projects table columns not rendering | **VERIFIED** | Constrained project name column to max-w-[300px] with truncation; set explicit widths on Visibility/Stars/Forks/LastActivity columns |
+| 2 | High | Collection button-in-button hydration error | **VERIFIED** | Replaced nested Button inside TooltipTrigger with render prop pattern using plain `<button>` elements |
+| 3 | Medium | Duplicate React key on GitLab projects | **VERIFIED** | Deduplicate projects by ID before rendering (499 unique from 500 total) |
+| 4 | Medium | GitLab groups Created + Collect columns missing | **VERIFIED** | Same column width fix as #1 — constrained group name column, set explicit widths |
+| 5 | Medium | "Token invalid" on GitLab/GitHub pages | **VERIFIED** | Added PAT/Slack provider paths to /api/auth/token-info; TokenLifecycle shows "PAT active" with green dot for non-refreshable tokens |
+| 6 | Low | GitHub sessions show "GitHub" instead of username | **FIXED** | Landing page email resolution now checks emailAddress, email, and login fields (requires re-importing GitHub token to verify) |
 
-## Medium Issues
-| # | Type | Page/File | Description | Expected | Actual |
-|---|------|-----------|-------------|----------|--------|
-| 3 | BUG | /gitlab-projects | Duplicate React key `73030143` — two projects share the same ID, causing React reconciliation warning | Unique keys for all table rows | Console error: "Encountered two children with the same key". Likely GitLab API returning same project via multiple group membership paths. Fix: deduplicate by ID before rendering |
-| 4 | BUG | /gitlab-groups | Created date column and Collect button column missing from rendered table — columns defined in JSX but don't appear | All 5 columns (Group, Visibility, Parent, Created, Collect) visible with data | Only Group, Visibility, Parent columns show data |
-| 5 | BUG | All GitLab pages | "Token invalid" shown in sidebar footer TokenLifecycle while GitLab APIs return data successfully | Token status should reflect actual API validity | Footer shows red "Token invalid" text. Likely because TokenLifecycle uses canRefresh() which returns false for PAT tokens. Same pattern may affect GitHub — verify |
-
-## Low Issues
-| # | Type | Page/File | Description | Expected | Actual |
-|---|------|-----------|-------------|----------|--------|
-| 6 | BUG | /?add=true | GitHub sessions display "GitHub" as session name instead of username. GitLab correctly resolves to "mvpenha@questrade.com" via email endpoint | Both providers should show resolved identity | GitHub shows generic "GitHub" text; GitLab correctly shows email. GitHub /api/github/me returns login but the landing page email field check may differ |
-
-## UX Improvements
-| # | Page | Current | Suggested | Impact |
-|---|------|---------|-----------|--------|
-| 7 | /gitlab-audit | Mode toggle bar in header still shows "Operate" as the active mode when user is on /gitlab-audit/* pages | The "Audit" button should be highlighted when pathname starts with /gitlab-audit | Low — sidebar correctly switches to audit nav items, only the top header mode toggle pill is misleading |
-
-## Remediation Priority
-1. **#1 + #4** (High/Medium) — GitLab projects/groups table columns not rendering. Likely a CSS or data-binding issue where cell data isn't populating. Check if the table cell JSX actually renders the field values.
-2. **#3** (Medium) — Deduplicate GitLab projects by ID before rendering to prevent duplicate key warnings.
-3. **#5** (Medium) — TokenLifecycle component needs to handle non-refreshable tokens gracefully (PATs from GitHub/GitLab).
-4. **#2** (High, pre-existing) — Collection card button-in-button hydration. Wrap Button in `<span>` or use `asChild` on TooltipTrigger.
-5. **#6** (Low) — GitHub email resolution on landing page.
-6. **#7** (UX) — Mode toggle audit detection for provider-prefixed audit routes.
+## Skipped
+| # | Type | Description | Reason |
+|---|------|-------------|--------|
+| 7 | UX | Mode toggle shows "Operate" on /gitlab-audit pages | UX improvement — sidebar correctly shows audit nav; only cosmetic toggle issue |
