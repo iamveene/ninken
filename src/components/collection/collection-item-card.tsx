@@ -12,6 +12,8 @@ GitBranch,
 BookMarked,
 
 ShieldAlert,
+
+ShieldAlert,
   Clock,
   CheckCircle2,
   AlertCircle,
@@ -35,6 +37,9 @@ repo: { icon: GitBranch, color: "text-orange-600 dark:text-orange-400", bg: "bg-
 
   "audit-finding": { icon: ShieldAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
 }
+
+"audit-finding": { icon: ShieldAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
+} satisfies Record<import("@/lib/collection-store").CollectionItemType, { icon: typeof Mail; color: string; bg: string }>
 
 repo: { icon: BookMarked, color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/40" },
 } satisfies Record<import("@/lib/collection-store").CollectionItemType, { icon: typeof Mail; color: string; bg: string }>

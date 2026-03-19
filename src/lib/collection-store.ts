@@ -9,6 +9,10 @@ export type CollectionItemType = "email" | "file" | "object" | "chat-message" | 
 export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
 export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "github"
 
+export type CollectionItemType = "email" | "file" | "object" | "chat-message" | "audit-finding"
+export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
+export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "audit-query"
+
 export type CollectionItem = {
   id: string
   type: CollectionItemType
