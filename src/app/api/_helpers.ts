@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session-store"
 import type {
   ProviderId,
   ActiveTokenCookie,
+  AccessTokenCredential,
   BaseCredential,
   GoogleCredential,
   MicrosoftCredential,
@@ -110,6 +111,16 @@ export async function getSlackCredential(): Promise<SlackCredential | null> {
   const result = await getCredentialFromRequest()
   if (!result || result.provider !== "slack") return null
   return result.credential as SlackCredential
+}
+
+/**
+ * Convenience: get a GitHub access token from the request cookie, or null.
+ * GitHub credentials are AccessTokenCredential (PATs).
+ */
+export async function getGitHubAccessToken(): Promise<string | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "github") return null
+  return (result.credential as AccessTokenCredential).access_token
 }
 
 export async function getProviderFromRequest(): Promise<ProviderId | null> {
