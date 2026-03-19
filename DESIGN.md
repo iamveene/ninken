@@ -432,20 +432,15 @@ Currently implemented:
 - GCS objects (`buckets/object-card.tsx`)
 - Teams messages (`teams/message-card.tsx`)
 
-Needs implementation:
+Needs implementation (focus on downloadable artifacts only):
 
 | Service | Collectible Items | Priority | Notes |
 |---------|------------------|----------|-------|
-| **Outlook** | Email messages | High | Mirror Gmail collect pattern — add CollectButton to outlook message view |
+| **Outlook** | Email messages + attachments | High | Mirror Gmail collect pattern — add CollectButton to outlook message view |
 | **OneDrive** | Files | High | Mirror Drive collect pattern — add CollectButton to onedrive file card |
-| **Calendar** | Events/meetings | Medium | Collect meeting invites with attendees, locations — useful for social engineering |
-| **Google Chat** | Messages | Medium | Mirror Teams collect pattern |
-| **Directory/Entra** | User profiles | Medium | Collect user dossiers (name, email, phone, org, title) for social engineering prep |
-| **GitHub Repos** | Repository metadata + README | Medium | Collect repo details, especially private repos with sensitive config |
-| **GitHub Gists** | Gist content | Medium | Secret gists may contain credentials/keys |
 | **GitHub Audit** | Secrets, deploy keys, webhooks | High | Collect sensitive findings from security audit |
 | **Audit Query** | Search result hits | High | Collect credential/secret findings from cross-service queries |
-| **Contacts** | Contact profiles | Low | Org directory contacts for social engineering |
+| **GitHub Repos** | Private repo metadata + README | High | Collect private repo details with sensitive config/secrets |
 
 ### Token Refresher & Lifecycle Testing Gaps
 
