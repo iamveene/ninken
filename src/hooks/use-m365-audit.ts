@@ -237,3 +237,98 @@ export function useConditionalAccessPolicies() {
 
   return { policies: data ?? [], loading, error, refetch }
 }
+
+// ---------------------------------------------------------------------------
+// Authentication Methods
+// ---------------------------------------------------------------------------
+
+export type AuthMethod = {
+  odataType: string
+  id: string
+  displayName?: string
+  phoneNumber?: string
+  phoneType?: string
+  createdDateTime?: string
+}
+
+export type AuthMethodUser = {
+  id: string
+  displayName: string
+  userPrincipalName: string
+  methods: AuthMethod[]
+}
+
+export type AuthMethodAggregate = {
+  total: number
+  passwordOnly: number
+  phoneOnlyMfa: number
+  fido2: number
+  microsoftAuthenticator: number
+  phone: number
+  email: number
+  softwareOath: number
+  temporaryAccessPass: number
+  windowsHello: number
+}
+
+type AuthMethodsResponse = {
+  scope: "tenant" | "me"
+  users: {
+    id: string
+    displayName: string
+    userPrincipalName: string
+    methods: {
+      "@odata.type": string
+      id: string
+      displayName?: string
+      phoneNumber?: string
+      phoneType?: string
+      createdDateTime?: string
+    }[]
+  }[]
+}
+
+function normalizeMethod(raw: AuthMethodsResponse["users"][0]["methods"][0]): AuthMethod {
+  return {
+    odataType: raw["@odata.type"],
+    id: raw.id,
+    displayName: raw.displayName,
+    phoneNumber: raw.phoneNumber,
+    phoneType: raw.phoneType,
+    createdDateTime: raw.createdDateTime,
+  }
+}
+
+export function useAuthenticationMethods() {
+  const fetcher = useCallback(async (): Promise<{ scope: "tenant" | "me"; users: AuthMethodUser[] }> => {
+    const res = await fetch("/api/microsoft/audit/auth-methods")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch authentication methods (${res.status})`)
+    }
+    const json: AuthMethodsResponse = await res.json()
+    return {
+      scope: json.scope,
+      users: json.users.map((u) => ({
+        id: u.id,
+        displayName: u.displayName,
+        userPrincipalName: u.userPrincipalName,
+        methods: u.methods.map(normalizeMethod),
+      })),
+    }
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<{ scope: "tenant" | "me"; users: AuthMethodUser[] }>(
+    "m365-audit:auth-methods",
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST }
+  )
+
+  return {
+    users: data?.users ?? [],
+    scope: data?.scope ?? null,
+    loading,
+    error,
+    refetch,
+  }
+}
