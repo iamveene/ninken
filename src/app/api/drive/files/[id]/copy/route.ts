@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../_helpers"
 
 export async function POST(
   request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/copy">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
@@ -19,7 +19,7 @@ export async function POST(
     }
     const { name, folder } = body
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.copy({
       fileId: id,
       requestBody: {

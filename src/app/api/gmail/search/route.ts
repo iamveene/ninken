@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { createGmailService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createGmailServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       return badRequest("Missing required query parameter: q")
     }
 
-    const gmail = createGmailService(token)
+    const gmail = createGmailServiceFromToken(accessToken)
     const res = await gmail.users.messages.list({
       userId: "me",
       q,

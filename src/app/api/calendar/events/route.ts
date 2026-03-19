@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { createCalendarService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createCalendarServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const timeMax = searchParams.get("timeMax") || undefined
     const maxResults = Math.min(Number(searchParams.get("maxResults")) || 250, 2500)
 
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     const res = await calendar.events.list({
       calendarId,
       timeMin,
@@ -33,8 +33,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const body = await request.json()
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       return badRequest("Missing required fields: summary, start, end")
     }
 
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     const res = await calendar.events.insert({
       calendarId: calendarId || "primary",
       requestBody: {

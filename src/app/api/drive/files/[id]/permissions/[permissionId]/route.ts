@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
 export async function DELETE(
   _request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/permissions/[permissionId]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id, permissionId } = await ctx.params
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     await drive.permissions.delete({
       fileId: id,
       permissionId,

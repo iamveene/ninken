@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../_helpers"
 
 export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/drive/files/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.get({
       fileId: id,
       fields: "id, name, mimeType, size, modifiedTime, createdTime, parents, shared, starred, webViewLink, iconLink, thumbnailLink, owners, description, permissions",
@@ -27,15 +27,15 @@ export async function PATCH(
   request: Request,
   ctx: RouteContext<"/api/drive/files/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
     const body = await request.json()
     const { name, addParents, removeParents, trashed, starred, description } = body
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.update({
       fileId: id,
       addParents: addParents || undefined,
@@ -59,12 +59,12 @@ export async function DELETE(
   _request: Request,
   ctx: RouteContext<"/api/drive/files/[id]">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     await drive.files.delete({ fileId: id })
 
     return NextResponse.json({ success: true })

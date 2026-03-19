@@ -1,5 +1,5 @@
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../_helpers"
 
 function sanitizeFileName(name: string): string {
   // Remove characters that could cause header injection or path traversal
@@ -33,15 +33,15 @@ export async function GET(
   request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/download">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await ctx.params
     const { searchParams } = new URL(request.url)
     const format = searchParams.get("format") || undefined
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
 
     // Get file metadata first
     const meta = await drive.files.get({

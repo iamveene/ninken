@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createDriveService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createDriveServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 const TYPE_MIME_MAP: Record<string, string> = {
   document: "application/vnd.google-apps.document",
@@ -13,8 +13,8 @@ const TYPE_MIME_MAP: Record<string, string> = {
 }
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const drive = createDriveService(token)
+    const drive = createDriveServiceFromToken(accessToken)
     const res = await drive.files.list({
       q: queryParts.join(" and "),
       pageSize: limit,

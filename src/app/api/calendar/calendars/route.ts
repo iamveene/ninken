@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { createCalendarService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createCalendarServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
-    const calendar = createCalendarService(token)
+    const calendar = createCalendarServiceFromToken(accessToken)
     const res = await calendar.calendarList.list()
 
     return NextResponse.json({
