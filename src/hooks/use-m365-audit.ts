@@ -154,6 +154,47 @@ export type ConditionalAccessPolicy = {
   sessionControls: Record<string, unknown> | null
 }
 
+// ---------------------------------------------------------------------------
+// Resource Pivot Probing
+// ---------------------------------------------------------------------------
+
+export type ResourceProbeEntry = {
+  accessible: boolean
+  tokenObtained: boolean
+  httpStatus?: number
+  error?: string
+}
+
+export type ResourcePivotResult = {
+  arm: ResourceProbeEntry & { subscriptions?: { id: string; name: string }[] }
+  keyVault: ResourceProbeEntry & { vaults?: string[] }
+  storage: ResourceProbeEntry
+  devops: ResourceProbeEntry & { projects?: string[] }
+}
+
+export function useResourcePivot() {
+  const fetcher = useCallback(async (): Promise<ResourcePivotResult> => {
+    const res = await fetch("/api/microsoft/audit/resource-pivot")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch resource pivot data (${res.status})`)
+    }
+    return res.json()
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<ResourcePivotResult>(
+    "m365-audit:resource-pivot",
+    fetcher,
+    { ttlMs: CACHE_TTL_BODY }
+  )
+
+  return { pivot: data, loading, error, refetch }
+}
+
+// ---------------------------------------------------------------------------
+// Conditional Access Policies
+// ---------------------------------------------------------------------------
+
 export function useConditionalAccessPolicies() {
   const fetcher = useCallback(async (): Promise<ConditionalAccessPolicy[]> => {
     const res = await fetch("/api/microsoft/audit/conditional-access")

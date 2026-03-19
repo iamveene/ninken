@@ -246,6 +246,7 @@ export const microsoftProvider: ServiceProvider = {
     { id: "m365-audit-signins", title: "Sign-ins", href: "/m365-audit/sign-ins", iconName: "LogIn" },
     { id: "m365-audit-risky", title: "Risky Users", href: "/m365-audit/risky-users", iconName: "AlertTriangle" },
     { id: "m365-audit-ca", title: "Conditional Access", href: "/m365-audit/conditional-access", iconName: "Shield" },
+    { id: "m365-audit-pivot", title: "Resource Pivot", href: "/m365-audit/pivot", iconName: "GitBranch" },
     { id: "m365-audit-query", title: "Query", href: "/m365-audit/query", iconName: "Search" },
   ],
 
