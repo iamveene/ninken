@@ -153,6 +153,7 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-policies", title: "Policies", href: "/audit/policies", iconName: "Settings" },
     { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },
     { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
+    { id: "audit-contacts", title: "Contacts", href: "/audit/contacts", iconName: "ContactRound" },
     { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
   ],
 
@@ -192,6 +193,11 @@ export const googleProvider: ServiceProvider = {
       "https://www.googleapis.com/auth/chat.messages",
       "https://www.googleapis.com/auth/chat.spaces.readonly",
       "https://www.googleapis.com/auth/chat.spaces",
+    ],
+    contacts: [
+      "https://www.googleapis.com/auth/contacts.readonly",
+      "https://www.googleapis.com/auth/contacts.other.readonly",
+      "https://www.googleapis.com/auth/directory.readonly",
     ],
   },
 

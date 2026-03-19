@@ -83,3 +83,7 @@ export function createDirectoryServiceFromToken(accessToken: string) {
 export function createChatServiceFromToken(accessToken: string) {
   return google.chat({ version: "v1", auth: createBearerClient(accessToken) })
 }
+
+export function createPeopleServiceFromToken(accessToken: string) {
+  return google.people({ version: "v1", auth: createBearerClient(accessToken) })
+}
