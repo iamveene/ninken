@@ -102,46 +102,42 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ error: "Invalid request" }, { status: 400 })
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE() {
   const cookieStore = await cookies()
 
-  let body: Record<string, unknown> | null = null
-  try {
-    body = await request.json() as Record<string, unknown>
-  } catch {
-    // No body = delete all
-  }
-
-  if (body && typeof body.index === "number") {
-    const profiles = getProfilesFromCookies(cookieStore)
-    const idx = body.index
-    if (idx < 0 || idx >= profiles.length) {
-      return NextResponse.json({ error: "Invalid profile index" }, { status: 400 })
-    }
-    profiles.splice(idx, 1)
-    let activeIndex = getActiveProfileIndex(cookieStore)
-    if (activeIndex >= profiles.length) {
-      activeIndex = Math.max(0, profiles.length - 1)
-    }
-    if (idx === activeIndex && profiles.length > 0) {
-      activeIndex = 0
-    }
-    setProfilesCookie(cookieStore, profiles, profiles.length > 0 ? activeIndex : 0)
-
-    return NextResponse.json({
-      authenticated: profiles.length > 0,
-      profileCount: profiles.length,
-    })
-  }
-
-  // Delete all profiles
+  // Clear both legacy and new cookies
   cookieStore.delete(AUTH_COOKIE_NAME)
   cookieStore.delete(ACTIVE_PROFILE_COOKIE)
+  cookieStore.delete("ninken_token")
+  cookieStore.delete("ninken_provider")
+
   return NextResponse.json({ authenticated: false })
 }
 
 export async function GET() {
   const cookieStore = await cookies()
+
+  // Check new cookie format first
+  const newCookie = cookieStore.get("ninken_token")
+  if (newCookie?.value) {
+    try {
+      const parsed = JSON.parse(newCookie.value)
+      const providerCookie = cookieStore.get("ninken_provider")
+      return NextResponse.json({
+        authenticated: true,
+        provider: providerCookie?.value ?? parsed.provider ?? "google",
+        // Profile info comes from IndexedDB on client side
+        // Server only confirms auth state
+        profiles: [],
+        activeProfile: 0,
+        format: "v2",
+      })
+    } catch {
+      // Malformed — fall through
+    }
+  }
+
+  // Legacy format
   const profiles = getProfilesFromCookies(cookieStore)
   const activeProfile = getActiveProfileIndex(cookieStore)
 
@@ -152,5 +148,6 @@ export async function GET() {
       index: i,
     })),
     activeProfile: profiles.length > 0 ? Math.min(activeProfile, profiles.length - 1) : 0,
+    format: "v1",
   })
 }

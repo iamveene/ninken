@@ -1,10 +1,28 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, FileJson, CheckCircle, AlertCircle, Shield, Lock, Zap, ClipboardPaste } from "lucide-react"
+import {
+  Upload,
+  FileJson,
+  CheckCircle,
+  AlertCircle,
+  Shield,
+  Lock,
+  Zap,
+  ClipboardPaste,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
+import { getAllProviders, detectProvider, getProvider } from "@/lib/providers"
+import { resolveIcon } from "@/lib/icon-resolver"
+import type { ServiceProvider } from "@/lib/providers/types"
+import {
+  addProfile,
+  getAllProfiles,
+  setActiveProfileId,
+} from "@/lib/token-store"
+import { activateProfile, migrateFromCookies } from "@/lib/token-sync"
 
 type Status = "idle" | "dragging" | "validating" | "success" | "error"
 
@@ -14,6 +32,41 @@ export default function AuthPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const [showPaste, setShowPaste] = useState(false)
   const [pasteValue, setPasteValue] = useState("")
+  const [selectedProvider, setSelectedProvider] =
+    useState<ServiceProvider | null>(null)
+  const [migrating, setMigrating] = useState(true)
+
+  const providers = getAllProviders()
+
+  // On mount: check for legacy cookies and migrate
+  useEffect(() => {
+    async function init() {
+      try {
+        const migrated = await migrateFromCookies()
+        if (migrated) {
+          const profiles = await getAllProfiles()
+          if (profiles.length > 0) {
+            const providerConfig = getProvider(profiles[0].provider)
+            router.push(providerConfig?.defaultRoute ?? "/gmail")
+            return
+          }
+        }
+
+        // Also check if we already have profiles in IndexedDB
+        const existing = await getAllProfiles()
+        if (existing.length > 0) {
+          await activateProfile(existing[0].id)
+          const providerConfig = getProvider(existing[0].provider)
+          router.push(providerConfig?.defaultRoute ?? "/gmail")
+          return
+        }
+      } catch {
+        // Non-critical — show landing page
+      }
+      setMigrating(false)
+    }
+    init()
+  }, [router])
 
   const submitToken = useCallback(
     async (text: string) => {
@@ -23,19 +76,49 @@ export default function AuthPage() {
       try {
         const data = JSON.parse(text)
 
-        const res = await fetch("/api/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        })
+        // Auto-detect or use selected provider
+        const provider = selectedProvider ?? detectProvider(data)
+        if (!provider) {
+          throw new Error(
+            "Unrecognized credential format. Select a service manually."
+          )
+        }
 
-        if (!res.ok) {
-          const err = await res.json()
-          throw new Error(err.error || "Failed to authenticate")
+        const result = provider.validateCredential(data)
+        if (!result.valid) {
+          throw new Error(result.error)
+        }
+
+        // Store in encrypted IndexedDB
+        const profile = await addProfile(
+          provider.id,
+          result.credential,
+          result.email
+        )
+
+        // Activate (sets server cookie)
+        await activateProfile(profile.id)
+
+        // Try to fetch email if not already set
+        if (!result.email && provider.emailEndpoint) {
+          try {
+            const profileRes = await fetch(provider.emailEndpoint)
+            if (profileRes.ok) {
+              const profileData = await profileRes.json()
+              if (profileData.emailAddress) {
+                const { updateProfileEmail } = await import(
+                  "@/lib/token-store"
+                )
+                await updateProfileEmail(profile.id, profileData.emailAddress)
+              }
+            }
+          } catch {
+            // Non-critical
+          }
         }
 
         setStatus("success")
-        setTimeout(() => router.push("/gmail"), 500)
+        setTimeout(() => router.push(provider.defaultRoute), 500)
       } catch (e) {
         setStatus("error")
         setErrorMessage(
@@ -47,7 +130,7 @@ export default function AuthPage() {
         )
       }
     },
-    [router]
+    [router, selectedProvider]
   )
 
   const handleFile = useCallback(
@@ -90,23 +173,84 @@ export default function AuthPage() {
     submitToken(pasteValue.trim())
   }, [pasteValue, submitToken])
 
+  if (migrating) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
+        <div className="animate-pulse text-sm text-neutral-500">
+          Loading...
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 p-4">
-      <div className="w-full max-w-md space-y-10">
+      <div className="w-full max-w-lg space-y-10">
         <div className="flex flex-col items-center">
           <NinkenLogo
             className="text-center text-neutral-50"
-            tagline="Your workspace. Your rules."
+            tagline="Track. Hunt. Retrieve."
           />
         </div>
 
+        {/* Service grid */}
         <div className="space-y-4">
-          <div className="text-center">
-            <p className="text-sm text-neutral-400">
-              Upload your token.json to connect
-            </p>
+          <p className="text-center text-xs text-neutral-500 uppercase tracking-wider">
+            Select a service or drop any credential
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            {providers.map((p) => {
+              const Icon = resolveIcon(p.iconName)
+              const isSelected = selectedProvider?.id === p.id
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() =>
+                    setSelectedProvider(isSelected ? null : p)
+                  }
+                  className={`flex flex-col items-center gap-2 rounded-md border p-4 transition-all text-center ${
+                    isSelected
+                      ? "border-red-600 bg-red-950/20 shadow-[0_0_15px_rgba(220,38,38,0.15)]"
+                      : "border-neutral-800 bg-neutral-900/50 hover:border-neutral-600"
+                  }`}
+                >
+                  <Icon className="h-6 w-6 text-neutral-400" />
+                  <span className="text-xs font-medium text-neutral-300">
+                    {p.name}
+                  </span>
+                </button>
+              )
+            })}
+            {/* Coming soon placeholders */}
+            {(
+              [
+                { name: "Microsoft 365", iconName: "Monitor" },
+                { name: "GitHub", iconName: "Globe" },
+                { name: "AWS", iconName: "Globe" },
+              ] as const
+            )
+              .filter((p) => !providers.some((r) => r.name === p.name))
+              .map((p) => {
+                const Icon = resolveIcon(p.iconName)
+                return (
+                  <div
+                    key={p.name}
+                    className="flex flex-col items-center gap-2 rounded-md border border-neutral-800/50 p-4 opacity-40"
+                  >
+                    <Icon className="h-6 w-6 text-neutral-600" />
+                    <span className="text-xs text-neutral-600">{p.name}</span>
+                    <span className="text-[10px] text-neutral-700">
+                      Coming soon
+                    </span>
+                  </div>
+                )
+              })}
           </div>
+        </div>
 
+        {/* Upload zone */}
+        <div className="space-y-4">
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
@@ -120,9 +264,7 @@ export default function AuthPage() {
                     ? "border-red-500/50 bg-red-500/5"
                     : "border-neutral-700 bg-neutral-900/50 hover:border-neutral-600 hover:shadow-[0_0_15px_rgba(220,38,38,0.08)]"
             }`}
-            onClick={() =>
-              document.getElementById("file-input")?.click()
-            }
+            onClick={() => document.getElementById("file-input")?.click()}
           >
             <input
               id="file-input"
@@ -166,10 +308,14 @@ export default function AuthPage() {
                 <Upload className="h-10 w-10 text-neutral-500" />
                 <div className="text-center space-y-1">
                   <p className="text-sm font-medium text-neutral-300">
-                    Drag and drop your token.json
+                    {selectedProvider
+                      ? `Drop your ${selectedProvider.name} credential`
+                      : "Drag and drop any credential"}
                   </p>
                   <p className="text-xs text-neutral-500">
-                    Must contain refresh_token, client_id, and client_secret
+                    {selectedProvider
+                      ? selectedProvider.description
+                      : "Auto-detects service from credential format"}
                   </p>
                 </div>
               </>
@@ -189,7 +335,7 @@ export default function AuthPage() {
               className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               <ClipboardPaste className="h-3 w-3" />
-              {showPaste ? "Hide paste option" : "Or paste your token JSON"}
+              {showPaste ? "Hide paste option" : "Or paste your credential JSON"}
             </button>
           </div>
 
@@ -216,15 +362,22 @@ export default function AuthPage() {
           <div className="mt-8 space-y-3">
             <div className="flex items-start gap-3">
               <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">Perpetual access — your token auto-renews silently</p>
+              <p className="text-xs text-neutral-500">
+                Perpetual access — your token auto-renews silently
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">Secure — credentials stored locally, never sent to third parties</p>
+              <p className="text-xs text-neutral-500">
+                Secure — credentials encrypted in browser, never sent to third
+                parties
+              </p>
             </div>
             <div className="flex items-start gap-3">
               <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">Instant — no Google UI, no browser redirects</p>
+              <p className="text-xs text-neutral-500">
+                Instant — no browser redirects, pure API access
+              </p>
             </div>
           </div>
         </div>

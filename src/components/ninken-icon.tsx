@@ -23,9 +23,9 @@ export function NinkenIcon({ className }: NinkenIconProps) {
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
-      {/* Eyes */}
-      <circle cx="9" cy="11" r="1.2" fill="currentColor" />
-      <circle cx="15" cy="11" r="1.2" fill="currentColor" />
+      {/* Eyes — red accent */}
+      <circle cx="9" cy="11" r="1.2" fill="#dc2626" />
+      <circle cx="15" cy="11" r="1.2" fill="#dc2626" />
       {/* Nose */}
       <path
         d="M11 15L12 16.5L13 15"

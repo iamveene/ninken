@@ -1,12 +1,20 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Check, Plus, Trash2, Upload, ClipboardPaste, FileJson } from "lucide-react"
+import {
+  Check,
+  Plus,
+  Trash2,
+  Upload,
+  ClipboardPaste,
+  FileJson,
+} from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -20,11 +28,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-
-type Profile = {
-  email: string | null
-  index: number
-}
+import { useProvider } from "@/components/providers/provider-context"
+import { resolveIcon } from "@/lib/icon-resolver"
+import { getProvider } from "@/lib/providers/registry"
+import "@/lib/providers"
 
 const AVATAR_COLORS = [
   "bg-red-700",
@@ -37,7 +44,7 @@ const AVATAR_COLORS = [
   "bg-neutral-800",
 ]
 
-function getInitials(email: string | null): string {
+function getInitials(email: string | undefined | null): string {
   if (!email) return "?"
   const name = email.split("@")[0]
   return name.slice(0, 2).toUpperCase()
@@ -49,105 +56,40 @@ function getColor(index: number): string {
 
 export function ProfileSelector() {
   const router = useRouter()
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [activeProfile, setActiveProfile] = useState(0)
+  const {
+    profile: activeProfile,
+    profiles,
+    switchProfile,
+    removeCurrentProfile,
+    updateEmail,
+    loading,
+  } = useProvider()
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [confirmRemove, setConfirmRemove] = useState<number | null>(null)
-
-  const fetchProfiles = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth")
-      if (!res.ok) return
-      const data = await res.json()
-      setProfiles(data.profiles || [])
-      setActiveProfile(data.activeProfile ?? 0)
-
-      // Fetch email for profiles that don't have one
-      for (const profile of data.profiles || []) {
-        if (!profile.email && data.profiles.length > 0) {
-          // Switch to that profile temporarily, fetch email, update
-          fetchEmailForProfile(profile.index)
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }, [])
-
-  const fetchEmailForProfile = async (index: number) => {
-    try {
-      // We need to temporarily switch to get this profile's email
-      // Only do this for the active profile to avoid side effects
-      const profileRes = await fetch("/api/gmail/profile")
-      if (!profileRes.ok) return
-      const profileData = await profileRes.json()
-      if (profileData.emailAddress) {
-        await fetch("/api/auth", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ index, email: profileData.emailAddress }),
-        })
-        fetchProfiles()
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  useEffect(() => {
-    fetchProfiles()
-  }, [fetchProfiles])
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   // Fetch email for active profile if missing
-  useEffect(() => {
-    const active = profiles.find((p) => p.index === activeProfile)
-    if (active && !active.email) {
-      fetchEmailForProfile(activeProfile)
-    }
-  }, [activeProfile, profiles])
-
-  const switchProfile = async (index: number) => {
+  const fetchEmailIfNeeded = useCallback(async () => {
+    if (!activeProfile || activeProfile.email) return
+    const providerConfig = getProvider(activeProfile.provider)
+    if (!providerConfig?.emailEndpoint) return
     try {
-      await fetch("/api/auth", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activeProfile: index }),
-      })
-      setActiveProfile(index)
-      router.refresh()
-      // Fetch email if missing for newly active profile
-      const profile = profiles.find((p) => p.index === index)
-      if (profile && !profile.email) {
-        fetchEmailForProfile(index)
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  const removeProfile = async (index: number) => {
-    try {
-      const res = await fetch("/api/auth", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index }),
-      })
+      const res = await fetch(providerConfig.emailEndpoint)
+      if (!res.ok) return
       const data = await res.json()
-      setConfirmRemove(null)
-      if (!data.authenticated) {
-        router.push("/")
-        return
+      if (data.emailAddress) {
+        await updateEmail(activeProfile.id, data.emailAddress)
       }
-      fetchProfiles()
-      router.refresh()
     } catch {
-      // ignore
+      // Non-critical
     }
-  }
+  }, [activeProfile, updateEmail])
 
-  const activeProfileData = profiles.find((p) => p.index === activeProfile)
+  // Auto-fetch email when active profile changes
+  useEffect(() => {
+    fetchEmailIfNeeded()
+  }, [fetchEmailIfNeeded])
 
-  if (profiles.length === 0) return null
+  if (loading || profiles.length === 0) return null
 
   return (
     <>
@@ -163,39 +105,51 @@ export function ProfileSelector() {
         >
           <Avatar size="sm">
             <AvatarFallback
-              className={`${getColor(activeProfile)} text-white text-xs font-medium`}
+              className={`${getColor(activeProfile ? profiles.findIndex((p) => p.id === activeProfile.id) : 0)} text-white text-xs font-medium`}
             >
-              {getInitials(activeProfileData?.email ?? null)}
+              {getInitials(activeProfile?.email)}
             </AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={8}>
-          <DropdownMenuLabel>Accounts</DropdownMenuLabel>
-          {profiles.map((profile) => (
-            <DropdownMenuItem
-              key={profile.index}
-              className="gap-2"
-              onClick={() => {
-                if (profile.index !== activeProfile) {
-                  switchProfile(profile.index)
-                }
-              }}
-            >
-              <Avatar size="sm">
-                <AvatarFallback
-                  className={`${getColor(profile.index)} text-white text-xs font-medium`}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Accounts</DropdownMenuLabel>
+            {profiles.map((p, i) => {
+              const providerConfig = getProvider(p.provider)
+              const ProviderIcon = providerConfig
+                ? resolveIcon(providerConfig.iconName)
+                : null
+              return (
+                <DropdownMenuItem
+                  key={p.id}
+                  className="gap-2"
+                  onClick={() => {
+                    if (p.id !== activeProfile?.id) {
+                      switchProfile(p.id)
+                      router.refresh()
+                    }
+                  }}
                 >
-                  {getInitials(profile.email)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="flex-1 truncate text-xs">
-                {profile.email || `Account ${profile.index + 1}`}
-              </span>
-              {profile.index === activeProfile && (
-                <Check className="h-3.5 w-3.5 text-primary" />
-              )}
-            </DropdownMenuItem>
-          ))}
+                  <Avatar size="sm">
+                    <AvatarFallback
+                      className={`${getColor(i)} text-white text-xs font-medium`}
+                    >
+                      {getInitials(p.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 truncate text-xs">
+                    {p.email || p.label || `Account ${i + 1}`}
+                  </span>
+                  {ProviderIcon && (
+                    <ProviderIcon className="h-3 w-3 text-muted-foreground" />
+                  )}
+                  {p.id === activeProfile?.id && (
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  )}
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="gap-2"
@@ -208,7 +162,7 @@ export function ProfileSelector() {
             <DropdownMenuItem
               className="gap-2"
               variant="destructive"
-              onClick={() => setConfirmRemove(activeProfile)}
+              onClick={() => setConfirmRemove(true)}
             >
               <Trash2 className="h-4 w-4" />
               Remove current account
@@ -222,34 +176,43 @@ export function ProfileSelector() {
         onOpenChange={setShowAddDialog}
         onSuccess={() => {
           setShowAddDialog(false)
-          fetchProfiles()
           router.refresh()
         }}
       />
 
       <Dialog
-        open={confirmRemove !== null}
-        onOpenChange={(open) => !open && setConfirmRemove(null)}
+        open={confirmRemove}
+        onOpenChange={(open) => !open && setConfirmRemove(false)}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remove account</DialogTitle>
             <DialogDescription>
-              Remove {activeProfileData?.email || `Account ${(confirmRemove ?? 0) + 1}`}? This will delete the stored credentials.
+              Remove{" "}
+              {activeProfile?.email || "this account"}? This
+              will delete the stored credentials.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setConfirmRemove(null)}
+              onClick={() => setConfirmRemove(false)}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => confirmRemove !== null && removeProfile(confirmRemove)}
+              onClick={async () => {
+                await removeCurrentProfile()
+                setConfirmRemove(false)
+                if (profiles.length <= 1) {
+                  router.push("/")
+                } else {
+                  router.refresh()
+                }
+              }}
             >
               Remove
             </Button>
@@ -273,6 +236,7 @@ function AddAccountDialog({
   const [status, setStatus] = useState<"idle" | "validating" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState("")
   const [pasteValue, setPasteValue] = useState("")
+  const { addCredential } = useProvider()
 
   const reset = () => {
     setMode("file")
@@ -287,37 +251,23 @@ function AddAccountDialog({
 
     try {
       const data = JSON.parse(text)
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
+      const result = await addCredential(data)
 
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Failed to authenticate")
+      if (!result.success) {
+        throw new Error(result.error || "Failed to authenticate")
       }
 
-      // Fetch email for the new profile
+      // Try to fetch email
       try {
         const profileRes = await fetch("/api/gmail/profile")
         if (profileRes.ok) {
           const profileData = await profileRes.json()
-          const authData = await res.json().catch(() => null)
           if (profileData.emailAddress) {
-            const authInfo = await fetch("/api/auth").then((r) => r.json())
-            await fetch("/api/auth", {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                index: authInfo.activeProfile,
-                email: profileData.emailAddress,
-              }),
-            })
+            // Email will be updated through the provider context
           }
         }
       } catch {
-        // Non-critical — email will be fetched later
+        // Non-critical
       }
 
       reset()
@@ -351,7 +301,7 @@ function AddAccountDialog({
         <DialogHeader>
           <DialogTitle>Add account</DialogTitle>
           <DialogDescription>
-            Upload or paste a token.json for another Google account.
+            Upload or paste a credential file for any supported service.
           </DialogDescription>
         </DialogHeader>
 
@@ -365,7 +315,9 @@ function AddAccountDialog({
                 if (file) handleFile(file)
               }}
               onDragOver={(e) => e.preventDefault()}
-              onClick={() => document.getElementById("add-account-file")?.click()}
+              onClick={() =>
+                document.getElementById("add-account-file")?.click()
+              }
             >
               <input
                 id="add-account-file"
@@ -383,7 +335,9 @@ function AddAccountDialog({
                 <Upload className="h-8 w-8 text-muted-foreground" />
               )}
               <p className="text-sm text-muted-foreground">
-                {status === "validating" ? "Validating..." : "Drop token.json or click to browse"}
+                {status === "validating"
+                  ? "Validating..."
+                  : "Drop credential file or click to browse"}
               </p>
             </div>
             {status === "error" && (

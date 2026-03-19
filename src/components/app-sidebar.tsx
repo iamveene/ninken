@@ -2,22 +2,14 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import {
-  Mail,
-  HardDrive,
-  Database,
-  Users,
-  Calendar,
-  LogOut,
-  LayoutDashboard,
-  UsersRound,
-  ShieldCheck,
-  AppWindow,
-  KeyRound,
-} from "lucide-react"
+import { LogOut } from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
-import { useScopes, type AppId } from "@/hooks/use-scopes"
+import { useScopes } from "@/hooks/use-scopes"
+import { useProvider } from "@/components/providers/provider-context"
+import { getProvider } from "@/lib/providers/registry"
+import { resolveIcon } from "@/lib/icon-resolver"
+import "@/lib/providers"
 
 import {
   Sidebar,
@@ -33,34 +25,23 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { NinkenLogoCompact } from "@/components/logo"
-
-const navItems: { title: string; href: string; icon: typeof Mail; appId: AppId }[] = [
-  { title: "Gmail", href: "/gmail", icon: Mail, appId: "gmail" },
-  { title: "Drive", href: "/drive", icon: HardDrive, appId: "drive" },
-  { title: "Buckets", href: "/buckets", icon: Database, appId: "buckets" },
-  { title: "Calendar", href: "/calendar", icon: Calendar, appId: "calendar" },
-  { title: "Directory", href: "/directory", icon: Users, appId: "directory" },
-]
-
-const auditNavItems: { title: string; href: string; icon: typeof Mail }[] = [
-  { title: "Dashboard", href: "/audit", icon: LayoutDashboard },
-  { title: "Users", href: "/audit/users", icon: Users },
-  { title: "Groups", href: "/audit/groups", icon: UsersRound },
-  { title: "Roles", href: "/audit/roles", icon: ShieldCheck },
-  { title: "Apps", href: "/audit/apps", icon: AppWindow },
-  { title: "Delegation", href: "/audit/delegation", icon: KeyRound },
-]
+import { NinkenIcon } from "@/components/ninken-icon"
 
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { hasApp, loading } = useScopes()
   const { toggleSidebar } = useSidebar()
+  const { provider } = useProvider()
   const isAuditMode = pathname.startsWith("/audit")
 
+  const providerConfig = getProvider(provider)
+  const operateNavItems = providerConfig?.operateNavItems ?? []
+  const auditNavItems = providerConfig?.auditNavItems ?? []
+
   const visibleItems = loading
-    ? [] // show nothing while loading to avoid flash
-    : navItems.filter((item) => hasApp(item.appId))
+    ? []
+    : operateNavItems.filter((item) => hasApp(item.id))
 
   const handleSignOut = async () => {
     await cacheClear()
@@ -71,13 +52,18 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <button
-          className="px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-        >
-          <NinkenLogoCompact />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <NinkenIcon className="h-5 w-5" />
+          </button>
+          <span className="group-data-[collapsible=icon]:hidden">
+            <NinkenLogoCompact />
+          </span>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -85,22 +71,36 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {isAuditMode ? (
-                auditNavItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      isActive={
-                        item.href === "/audit"
-                          ? pathname === "/audit"
-                          : pathname.startsWith(item.href)
-                      }
-                      render={<Link href={item.href} />}
-                      tooltip={item.title}
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
+                loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <SidebarMenuItem key={i}>
+                      <SidebarMenuButton>
+                        <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                ) : (
+                  auditNavItems.map((item) => {
+                    const Icon = resolveIcon(item.iconName)
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={
+                            item.href === "/audit"
+                              ? pathname === "/audit"
+                              : pathname.startsWith(item.href)
+                          }
+                          render={<Link href={item.href} />}
+                          tooltip={item.title}
+                        >
+                          <Icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })
+                )
               ) : loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <SidebarMenuItem key={i}>
@@ -111,18 +111,21 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))
               ) : (
-                visibleItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      isActive={pathname.startsWith(item.href)}
-                      render={<Link href={item.href} />}
-                      tooltip={item.title}
-                    >
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
+                visibleItems.map((item) => {
+                  const Icon = resolveIcon(item.iconName)
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={pathname.startsWith(item.href)}
+                        render={<Link href={item.href} />}
+                        tooltip={item.title}
+                      >
+                        <Icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })
               )}
             </SidebarMenu>
           </SidebarGroupContent>

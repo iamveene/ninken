@@ -142,7 +142,7 @@ export function useObjects(bucket: string, prefix?: string) {
     canDownload: data?.canDownload ?? true,
     loading,
     error,
-    accessDenied: error?.message?.includes("Access denied") || error?.message?.includes("403") || false,
+    accessDenied: error?.includes("Access denied") || error?.includes("403") || false,
     refetch,
   }
 }

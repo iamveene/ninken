@@ -1,19 +1,19 @@
 "use client"
 
-import { KeyRound, AlertCircle, Info } from "lucide-react"
-import { useAuditDelegation } from "@/hooks/use-audit"
+import { AppWindow, AlertCircle, Info } from "lucide-react"
+import { useAuditApps } from "@/hooks/use-audit"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function DelegationAuditPage() {
-  const { delegations, note, loading, error } = useAuditDelegation()
+export default function AppsAuditPage() {
+  const { apps, note, loading, error } = useAuditApps()
 
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold">Domain-Wide Delegation Audit</h1>
+        <h1 className="text-lg font-semibold">OAuth Apps Audit</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Service accounts with domain-wide delegation can impersonate any user. This is the highest-risk configuration in Google Workspace.
+          Third-party applications users have authorized with OAuth access to their data.
         </p>
       </div>
 
@@ -28,11 +28,11 @@ export default function DelegationAuditPage() {
           <CardContent className="flex items-center gap-3 py-4">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
             <div>
-              <p className="font-medium">Unable to load delegation data</p>
+              <p className="font-medium">Unable to load OAuth app data</p>
               <p className="text-sm text-muted-foreground">
-                {error.message?.includes("403") || error.message?.includes("Authorized")
-                  ? "Admin permissions and IAM API access are required to audit domain-wide delegation."
-                  : error.message}
+                {error.includes("403") || error.includes("Authorized")
+                  ? "Admin permissions are required to audit OAuth app grants across the organization."
+                  : error}
               </p>
             </div>
           </CardContent>
@@ -51,11 +51,11 @@ export default function DelegationAuditPage() {
             </Card>
           )}
 
-          {delegations.length === 0 && !note && (
+          {apps.length === 0 && !note && (
             <div className="flex flex-col items-center justify-center gap-3 py-20">
-              <KeyRound className="h-10 w-10 text-muted-foreground/50" />
-              <p className="text-lg font-medium">No domain-wide delegations found</p>
-              <p className="text-sm text-muted-foreground">No service accounts with domain-wide delegation were detected.</p>
+              <AppWindow className="h-10 w-10 text-muted-foreground/50" />
+              <p className="text-lg font-medium">No OAuth apps found</p>
+              <p className="text-sm text-muted-foreground">No third-party applications have been authorized.</p>
             </div>
           )}
         </>

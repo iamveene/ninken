@@ -4,15 +4,30 @@ import { AUTH_COOKIE_NAME } from "@/lib/auth"
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  // Check for multi-profile tokens cookie
-  const tokenCookie = request.cookies.get(AUTH_COOKIE_NAME)
+
+  // Check for new cookie format first, fallback to legacy
   let hasToken = false
-  if (tokenCookie?.value) {
+
+  const newTokenCookie = request.cookies.get("ninken_token")
+  if (newTokenCookie?.value) {
     try {
-      const parsed = JSON.parse(tokenCookie.value)
-      hasToken = Array.isArray(parsed) ? parsed.length > 0 : !!parsed
+      const parsed = JSON.parse(newTokenCookie.value)
+      hasToken = !!parsed?.provider && !!parsed?.credential
     } catch {
       hasToken = false
+    }
+  }
+
+  // Fallback: legacy cookie
+  if (!hasToken) {
+    const legacyCookie = request.cookies.get(AUTH_COOKIE_NAME)
+    if (legacyCookie?.value) {
+      try {
+        const parsed = JSON.parse(legacyCookie.value)
+        hasToken = Array.isArray(parsed) ? parsed.length > 0 : !!parsed
+      } catch {
+        hasToken = false
+      }
     }
   }
 
