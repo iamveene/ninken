@@ -52,11 +52,12 @@ export type StoredProfile = {
   addedAt: number
 }
 
-// What gets stored in the active-profile httpOnly cookie (minimal, server-readable)
-export type ActiveTokenCookie<C extends BaseCredential = BaseCredential> = {
-  provider: ProviderId
-  credential: C
-}
+// What gets stored in the active-profile httpOnly cookie (minimal, server-readable).
+// Direct mode: credential fits in the cookie.
+// Session mode: credential is server-side, cookie holds only a sessionId reference.
+export type ActiveTokenCookie =
+  | { provider: ProviderId; credential: BaseCredential }
+  | { provider: ProviderId; sessionId: string }
 
 // Nav item definition returned by providers
 export type ProviderNavItem = {

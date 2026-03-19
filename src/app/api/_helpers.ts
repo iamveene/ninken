@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { getTokenFromCookies, type TokenData } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { getProvider } from "@/lib/providers/registry"
+import { getSession } from "@/lib/session-store"
 import type {
   ProviderId,
   ActiveTokenCookie,
@@ -19,31 +20,25 @@ import "@/lib/providers"
  * Will be removed in Phase 1.
  */
 export async function getTokenFromRequest(): Promise<TokenData | null> {
-  const cookieStore = await cookies()
-
-  // Try new cookie format first
-  const newCookie = cookieStore.get("ninken_token")
-  if (newCookie?.value) {
-    try {
-      const parsed = JSON.parse(newCookie.value) as ActiveTokenCookie
-      if (parsed.provider === "google") {
-        const cred = parsed.credential as GoogleCredential
-        return {
-          token: cred.token,
-          refresh_token: cred.refresh_token,
-          client_id: cred.client_id,
-          client_secret: cred.client_secret,
-          token_uri: cred.token_uri,
-        }
+  // Try new cookie format first (delegates session resolution to getCredentialFromRequest)
+  const result = await getCredentialFromRequest()
+  if (result) {
+    if (result.provider === "google") {
+      const cred = result.credential as GoogleCredential
+      return {
+        token: cred.token,
+        refresh_token: cred.refresh_token,
+        client_id: cred.client_id,
+        client_secret: cred.client_secret,
+        token_uri: cred.token_uri,
       }
-      // Non-Google provider — Google API routes should 401
-      return null
-    } catch {
-      // Malformed new cookie — fall through to legacy
     }
+    // Non-Google provider — Google API routes should 401
+    return null
   }
 
   // Fallback to legacy cookie format
+  const cookieStore = await cookies()
   return getTokenFromCookies(cookieStore)
 }
 
@@ -66,6 +61,9 @@ export async function getGoogleAccessToken(): Promise<string | null> {
 
 /**
  * Generic credential reader — returns { provider, credential } for any provider.
+ * Supports two cookie modes:
+ *   - Direct: cookie contains { provider, credential }
+ *   - Session: cookie contains { provider, sessionId } and credential lives server-side
  */
 export async function getCredentialFromRequest(): Promise<{
   provider: ProviderId
@@ -77,7 +75,15 @@ export async function getCredentialFromRequest(): Promise<{
 
   try {
     const parsed = JSON.parse(newCookie.value) as ActiveTokenCookie
-    if (parsed.provider && parsed.credential) {
+    if (!parsed.provider) return null
+
+    // Session reference mode — resolve from server-side store
+    if ("sessionId" in parsed && parsed.sessionId) {
+      return getSession(parsed.sessionId)
+    }
+
+    // Direct mode — credential is in the cookie
+    if ("credential" in parsed && parsed.credential) {
       return { provider: parsed.provider, credential: parsed.credential }
     }
   } catch {
