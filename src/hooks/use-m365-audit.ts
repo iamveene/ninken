@@ -186,19 +186,92 @@ export function useRiskDetections(userId?: string) {
 // Conditional Access Policies
 // ---------------------------------------------------------------------------
 
+export type CAUserCondition = {
+  includeUsers?: string[]
+  excludeUsers?: string[]
+  includeGroups?: string[]
+  excludeGroups?: string[]
+  includeRoles?: string[]
+  excludeRoles?: string[]
+  includeGuestsOrExternalUsers?: Record<string, unknown>
+  excludeGuestsOrExternalUsers?: Record<string, unknown>
+}
+
+export type CAApplicationCondition = {
+  includeApplications?: string[]
+  excludeApplications?: string[]
+  includeUserActions?: string[]
+  includeAuthenticationContextClassReferences?: string[]
+}
+
+export type CAPlatformCondition = {
+  includePlatforms?: string[]
+  excludePlatforms?: string[]
+}
+
+export type CALocationCondition = {
+  includeLocations?: string[]
+  excludeLocations?: string[]
+}
+
+export type CAConditions = {
+  users?: CAUserCondition
+  applications?: CAApplicationCondition
+  platforms?: CAPlatformCondition
+  locations?: CALocationCondition
+  userRiskLevels?: string[]
+  signInRiskLevels?: string[]
+  clientAppTypes?: string[]
+  servicePrincipalRiskLevels?: string[]
+  devices?: Record<string, unknown>
+}
+
+export type CAGrantControls = {
+  operator?: string
+  builtInControls?: string[]
+  customAuthenticationFactors?: string[]
+  termsOfUse?: string[]
+  authenticationStrength?: {
+    id?: string
+    displayName?: string
+  }
+}
+
+export type CASessionControls = {
+  applicationEnforcedRestrictions?: { isEnabled?: boolean }
+  cloudAppSecurity?: { isEnabled?: boolean; cloudAppSecurityType?: string }
+  signInFrequency?: {
+    isEnabled?: boolean
+    value?: number
+    type?: string
+    frequencyInterval?: string
+    authenticationType?: string
+  }
+  persistentBrowser?: { isEnabled?: boolean; mode?: string }
+  continuousAccessEvaluation?: { mode?: string }
+  disableResilienceDefaults?: boolean
+}
+
 export type ConditionalAccessPolicy = {
   id: string
   displayName: string
   state: string
   createdDateTime: string
   modifiedDateTime: string
-  conditions: Record<string, unknown>
-  grantControls: {
-    operator?: string
-    builtInControls?: string[]
-    customAuthenticationFactors?: string[]
-  } | null
-  sessionControls: Record<string, unknown> | null
+  conditions: CAConditions
+  grantControls: CAGrantControls | null
+  sessionControls: CASessionControls | null
+}
+
+export type NamedLocation = {
+  id: string
+  displayName: string
+  isTrusted?: boolean
+}
+
+type ConditionalAccessData = {
+  policies: ConditionalAccessPolicy[]
+  namedLocations: NamedLocation[]
 }
 
 // ---------------------------------------------------------------------------
@@ -298,23 +371,32 @@ const { data, loading, error, refetch } = useCachedQuery<ResourcePivotResult>(
 // ---------------------------------------------------------------------------
 
 export function useConditionalAccessPolicies() {
-  const fetcher = useCallback(async (): Promise<ConditionalAccessPolicy[]> => {
+  const fetcher = useCallback(async (): Promise<ConditionalAccessData> => {
     const res = await fetch("/api/microsoft/audit/conditional-access")
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       throw new Error(data.error || `Failed to fetch conditional access policies (${res.status})`)
     }
     const json = await res.json()
-    return json.policies ?? []
+    return {
+      policies: json.policies ?? [],
+      namedLocations: json.namedLocations ?? [],
+    }
   }, [])
 
-  const { data, loading, error, refetch } = useCachedQuery<ConditionalAccessPolicy[]>(
+  const { data, loading, error, refetch } = useCachedQuery<ConditionalAccessData>(
     "m365-audit:conditional-access",
     fetcher,
     { ttlMs: CACHE_TTL_LIST }
   )
 
-  return { policies: data ?? [], loading, error, refetch }
+  return {
+    policies: data?.policies ?? [],
+    namedLocations: data?.namedLocations ?? [],
+    loading,
+    error,
+    refetch,
+  }
 }
 
 // ---------------------------------------------------------------------------
