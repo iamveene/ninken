@@ -24,7 +24,9 @@ const strategies: CredentialStrategy[] = [
 ]
 
 function strategyForKind(credential: BaseCredential) {
-  return strategies.find((s) => s.kind === credential.credentialKind)
+  // FOCI credentials use the same OAuth refresh flow as regular OAuth tokens
+  const kind = credential.credentialKind === "foci" ? "oauth" : credential.credentialKind
+  return strategies.find((s) => s.kind === kind)
 }
 
 export type ExtractedMicrosoftAccount = {
