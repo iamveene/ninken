@@ -184,8 +184,8 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 p-4">
-      <div className="w-full max-w-lg space-y-10">
+    <div className="flex min-h-screen items-start justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 p-4 pt-0">
+      <div className="w-full max-w-2xl space-y-10">
         <div className="flex flex-col items-center">
           <NinkenLogo
             className="text-center text-neutral-50"

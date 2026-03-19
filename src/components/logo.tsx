@@ -13,7 +13,11 @@ export function NinkenLogo({ className, tagline }: LogoProps) {
         alt="Ninken 忍犬"
         width={600}
         height={200}
-        className="w-full max-w-md h-auto"
+        className="w-full max-w-2xl h-auto"
+        style={{
+          maskImage: "radial-gradient(ellipse 70% 60% at center, black 40%, transparent 90%)",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 60% at center, black 40%, transparent 90%)",
+        }}
         priority
       />
       {tagline && (
