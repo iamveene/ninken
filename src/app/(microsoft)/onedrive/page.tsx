@@ -39,6 +39,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { CollectButton } from "@/components/collection/collect-button"
+import type { CollectParams } from "@/hooks/use-collect-action"
 import {
   useOneDriveFiles,
   useOneDriveSearch,
@@ -68,6 +70,24 @@ function formatFileSize(bytes?: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+}
+
+function collectParamsForItem(item: OneDriveItem): CollectParams {
+  return {
+    type: "file",
+    source: "onedrive",
+    title: item.name,
+    subtitle: item.lastModifiedBy?.user?.displayName,
+    sourceId: item.id,
+    downloadUrl: `/api/microsoft/drive/files/${item.id}/download`,
+    mimeType: item.file?.mimeType,
+    sizeBytes: item.size,
+    metadata: {
+      mimeType: item.file?.mimeType,
+      lastModifiedDateTime: item.lastModifiedDateTime,
+      webUrl: item.webUrl,
+    },
+  }
 }
 
 export default function OneDrivePage() {
@@ -278,13 +298,19 @@ export default function OneDrivePage() {
                 <div className="relative">
                   <Icon className={cn("h-10 w-10", color)} />
                   {!item.folder && (
-                    <button
-                      className="absolute -top-1 -right-3 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/20"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(item) }}
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </button>
+                    <div className="absolute -top-2 -right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <CollectButton
+                        variant="icon-xs"
+                        params={collectParamsForItem(item)}
+                      />
+                      <button
+                        className="p-0.5 rounded hover:bg-destructive/20"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(item) }}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </button>
+                    </div>
                   )}
                 </div>
                 <span className="text-sm font-medium truncate w-full text-center">{item.name}</span>
@@ -303,6 +329,7 @@ export default function OneDrivePage() {
               <TableHead>Modified</TableHead>
               <TableHead>Modified By</TableHead>
               <TableHead className="text-right">Size</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -330,6 +357,14 @@ export default function OneDrivePage() {
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
                     {item.folder ? `${item.folder.childCount} items` : formatFileSize(item.size) || "-"}
+                  </TableCell>
+                  <TableCell>
+                    {!item.folder && (
+                      <CollectButton
+                        variant="icon-xs"
+                        params={collectParamsForItem(item)}
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               )
