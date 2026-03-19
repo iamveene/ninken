@@ -392,6 +392,7 @@ export const microsoftProvider: ServiceProvider = {
 
 { id: "m365-audit-pivot", title: "Resource Pivot", href: "/m365-audit/pivot", iconName: "GitBranch" },
     { id: "m365-audit-query", title: "Query", href: "/m365-audit/query", iconName: "Search" },
+    { id: "m365-audit-foci", title: "FOCI Pivot", href: "/m365-audit/foci-pivot", iconName: "Shuffle" },
   ],
 
   scopeAppMap: {
