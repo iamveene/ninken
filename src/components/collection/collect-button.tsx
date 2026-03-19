@@ -3,7 +3,6 @@
 import { PackagePlus, Check, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useCollectAction, type CollectParams } from "@/hooks/use-collect-action"
 import { cn } from "@/lib/utils"
 
@@ -58,33 +57,27 @@ export function CollectButton({ params, variant = "icon", className }: CollectBu
   const size = variant === "icon-xs" ? "icon-xs" : "icon-sm"
 
   return (
-    <Tooltip>
-      <TooltipTrigger>
-        <Button
-          variant="ghost"
-          size={size}
-          className={cn(
-            collected
-              ? "text-green-600 dark:text-green-400"
-              : "hover:bg-accent",
-            className
-          )}
-          onClick={handleCollect}
-          disabled={loading || collected}
-          aria-label={collected ? "Already collected" : `Collect ${params.title}`}
-        >
-          {loading ? (
-            <Loader2 className="size-[18px] animate-spin" />
-          ) : collected ? (
-            <Check className="size-[18px]" />
-          ) : (
-            <PackagePlus className="size-[18px]" />
-          )}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        {collected ? "Already collected" : "Add to collection"}
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      variant="ghost"
+      size={size}
+      className={cn(
+        collected
+          ? "text-green-600 dark:text-green-400"
+          : "hover:bg-accent",
+        className
+      )}
+      onClick={handleCollect}
+      disabled={loading || collected}
+      aria-label={collected ? "Already collected" : `Collect ${params.title}`}
+      title={collected ? "Already collected" : "Add to collection"}
+    >
+      {loading ? (
+        <Loader2 className="size-[18px] animate-spin" />
+      ) : collected ? (
+        <Check className="size-[18px]" />
+      ) : (
+        <PackagePlus className="size-[18px]" />
+      )}
+    </Button>
   )
 }
