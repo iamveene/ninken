@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -32,15 +32,25 @@ export function ModeToggle() {
   const pathname = usePathname()
   const mode = getMode(pathname)
 
-  // Store current pathname for the active mode
+  // Resolve stored hrefs after hydration to avoid server/client mismatch
+  const [storedHrefs, setStoredHrefs] = useState<Record<Mode, string>>(DEFAULT_PATHS)
+
   useEffect(() => {
+    // Persist current pathname for the active mode
     sessionStorage.setItem(STORAGE_KEYS[mode], pathname)
+
+    // Read stored paths from sessionStorage (client-only)
+    setStoredHrefs({
+      operate: sessionStorage.getItem(STORAGE_KEYS.operate) || DEFAULT_PATHS.operate,
+      audit: sessionStorage.getItem(STORAGE_KEYS.audit) || DEFAULT_PATHS.audit,
+      collection: sessionStorage.getItem(STORAGE_KEYS.collection) || DEFAULT_PATHS.collection,
+      studio: sessionStorage.getItem(STORAGE_KEYS.studio) || DEFAULT_PATHS.studio,
+    })
   }, [mode, pathname])
 
   function getHref(target: Mode): string {
     if (target === mode) return pathname
-    if (typeof window === "undefined") return DEFAULT_PATHS[target]
-    return sessionStorage.getItem(STORAGE_KEYS[target]) || DEFAULT_PATHS[target]
+    return storedHrefs[target]
   }
 
   const modes: { id: Mode; label: string }[] = [
