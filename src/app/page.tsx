@@ -7,11 +7,8 @@ import {
   FileJson,
   CheckCircle,
   AlertCircle,
-  Shield,
-  Lock,
-  Zap,
   ClipboardPaste,
-  ArrowLeft,
+  ArrowRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
@@ -21,8 +18,6 @@ import type { ServiceProvider } from "@/lib/providers/types"
 import {
   addProfile,
   getAllProfiles,
-  getActiveProfileId,
-  setActiveProfileId,
 } from "@/lib/token-store"
 import { activateProfile, migrateFromCookies } from "@/lib/token-sync"
 
@@ -32,7 +27,7 @@ export default function AuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
+        <div className="flex h-dvh items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
           <div className="animate-pulse text-sm text-neutral-500">Loading...</div>
         </div>
       }
@@ -60,7 +55,6 @@ function AuthPageInner() {
 
   const providers = getAllProviders()
 
-  // On mount: check for legacy cookies and migrate
   useEffect(() => {
     async function init() {
       try {
@@ -69,7 +63,6 @@ function AuthPageInner() {
           const profiles = await getAllProfiles()
           if (profiles.length > 0) {
             setHasExistingProfiles(true)
-            // If ?add=true, stay on landing page for new service upload
             if (isAddMode) {
               setMigrating(false)
               return
@@ -80,12 +73,10 @@ function AuthPageInner() {
           }
         }
 
-        // Also check if we already have profiles in IndexedDB
         const existing = await getAllProfiles()
         if (existing.length > 0) {
           setHasExistingProfiles(true)
           setExistingProfiles(existing.map((p) => ({ id: p.id, provider: p.provider, email: p.email })))
-          // If ?add=true, stay on landing page for new service upload
           if (isAddMode) {
             setMigrating(false)
             return
@@ -96,7 +87,7 @@ function AuthPageInner() {
           return
         }
       } catch {
-        // Non-critical — show landing page
+        // Non-critical
       }
       setMigrating(false)
     }
@@ -110,8 +101,6 @@ function AuthPageInner() {
 
       try {
         const data = JSON.parse(text)
-
-        // Auto-detect or use selected provider
         const provider = selectedProvider ?? detectProvider(data)
         if (!provider) {
           throw new Error(
@@ -120,30 +109,22 @@ function AuthPageInner() {
         }
 
         const result = provider.validateCredential(data)
-        if (!result.valid) {
-          throw new Error(result.error)
-        }
+        if (!result.valid) throw new Error(result.error)
 
-        // Store in encrypted IndexedDB
         const profile = await addProfile(
           provider.id,
           result.credential,
           result.email
         )
-
-        // Activate (sets server cookie)
         await activateProfile(profile.id)
 
-        // Try to fetch email if not already set
         if (!result.email && provider.emailEndpoint) {
           try {
             const profileRes = await fetch(provider.emailEndpoint)
             if (profileRes.ok) {
               const profileData = await profileRes.json()
               if (profileData.emailAddress) {
-                const { updateProfileEmail } = await import(
-                  "@/lib/token-store"
-                )
+                const { updateProfileEmail } = await import("@/lib/token-store")
                 await updateProfileEmail(profile.id, profileData.emailAddress)
               }
             }
@@ -210,67 +191,73 @@ function AuthPageInner() {
 
   if (migrating) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
-        <div className="animate-pulse text-sm text-neutral-500">
-          Loading...
-        </div>
+      <div className="flex h-dvh items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
+        <div className="animate-pulse text-sm text-neutral-500">Loading...</div>
       </div>
     )
   }
 
+  // Coming-soon services (not yet implemented)
+  const comingSoon = (
+    [
+      { name: "GitHub", iconName: "Globe" },
+      { name: "Slack", iconName: "MessageSquare" },
+      { name: "AWS", iconName: "Globe" },
+    ] as const
+  ).filter((p) => !providers.some((r) => r.name === p.name))
+
   return (
-    <div className="flex min-h-screen items-start justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 p-4 pt-0">
-      <div className="w-full max-w-2xl space-y-10">
-        <div className="flex flex-col items-center">
-          <NinkenLogo
-            className="text-center text-neutral-50"
-          />
+    <div className="flex h-dvh flex-col items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900 px-4 overflow-hidden">
+      <div className="w-full max-w-2xl flex flex-col gap-5">
+        {/* Compact logo */}
+        <div className="flex justify-center">
+          <NinkenLogo className="text-center max-w-[360px]" />
         </div>
 
-        {/* Active sessions panel */}
+        {/* Active sessions — scrollable listbox */}
         {hasExistingProfiles && existingProfiles.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-center text-xs text-neutral-500 uppercase tracking-wider">
+          <div className="space-y-1.5">
+            <p className="text-center text-[10px] text-neutral-500 uppercase tracking-wider">
               Active sessions
             </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {existingProfiles.map((p) => {
-                const providerConfig = getProvider(p.provider as "google" | "microsoft")
-                if (!providerConfig) return null
-                const PIcon = resolveIcon(providerConfig.iconName)
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={async () => {
-                      await activateProfile(p.id)
-                      router.push(providerConfig.defaultRoute)
-                    }}
-                    className="flex items-center gap-2.5 rounded-md border border-neutral-700 bg-neutral-900/50 px-4 py-2.5 text-sm transition-colors hover:border-emerald-600/50 hover:bg-emerald-950/10 group"
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
-                      <PIcon className="h-3.5 w-3.5 text-emerald-500" />
-                    </span>
-                    <span className="flex flex-col items-start">
-                      <span className="text-xs font-medium text-neutral-200">{providerConfig.name}</span>
-                      <span className="text-[10px] text-neutral-500">{p.email || "Connected"}</span>
-                    </span>
-                    <ArrowLeft className="h-3 w-3 text-neutral-600 rotate-180 group-hover:text-emerald-500 transition-colors" />
-                  </button>
-                )
-              })}
+            <div className="mx-auto max-w-sm rounded border border-neutral-800 bg-neutral-900/40 overflow-hidden">
+              <div className="max-h-[120px] overflow-y-auto">
+                {existingProfiles.map((p, i) => {
+                  const providerConfig = getProvider(p.provider as "google" | "microsoft")
+                  if (!providerConfig) return null
+                  const PIcon = resolveIcon(providerConfig.iconName)
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={async () => {
+                        await activateProfile(p.id)
+                        router.push(providerConfig.defaultRoute)
+                      }}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-emerald-950/15 group ${
+                        i > 0 ? "border-t border-neutral-800/60" : ""
+                      }`}
+                    >
+                      <PIcon className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                      <span className="flex-1 truncate text-xs text-neutral-300">
+                        {p.email || providerConfig.name}
+                      </span>
+                      <span className="text-[10px] text-neutral-600">{providerConfig.name}</span>
+                      <ArrowRight className="h-3 w-3 shrink-0 text-neutral-600 group-hover:text-emerald-500 transition-colors" />
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Service grid */}
-        <div className="space-y-4">
-          <p className="text-center text-xs text-neutral-500 uppercase tracking-wider">
-            {hasExistingProfiles
-              ? "Add another service"
-              : "Select a service or drop any credential"}
+        {/* Service grid — compact single row */}
+        <div className="space-y-1.5">
+          <p className="text-center text-[10px] text-neutral-500 uppercase tracking-wider">
+            {hasExistingProfiles ? "Add another service" : "Select a service"}
           </p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex justify-center gap-2">
             {providers.map((p) => {
               const Icon = resolveIcon(p.iconName)
               const isSelected = selectedProvider?.id === p.id
@@ -278,182 +265,147 @@ function AuthPageInner() {
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() =>
-                    setSelectedProvider(isSelected ? null : p)
-                  }
-                  className={`flex flex-col items-center gap-2 rounded-md border p-4 transition-all text-center ${
+                  onClick={() => setSelectedProvider(isSelected ? null : p)}
+                  className={`flex items-center gap-2 rounded border px-4 py-2 transition-all ${
                     isSelected
-                      ? "border-red-600 bg-red-950/20 shadow-[0_0_15px_rgba(220,38,38,0.15)]"
+                      ? "border-red-600 bg-red-950/20 shadow-[0_0_12px_rgba(220,38,38,0.15)]"
                       : "border-neutral-800 bg-neutral-900/50 hover:border-neutral-600"
                   }`}
                 >
-                  <Icon className="h-6 w-6 text-neutral-400" />
-                  <span className="text-xs font-medium text-neutral-300">
-                    {p.name}
-                  </span>
+                  <Icon className="h-4 w-4 text-neutral-400" />
+                  <span className="text-xs font-medium text-neutral-300">{p.name}</span>
                 </button>
               )
             })}
-            {/* Coming soon placeholders */}
-            {(
-              [
-                { name: "Microsoft 365", iconName: "Monitor" },
-                { name: "GitHub", iconName: "Globe" },
-                { name: "Slack", iconName: "MessageSquare" },
-                { name: "AWS", iconName: "Globe" },
-              ] as const
-            )
-              .filter((p) => !providers.some((r) => r.name === p.name))
-              .map((p) => {
-                const Icon = resolveIcon(p.iconName)
-                return (
-                  <div
-                    key={p.name}
-                    className="flex flex-col items-center gap-2 rounded-md border border-neutral-800/50 p-4 opacity-40"
-                  >
-                    <Icon className="h-6 w-6 text-neutral-600" />
-                    <span className="text-xs text-neutral-600">{p.name}</span>
-                    <span className="text-[10px] text-neutral-700">
-                      Coming soon
-                    </span>
-                  </div>
-                )
-              })}
+            {comingSoon.map((p) => {
+              const Icon = resolveIcon(p.iconName)
+              return (
+                <div
+                  key={p.name}
+                  className="flex items-center gap-2 rounded border border-neutral-800/40 px-4 py-2 opacity-30"
+                >
+                  <Icon className="h-4 w-4 text-neutral-600" />
+                  <span className="text-xs text-neutral-600">{p.name}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
 
-        {/* Upload zone */}
-        <div className="space-y-4">
-          <div
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            className={`relative flex flex-col items-center justify-center gap-4 border p-8 transition-all cursor-pointer rounded-md ${
-              status === "dragging"
-                ? "border-red-600 bg-red-950/20 shadow-[0_0_20px_rgba(220,38,38,0.15)]"
-                : status === "success"
-                  ? "border-emerald-500/50 bg-emerald-500/5"
-                  : status === "error"
-                    ? "border-red-500/50 bg-red-500/5"
-                    : "border-neutral-700 bg-neutral-900/50 hover:border-neutral-600 hover:shadow-[0_0_15px_rgba(220,38,38,0.08)]"
-            }`}
-            onClick={() => document.getElementById("file-input")?.click()}
-          >
-            <input
-              id="file-input"
-              type="file"
-              accept=".json,application/json"
-              className="hidden"
-              onChange={onFileSelect}
-            />
+        {/* Upload zone — compact */}
+        <div
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          className={`relative flex items-center justify-center gap-3 border rounded px-6 py-5 transition-all cursor-pointer ${
+            status === "dragging"
+              ? "border-red-600 bg-red-950/20 shadow-[0_0_20px_rgba(220,38,38,0.15)]"
+              : status === "success"
+                ? "border-emerald-500/50 bg-emerald-500/5"
+                : status === "error"
+                  ? "border-red-500/50 bg-red-500/5"
+                  : "border-neutral-700 bg-neutral-900/50 hover:border-neutral-600 hover:shadow-[0_0_15px_rgba(220,38,38,0.08)]"
+          }`}
+          onClick={() => document.getElementById("file-input")?.click()}
+        >
+          <input
+            id="file-input"
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={onFileSelect}
+          />
 
-            {status === "success" ? (
-              <>
-                <CheckCircle className="h-10 w-10 text-emerald-400" />
-                <p className="text-sm text-emerald-400">
-                  Authenticated. Redirecting...
-                </p>
-              </>
-            ) : status === "error" ? (
-              <>
-                <AlertCircle className="h-10 w-10 text-red-400" />
-                <p className="text-sm text-red-400">{errorMessage}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-neutral-600 text-neutral-300 hover:bg-neutral-800"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setStatus("idle")
-                    setErrorMessage("")
-                  }}
-                >
-                  Try again
-                </Button>
-              </>
-            ) : status === "validating" ? (
-              <>
-                <FileJson className="h-10 w-10 text-neutral-400 animate-pulse" />
-                <p className="text-sm text-neutral-400">Validating...</p>
-              </>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-neutral-500" />
-                <div className="text-center space-y-1">
-                  <p className="text-sm font-medium text-neutral-300">
-                    {selectedProvider
-                      ? `Drop your ${selectedProvider.name} credential`
-                      : "Drag and drop any credential"}
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {selectedProvider
-                      ? selectedProvider.description
-                      : "Auto-detects service from credential format"}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setShowPaste(!showPaste)
-                if (status === "error") {
+          {status === "success" ? (
+            <>
+              <CheckCircle className="h-6 w-6 text-emerald-400" />
+              <p className="text-sm text-emerald-400">Authenticated. Redirecting...</p>
+            </>
+          ) : status === "error" ? (
+            <>
+              <AlertCircle className="h-6 w-6 text-red-400" />
+              <p className="text-sm text-red-400">{errorMessage}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neutral-600 text-neutral-300 hover:bg-neutral-800"
+                onClick={(e) => {
+                  e.stopPropagation()
                   setStatus("idle")
                   setErrorMessage("")
-                }
-              }}
-              className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
-            >
-              <ClipboardPaste className="h-3 w-3" />
-              {showPaste ? "Hide paste option" : "Or paste your credential JSON"}
-            </button>
-          </div>
-
-          {showPaste && (
-            <div className="space-y-3">
-              <textarea
-                value={pasteValue}
-                onChange={(e) => setPasteValue(e.target.value)}
-                placeholder='{"refresh_token": "...", "client_id": "...", "client_secret": "..."}'
-                spellCheck={false}
-                className="w-full h-32 rounded-md border border-neutral-700 bg-neutral-900/50 p-3 font-mono text-xs text-neutral-300 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-900/50 resize-none"
-              />
-              <Button
-                size="sm"
-                disabled={!pasteValue.trim() || status === "validating"}
-                onClick={handlePasteSubmit}
-                className="w-full bg-red-700 text-white hover:bg-red-600 disabled:opacity-40"
+                }}
               >
-                {status === "validating" ? "Validating..." : "Authenticate"}
+                Retry
               </Button>
-            </div>
+            </>
+          ) : status === "validating" ? (
+            <>
+              <FileJson className="h-6 w-6 text-neutral-400 animate-pulse" />
+              <p className="text-sm text-neutral-400">Validating...</p>
+            </>
+          ) : (
+            <>
+              <Upload className="h-6 w-6 text-neutral-500" />
+              <div className="text-left">
+                <p className="text-sm font-medium text-neutral-300">
+                  {selectedProvider
+                    ? `Drop your ${selectedProvider.name} credential`
+                    : "Drag and drop any credential"}
+                </p>
+                <p className="text-[11px] text-neutral-500">
+                  {selectedProvider ? selectedProvider.description : "Auto-detects service from credential format"}
+                </p>
+              </div>
+            </>
           )}
-
-          <div className="mt-8 space-y-3">
-            <div className="flex items-start gap-3">
-              <Shield className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">
-                Perpetual access — your token auto-renews silently
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">
-                Secure — credentials encrypted in browser, never sent to third
-                parties
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-500" />
-              <p className="text-xs text-neutral-500">
-                Instant — no browser redirects, pure API access
-              </p>
-            </div>
-          </div>
         </div>
+
+        {/* Paste toggle + paste area */}
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setShowPaste(!showPaste)
+              if (status === "error") {
+                setStatus("idle")
+                setErrorMessage("")
+              }
+            }}
+            className="inline-flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-neutral-300 transition-colors"
+          >
+            <ClipboardPaste className="h-3 w-3" />
+            {showPaste ? "Hide paste" : "Or paste credential JSON"}
+          </button>
+        </div>
+
+        {showPaste && (
+          <div className="space-y-2">
+            <textarea
+              value={pasteValue}
+              onChange={(e) => setPasteValue(e.target.value)}
+              placeholder='{"refresh_token": "...", "client_id": "...", "client_secret": "..."}'
+              spellCheck={false}
+              className="w-full h-24 rounded border border-neutral-700 bg-neutral-900/50 p-2.5 font-mono text-xs text-neutral-300 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-900/50 resize-none"
+            />
+            <Button
+              size="sm"
+              disabled={!pasteValue.trim() || status === "validating"}
+              onClick={handlePasteSubmit}
+              className="w-full bg-red-700 text-white hover:bg-red-600 disabled:opacity-40"
+            >
+              {status === "validating" ? "Validating..." : "Authenticate"}
+            </Button>
+          </div>
+        )}
+
+        {/* Footer — inline security badges */}
+        {!showPaste && (
+          <div className="flex justify-center gap-6 text-[10px] text-neutral-500">
+            <span>Perpetual access</span>
+            <span>Encrypted in-browser</span>
+            <span>Pure API — no browser traces</span>
+          </div>
+        )}
       </div>
     </div>
   )
