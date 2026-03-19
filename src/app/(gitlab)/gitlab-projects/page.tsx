@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useGitLabProjects } from "@/hooks/use-gitlab"
 import { ExportButton } from "@/components/layout/export-button"
 import { ServiceError } from "@/components/ui/service-error"
@@ -24,6 +25,7 @@ import {
   Lock,
   Globe,
   Archive,
+  ExternalLink,
 } from "lucide-react"
 
 export default function GitLabProjectsPage() {
@@ -125,14 +127,24 @@ export default function GitLabProjectsPage() {
                 <TableRow key={`project-${project.id}-${project.pathWithNamespace}`}>
                   <TableCell className="max-w-[300px]">
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      <a
-                        href={project.webUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary hover:underline truncate block"
-                      >
-                        {project.pathWithNamespace}
-                      </a>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Link
+                          href={`/gitlab-projects/${project.id}?ref=${project.defaultBranch || "main"}`}
+                          className="text-xs font-medium text-primary hover:underline truncate block"
+                        >
+                          {project.pathWithNamespace}
+                        </Link>
+                        <a
+                          href={project.webUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-foreground shrink-0"
+                          title="Open in GitLab"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
                       {project.description && (
                         <p className="text-[10px] text-muted-foreground line-clamp-1">
                           {project.description}
