@@ -13,6 +13,7 @@ import { resolveIcon } from "@/lib/icon-resolver"
 import { studioNavItems } from "@/lib/studio/nav"
 import { collectionNavItems } from "@/lib/collection/nav"
 import { useSidebarSlot } from "@/components/sidebar-slot"
+import type { ProviderId } from "@/lib/providers/types"
 import "@/lib/providers"
 
 import {
@@ -40,6 +41,44 @@ import {
 import Image from "next/image"
 import { NinkenIcon } from "@/components/ninken-icon"
 
+/**
+ * Detect which provider owns the current route group based on URL pathname.
+ * Returns null for provider-agnostic routes (studio, collection, alerts)
+ * where the active profile's provider should be used instead.
+ */
+const ROUTE_PROVIDER_MAP: [string, ProviderId][] = [
+  // Google routes
+  ["/gmail", "google"],
+  ["/drive", "google"],
+  ["/buckets", "google"],
+  ["/calendar", "google"],
+  ["/directory", "google"],
+  ["/chat", "google"],
+  ["/dashboard", "google"],
+  ["/audit", "google"],
+  // Microsoft routes
+  ["/outlook", "microsoft"],
+  ["/onedrive", "microsoft"],
+  ["/teams", "microsoft"],
+  ["/entra", "microsoft"],
+  ["/m365-dashboard", "microsoft"],
+  ["/m365-audit", "microsoft"],
+  // Slack routes
+  ["/channels", "slack"],
+  ["/slack-dashboard", "slack"],
+  ["/slack-files", "slack"],
+  ["/slack-users", "slack"],
+]
+
+function getProviderFromPathname(pathname: string): ProviderId | null {
+  for (const [prefix, providerId] of ROUTE_PROVIDER_MAP) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/") || pathname.startsWith(prefix + "?")) {
+      return providerId
+    }
+  }
+  return null
+}
+
 type Mode = "operate" | "audit" | "collection" | "studio"
 
 function getMode(pathname: string): Mode {
@@ -65,11 +104,14 @@ export function AppSidebar() {
   const router = useRouter()
   const { hasApp, loading } = useScopes()
   const { toggleSidebar } = useSidebar()
-  const { provider } = useProvider()
+  const { provider: activeProvider } = useProvider()
   const mode = getMode(pathname)
 
   const { content: sidebarSlotContent } = useSidebarSlot()
 
+  // Use the route group's provider for nav items, falling back to active profile
+  const routeProvider = getProviderFromPathname(pathname)
+  const provider = routeProvider ?? activeProvider
   const providerConfig = getProvider(provider)
   const operateNavItems = providerConfig?.operateNavItems ?? []
   const auditNavItems = providerConfig?.auditNavItems ?? []
@@ -177,10 +219,7 @@ export function AppSidebar() {
                     <DropdownMenuLabel>Switch Service</DropdownMenuLabel>
                     <DropdownMenuItem
                       className="gap-2"
-                      onClick={() => {
-                        const dashRoute = provider === "google" ? "/dashboard" : "/m365-dashboard"
-                        router.push(dashRoute)
-                      }}
+                      onClick={() => router.push(dashboardRoute)}
                     >
                       <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="text-xs">Dashboard</span>
