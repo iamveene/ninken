@@ -13,6 +13,7 @@ import type {
 // Ensure providers are registered
 import "@/lib/providers"
 
+/** @deprecated Use getGoogleAccessToken() or getCredentialFromRequest() instead */
 export async function getTokenFromRequest(): Promise<TokenData | null> {
   const cookieStore = await cookies()
 
@@ -40,6 +41,22 @@ export async function getTokenFromRequest(): Promise<TokenData | null> {
 
   // Fallback to legacy cookie format
   return getTokenFromCookies(cookieStore)
+}
+
+/**
+ * Get a fresh Google access token from the request cookie.
+ * Returns the bearer token string, or null if not authenticated as Google.
+ */
+export async function getGoogleAccessToken(): Promise<string | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "google") return null
+  const provider = getProvider("google")
+  if (!provider) return null
+  try {
+    return await provider.getAccessToken(result.credential)
+  } catch {
+    return null
+  }
 }
 
 /**

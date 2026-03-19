@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { createStorageService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../../../../_helpers"
+import { createStorageServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../../../../_helpers"
 
 export async function GET(
   request: Request,
   ctx: RouteContext<"/api/gcp/buckets/[name]/objects/metadata">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { name } = await ctx.params
@@ -15,7 +15,7 @@ export async function GET(
     const path = searchParams.get("path")
     if (!path) return badRequest("Missing required query parameter: path")
 
-    const storage = createStorageService(token)
+    const storage = createStorageServiceFromToken(accessToken)
     const res = await storage.objects.get({ bucket: name, object: path })
 
     return NextResponse.json(res.data)

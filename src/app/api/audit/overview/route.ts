@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
-import { createGmailService, createDriveService, createCalendarService, createStorageService, createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "@/app/api/_helpers"
-import { OAuth2Client } from "google-auth-library"
+import { createGmailServiceFromToken, createDriveServiceFromToken, createCalendarServiceFromToken, createStorageServiceFromToken, createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "@/app/api/_helpers"
 
 /**
  * GET /api/audit/overview
@@ -10,18 +9,11 @@ import { OAuth2Client } from "google-auth-library"
  * No admin permissions required — this audits from the token owner's perspective.
  */
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     // Get token scopes
-    const oauth2Client = new OAuth2Client(token.client_id, token.client_secret)
-    oauth2Client.setCredentials({
-      access_token: token.token,
-      refresh_token: token.refresh_token,
-    })
-    const { credentials } = await oauth2Client.refreshAccessToken()
-    const accessToken = credentials.access_token
     const tokenInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`)
     const tokenInfo = tokenInfoRes.ok ? await tokenInfoRes.json() : {}
     const scopes = (tokenInfo.scope || "").split(" ").filter(Boolean)
@@ -31,7 +23,7 @@ export async function GET() {
     const [gmailResult, driveResult, calendarResult, storageResult, directoryResult] = await Promise.allSettled([
       // Gmail: profile + message count
       (async () => {
-        const gmail = createGmailService(token)
+        const gmail = createGmailServiceFromToken(accessToken)
         const profile = await gmail.users.getProfile({ userId: "me" })
         const labels = await gmail.users.labels.list({ userId: "me" })
         return {
@@ -44,7 +36,7 @@ export async function GET() {
       })(),
       // Drive: file count + shared drives
       (async () => {
-        const drive = createDriveService(token)
+        const drive = createDriveServiceFromToken(accessToken)
         const files = await drive.files.list({ pageSize: 1, q: "trashed = false", fields: "nextPageToken", supportsAllDrives: true })
         const shared = await drive.drives.list({ pageSize: 100, fields: "drives(id)" })
         return {
@@ -55,7 +47,7 @@ export async function GET() {
       })(),
       // Calendar: calendar count
       (async () => {
-        const cal = createCalendarService(token)
+        const cal = createCalendarServiceFromToken(accessToken)
         const calendars = await cal.calendarList.list()
         return {
           accessible: true,
@@ -64,7 +56,7 @@ export async function GET() {
       })(),
       // GCP Storage: project + bucket counts
       (async () => {
-        const storage = createStorageService(token)
+        const storage = createStorageServiceFromToken(accessToken)
         // We can't list projects without resource manager, so use the projects API
         const crmRes = await fetch("https://cloudresourcemanager.googleapis.com/v1/projects?pageSize=1000", {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -93,7 +85,7 @@ export async function GET() {
       })(),
       // Directory: try to list users (admin only)
       (async () => {
-        const admin = createDirectoryService(token)
+        const admin = createDirectoryServiceFromToken(accessToken)
         const res = await admin.users.list({ customer: "my_customer", maxResults: 1, projection: "basic" })
         return {
           accessible: true,

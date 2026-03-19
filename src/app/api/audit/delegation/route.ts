@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { getTokenFromRequest, unauthorized } from "../../_helpers"
+import { getGoogleAccessToken, unauthorized } from "../../_helpers"
 
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   // Domain-wide delegation is managed through the GCP IAM API,
   // not the Google Admin SDK. This placeholder will be replaced

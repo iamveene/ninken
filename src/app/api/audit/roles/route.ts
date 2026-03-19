@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
 
     const [rolesRes, assignmentsRes] = await Promise.all([
       admin.roles.list({ customer: "my_customer" }),
