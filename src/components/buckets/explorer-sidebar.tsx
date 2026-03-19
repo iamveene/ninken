@@ -203,11 +203,14 @@ function ProjectNode({
             </div>
           ) : (
             (() => {
-              const readable = buckets.filter((b) => b.readable !== false)
+              // Downloadable buckets at top, then browse-only, then no-access at bottom
+              const downloadable = buckets.filter((b) => b.readable !== false && b.downloadable !== false)
+              const browseOnly = buckets.filter((b) => b.readable !== false && b.downloadable === false)
               const unreadable = buckets.filter((b) => b.readable === false)
+              const denied = [...browseOnly, ...unreadable]
               return (
                 <>
-                  {readable.map((bucket) => {
+                  {downloadable.map((bucket) => {
                     const isSelected = selectedBucket?.name === bucket.name
                     return (
                       <button
@@ -229,23 +232,24 @@ function ProjectNode({
                       </button>
                     )
                   })}
-                  {unreadable.length > 0 && (
+                  {denied.length > 0 && (
                     <>
-                      {readable.length > 0 && (
+                      {downloadable.length > 0 && (
                         <div className="px-2 pt-2 pb-0.5">
                           <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">
-                            No read access
+                            No download access
                           </p>
                         </div>
                       )}
-                      {unreadable.map((bucket) => (
-                        <div
+                      {denied.map((bucket) => (
+                        <button
                           key={bucket.name}
-                          className="flex w-full items-center gap-1.5 px-2 py-1.5 text-sm opacity-40 cursor-not-allowed mx-1"
+                          className="flex w-full items-center gap-1.5 px-2 py-1.5 text-sm opacity-40 transition-colors rounded-sm mx-1 hover:bg-muted/30 cursor-pointer"
+                          onClick={() => onSelectBucket(bucket, project.projectId)}
                         >
                           <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />
                           <span className="truncate text-muted-foreground">{bucket.name}</span>
-                        </div>
+                        </button>
                       ))}
                     </>
                   )}

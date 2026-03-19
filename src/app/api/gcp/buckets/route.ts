@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const res = await storage.buckets.list({ project })
     const buckets = res.data.items || []
 
-    // Check which buckets have objects and whether we can read them
+    // Check which buckets have objects, are readable, and are downloadable
     const objectChecks = await Promise.allSettled(
       buckets.map(async (bucket) => {
         try {
@@ -23,22 +23,36 @@ export async function GET(request: Request) {
             bucket: bucket.name!,
             maxResults: 1,
           })
-          const hasObjects = (objRes.data.items?.length ?? 0) > 0
-          return { ...bucket, hasObjects, readable: true }
+          const items = objRes.data.items || []
+          const hasObjects = items.length > 0
+
+          // If there are objects, probe download access by trying to get metadata
+          let downloadable = true
+          if (hasObjects) {
+            try {
+              await storage.objects.get({ bucket: bucket.name!, object: items[0].name! })
+            } catch (dlErr) {
+              const dlCode = dlErr && typeof dlErr === "object" && "code" in dlErr ? (dlErr as { code: number }).code : 0
+              if (dlCode === 403) downloadable = false
+            }
+          }
+
+          return { ...bucket, hasObjects, readable: true, downloadable }
         } catch (err) {
           const code = err && typeof err === "object" && "code" in err ? (err as { code: number }).code : 0
-          // 403 = we can see the bucket but can't read its objects
-          return { ...bucket, hasObjects: false, readable: code !== 403 }
+          return { ...bucket, hasObjects: false, readable: code !== 403, downloadable: false }
         }
       })
     )
 
     const enriched = objectChecks.map((result) =>
-      result.status === "fulfilled" ? result.value : { hasObjects: false, readable: false }
+      result.status === "fulfilled" ? result.value : { hasObjects: false, readable: false, downloadable: false }
     )
 
-    // Sort: readable with objects first, readable empty, then unreadable
+    // Sort: downloadable first, then readable-only, then unreadable
     enriched.sort((a, b) => {
+      if (a.downloadable && !b.downloadable) return -1
+      if (!a.downloadable && b.downloadable) return 1
       if (a.readable && !b.readable) return -1
       if (!a.readable && b.readable) return 1
       if (a.hasObjects && !b.hasObjects) return -1

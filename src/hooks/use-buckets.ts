@@ -62,6 +62,7 @@ export type Bucket = {
   selfLink?: string
   hasObjects?: boolean
   readable?: boolean
+  downloadable?: boolean
 }
 
 export type StorageObject = {
