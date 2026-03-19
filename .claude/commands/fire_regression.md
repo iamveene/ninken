@@ -24,14 +24,28 @@ Launch ONE frontend agent that tests ALL providers sequentially. **Do NOT launch
 
 **IMPORTANT**: Load chrome tools with ToolSearch first. Start with `tabs_context_mcp`, create ONE tab, use it throughout.
 
+### Pre-Test: Auto-Import Tokens from secrets/ Folder
+
+Before testing, ensure all tokens are loaded. If the landing page shows no "Active sessions", import tokens automatically:
+
+1. Navigate to `http://localhost:4000/?add=true`
+2. Check if "Active sessions" section exists with loaded profiles
+3. If NO profiles loaded, import each credential from `secrets/` folder:
+   - **Google**: Read `secrets/google/token.json`, click paste toggle, paste JSON into textarea, click Authenticate, wait for redirect
+   - **Microsoft**: Read `secrets/microsoft/token.json`, extract minimal fields `{ platform, refresh_token, client_id, tenant_id, foci }`, navigate back to `/?add=true`, paste, authenticate
+   - **GitHub**: Read `secrets/github/pat.json`, paste, authenticate
+   - **Slack**: Read `secrets/slack/session.json` — NOTE: Slack d_cookie requires bootstrap. Try import; if it fails with "Missing xoxc_token", skip Slack testing and document as known limitation
+4. After importing, navigate to `/?add=true` and verify all available profiles appear in "Active sessions"
+
 ### Testing Sequence:
 
 ```
-1. Test Landing Page (no profile switch needed)
+0. Auto-import tokens if needed (see above)
+1. Test Landing Page (verify active sessions, service buttons)
 2. Switch to Google profile → Test ALL Google pages
 3. Switch to Microsoft profile → Test ALL Microsoft pages
 4. Switch to GitHub profile → Test ALL GitHub pages
-5. Switch to Slack profile → Test ALL Slack pages
+5. Switch to Slack profile → Test ALL Slack pages (if token loaded)
 6. Test Studio pages (provider-agnostic, any profile)
 7. Test Collection + Alerts pages
 ```

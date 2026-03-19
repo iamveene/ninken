@@ -419,6 +419,7 @@ All modules will support:
 |-----|----------|--------|-------------|
 | **Sign out button does not work** | High | Fixed | Was only clearing server cookie, not IndexedDB profiles. Fixed by adding `clearAllProfiles()` call in `handleSignOut` in `app-sidebar.tsx`. |
 | **Horizontal overflow on responsive views** | Medium | Fixed | Added `overflow-x-hidden` to html element (`globals.css`) and `SidebarInset` (`(google)/layout.tsx`), plus `min-w-0` on content areas. |
+| **Slack d_cookie import requires manual bootstrap** | Medium | Open | When a user pastes a Slack `d_cookie` credential, the landing page shows "Missing xoxc_token — credential must be bootstrapped before validation". The d_cookie must first be sent to `/api/slack/bootstrap` to extract the xoxc token, but this step is not automated in the import flow. **Fix needed**: The landing page should automatically call `/api/slack/bootstrap` when it detects a Slack d_cookie credential, extract the xoxc token, and then proceed with normal validation — all transparent to the user. |
 
 ## Dual-Mode Architecture: Operate & Audit
 
