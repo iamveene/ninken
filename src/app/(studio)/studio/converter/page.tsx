@@ -101,15 +101,23 @@ export default function TokenConverterPage() {
 
           <div className="space-y-1.5 max-h-[60vh] overflow-y-auto">
             {sortedClients.map((client) => (
-              <button
+              <div
                 key={client.clientId}
+                role="button"
+                tabIndex={0}
                 className={cn(
-                  "w-full flex items-start gap-3 rounded border px-3 py-2 text-left transition-colors",
+                  "w-full flex items-start gap-3 rounded border px-3 py-2 text-left transition-colors cursor-pointer",
                   selectedClient === client.clientId
                     ? "border-primary/50 bg-primary/5"
                     : "border-border/30 bg-black/10 hover:border-border/60"
                 )}
                 onClick={() => setSelectedClient(client.clientId)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    setSelectedClient(client.clientId)
+                  }
+                }}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -152,7 +160,7 @@ export default function TokenConverterPage() {
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
