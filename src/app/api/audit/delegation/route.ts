@@ -14,6 +14,6 @@ export async function GET() {
       note: "Domain-wide delegation audit requires IAM API access. This will be implemented when GCP IAM integration is added.",
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

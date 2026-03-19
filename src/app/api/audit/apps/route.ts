@@ -15,6 +15,6 @@ export async function GET() {
       note: "Requires per-user token enumeration. A full OAuth app audit needs to iterate over all users and call tokens.list for each.",
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
