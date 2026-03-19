@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { getProvider } from "@/lib/providers/registry"
+import { storeSession } from "@/lib/session-store"
 import type {
   ProviderId,
   ActiveTokenCookie,
@@ -17,8 +18,12 @@ const COOKIE_OPTS = {
   maxAge: 60 * 60 * 24 * 30, // 30 days
 }
 
-// Max cookie payload ~4000 bytes (4096 limit minus header overhead)
-const MAX_COOKIE_SIZE = 4000
+/**
+ * Conservative cookie size threshold.
+ * Total cookie limit is ~4096 bytes including header overhead.
+ * If the direct payload exceeds this, fall back to a server-side session.
+ */
+const COOKIE_SIZE_THRESHOLD = 3800
 
 export const dynamic = "force-dynamic"
 
@@ -49,26 +54,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 })
   }
 
-  // Store only essential fields in the cookie to stay under 4KB limit
+  // Store only essential fields to minimise size
   const minimal = provider.minimalCredential(result.credential)
 
-  const tokenCookie: ActiveTokenCookie = {
+  // Two-tier storage: try direct cookie first, fall back to server-side session
+  const directPayload = JSON.stringify({
     provider: provider.id,
     credential: minimal,
-  }
+  } satisfies ActiveTokenCookie)
 
-  const payload = JSON.stringify(tokenCookie)
-  if (payload.length > MAX_COOKIE_SIZE) {
-    return NextResponse.json(
-      { error: `Credential too large for cookie (${payload.length} bytes). Max: ${MAX_COOKIE_SIZE}` },
-      { status: 400 }
-    )
+  let cookiePayload: string
+
+  if (directPayload.length < COOKIE_SIZE_THRESHOLD) {
+    // Direct mode — credential fits in the cookie
+    cookiePayload = directPayload
+  } else {
+    // Session mode — store credential server-side, cookie holds only a reference
+    const sessionId = storeSession(provider.id, minimal)
+    cookiePayload = JSON.stringify({
+      provider: provider.id,
+      sessionId,
+    } satisfies ActiveTokenCookie)
   }
 
   const cookieStore = await cookies()
 
   // httpOnly cookie — server-side token access for API routes
-  cookieStore.set("ninken_token", payload, COOKIE_OPTS)
+  cookieStore.set("ninken_token", cookiePayload, COOKIE_OPTS)
 
   // Non-httpOnly cookie — client can read which provider is active
   cookieStore.set("ninken_provider", provider.id, {
