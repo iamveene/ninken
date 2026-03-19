@@ -87,3 +87,7 @@ export function createChatServiceFromToken(accessToken: string) {
 export function createReportsServiceFromToken(accessToken: string) {
   return google.admin({ version: "reports_v1", auth: createBearerClient(accessToken) })
 }
+
+export function createAlertCenterServiceFromToken(accessToken: string) {
+  return google.alertcenter({ version: "v1beta1", auth: createBearerClient(accessToken) })
+}

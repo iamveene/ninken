@@ -192,6 +192,7 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
     { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
     { id: "audit-reports", title: "Admin Reports", href: "/audit/admin-reports", iconName: "FileText" },
+    { id: "audit-alert-center", title: "Alert Center", href: "/audit/alert-center", iconName: "Bell" },
   ],
 
   scopeAppMap: {
@@ -234,6 +235,10 @@ export const googleProvider: ServiceProvider = {
     "admin-reports": [
       "https://www.googleapis.com/auth/admin.reports.audit.readonly",
       "https://www.googleapis.com/auth/admin.reports.usage.readonly",
+    ],
+    "alert-center": [
+      "https://www.googleapis.com/auth/apps.alerts",
+      "https://www.googleapis.com/auth/apps.alerts.readonly",
     ],
   },
 
