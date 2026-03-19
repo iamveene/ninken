@@ -174,11 +174,12 @@ When no token is loaded, the landing page shows a grid of service cards instead 
 - Cards for unimplemented services (GitHub, GitLab, Slack, AWS) show "Coming soon" badge, still clickable for roadmap info. Google and Microsoft are live.
 
 **2. Sidebar — Service Overlay Navigation** *(implemented 2026-03-19)*
-The sidebar uses a contextual overlay pattern:
-- **Dashboard view** (default after auth): Sidebar shows flat list of all accessible services (Gmail, Drive, etc.)
-- **Service view** (e.g., on `/gmail`): Sidebar replaces its content with service-specific sub-navigation (Inbox, Starred, Sent, Drafts, Spam, Trash for Gmail). At the top: active service name + icon with a dropdown to switch to another service or back to Dashboard.
+The sidebar uses a contextual overlay pattern with two mechanisms:
+- **Dashboard view** (default after auth): Sidebar shows Dashboard (first item) + flat list of all accessible services.
+- **Service view** (e.g., on `/gmail`): Sidebar replaces its content with service-specific navigation. At the top: active service name + icon with a dropdown to switch to another service or back to Dashboard.
+- **Static sub-nav**: Provider defines `serviceSubNav: Record<string, ProviderNavItem[]>` for simple link-based navigation (Drive sections, Directory tabs).
+- **Dynamic sidebar slot** (`SidebarSlotContent`): Services with interactive sidebar content (Gmail labels with unread counts, Outlook folders, Calendar toggles, Chat space list, Bucket explorer) inject their full sidebar component into the main sidebar via React context. The page renders `<SidebarSlotContent>` which portals its children into the sidebar's content area. Slot content takes priority over static sub-nav.
 - **Service switcher**: Dropdown at top of sidebar lists Dashboard + all accessible services. Active service highlighted in primary color.
-- Each provider defines `serviceSubNav: Record<string, ProviderNavItem[]>` mapping service IDs to sub-items.
 - Audit/Studio/Collection modes keep their own nav items as before.
 
 **3. Service Landing Page / Dashboard** *(implemented 2026-03-19)*
