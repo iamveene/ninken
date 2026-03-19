@@ -3,6 +3,7 @@
 import { formatDistanceToNow } from "date-fns"
 import { ExternalLink, Mail, HardDrive, Calendar, Database, Cloud } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { CollectButton } from "@/components/collection/collect-button"
 import type { QueryResultItem, ServiceId } from "@/lib/audit/query-types"
 
 const SERVICE_ICONS: Record<ServiceId, typeof Mail> = {
@@ -57,16 +58,35 @@ export function ResultItem({ item }: ResultItemProps) {
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-start gap-2">
           <h4 className="text-sm font-medium truncate flex-1">{item.title}</h4>
-          {item.url && (
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
+          <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <CollectButton
+              variant="icon-xs"
+              params={{
+                type: "audit-finding",
+                source: "audit-query",
+                title: item.title,
+                subtitle: `Found in ${item.service}`,
+                sourceId: `query:${item.service}:${item.id}`,
+                metadata: {
+                  ...item.metadata,
+                  service: item.service,
+                  snippet: item.snippet,
+                  url: item.url,
+                  date: item.date,
+                },
+              }}
+            />
+            {item.url && (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
         </div>
 
         {item.snippet && (
