@@ -58,6 +58,15 @@ Landing page uses Tailwind `from-neutral-950 to-neutral-900` gradient (slightly 
 - **Sharp typography** — Geist Sans, proper hierarchy, no rounded bubbly fonts
 - **Subtle animations** — smooth but not playful. Fade, slide, no bounce
 
+### OPSEC & Stealth Principles
+Ninken is designed for zero-footprint reconnaissance. Every API interaction should leave the smallest possible trace.
+
+- **Silent reads** — API access does NOT mark messages as read. The Gmail API only removes the `UNREAD` label when explicitly requested via `messages.modify`. Ninken never does this automatically. The target's inbox looks untouched — no bold-to-read transitions, no unread count changes.
+- **No write-by-default** — All operations are read-only unless the operator explicitly chooses an action (reply, trash, label, etc.). Browsing is completely passive.
+- **Detection surface** — The only trace is in Google Workspace Admin Console audit logs (Reports > User activity > Token grants, API calls). Most orgs don't monitor these closely, but sophisticated SOCs may detect unusual API activity patterns.
+- **Token stealth** — Refresh tokens renew silently. No OAuth consent screens, no browser redirects, no re-authentication prompts on the target's end.
+- **Future: stealth indicators** — UI should surface OPSEC-relevant context: whether an action is read-only vs. leaves traces, audit log implications of each operation, time-since-last-API-call for rate limiting awareness.
+
 ## Overview
 
 **Ninken (忍犬)** is a universal red team data exploration platform. Red teamers paste or upload stolen credentials (OAuth tokens, PATs, API keys) and Ninken renders a full native-quality UI for that service — no need to touch the target's actual web UI.
