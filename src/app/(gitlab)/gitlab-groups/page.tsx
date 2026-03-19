@@ -90,10 +90,10 @@ export default function GitLabGroupsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">Group</TableHead>
-              <TableHead className="text-xs">Visibility</TableHead>
-              <TableHead className="text-xs">Parent</TableHead>
-              <TableHead className="text-xs">Created</TableHead>
+              <TableHead className="text-xs max-w-[300px]">Group</TableHead>
+              <TableHead className="text-xs w-[100px]">Visibility</TableHead>
+              <TableHead className="text-xs w-[100px]">Parent</TableHead>
+              <TableHead className="text-xs w-[100px]">Created</TableHead>
               <TableHead className="text-xs w-10" />
             </TableRow>
           </TableHeader>
@@ -117,13 +117,13 @@ export default function GitLabGroupsPage() {
             ) : (
               filtered.map((group) => (
                 <TableRow key={group.id}>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
+                  <TableCell className="max-w-[300px]">
+                    <div className="flex flex-col gap-0.5 min-w-0">
                       <a
                         href={group.webUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary hover:underline"
+                        className="text-xs font-medium text-primary hover:underline truncate block"
                       >
                         {group.fullPath}
                       </a>

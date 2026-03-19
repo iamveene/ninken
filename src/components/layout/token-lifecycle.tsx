@@ -69,25 +69,34 @@ export function TokenLifecycle() {
   }
 
   const scopeCount = tokenInfo.scopes?.length ?? 0
+  const isPat = tokenInfo.expiresIn === 0 || !tokenInfo.expiresIn
 
   return (
     <div className="group-data-[collapsible=icon]:hidden px-2 py-1.5 space-y-1">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", getDotColor(expiresIn))} />
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className={cn("text-xs font-mono tabular-nums", getStatusColor(expiresIn))}>
-            {formatCountdown(expiresIn)}
-          </span>
+          <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", isPat ? "bg-emerald-400" : getDotColor(expiresIn))} />
+          {isPat ? (
+            <span className="text-xs text-emerald-400">PAT active</span>
+          ) : (
+            <>
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <span className={cn("text-xs font-mono tabular-nums", getStatusColor(expiresIn))}>
+                {formatCountdown(expiresIn)}
+              </span>
+            </>
+          )}
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="p-0.5 rounded hover:bg-muted transition-colors disabled:opacity-50"
-          title="Refresh token"
-        >
-          <RefreshCw className={cn("h-3 w-3 text-muted-foreground", refreshing && "animate-spin")} />
-        </button>
+        {!isPat && (
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-0.5 rounded hover:bg-muted transition-colors disabled:opacity-50"
+            title="Refresh token"
+          >
+            <RefreshCw className={cn("h-3 w-3 text-muted-foreground", refreshing && "animate-spin")} />
+          </button>
+        )}
       </div>
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <Shield className="h-2.5 w-2.5" />

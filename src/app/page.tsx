@@ -263,9 +263,10 @@ const [showCapabilities, setShowCapabilities] = useState(false)
             const profileRes = await fetch(provider.emailEndpoint)
             if (profileRes.ok) {
               const profileData = await profileRes.json()
-              if (profileData.emailAddress) {
+              const resolvedEmail = profileData.emailAddress || profileData.email || profileData.login
+              if (resolvedEmail) {
                 const { updateProfileEmail } = await import("@/lib/token-store")
-                await updateProfileEmail(profile.id, profileData.emailAddress)
+                await updateProfileEmail(profile.id, resolvedEmail)
               }
             }
           } catch {

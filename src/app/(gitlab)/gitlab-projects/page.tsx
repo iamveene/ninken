@@ -29,7 +29,10 @@ import {
 export default function GitLabProjectsPage() {
   const [search, setSearch] = useState("")
   const [visibilityFilter, setVisibilityFilter] = useState<string>("all")
-  const { projects, loading, error, refetch } = useGitLabProjects()
+  const { projects: rawProjects, loading, error, refetch } = useGitLabProjects()
+
+  // Deduplicate projects by ID (GitLab can return same project via multiple group memberships)
+  const projects = rawProjects.filter((p, i, arr) => arr.findIndex((q) => q.id === p.id) === i)
 
   const filtered = projects.filter((p) => {
     const matchesSearch =
@@ -92,11 +95,11 @@ export default function GitLabProjectsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">Project</TableHead>
-              <TableHead className="text-xs">Visibility</TableHead>
-              <TableHead className="text-xs text-right">Stars</TableHead>
-              <TableHead className="text-xs text-right">Forks</TableHead>
-              <TableHead className="text-xs">Last Activity</TableHead>
+              <TableHead className="text-xs max-w-[300px]">Project</TableHead>
+              <TableHead className="text-xs w-[100px]">Visibility</TableHead>
+              <TableHead className="text-xs text-right w-[70px]">Stars</TableHead>
+              <TableHead className="text-xs text-right w-[70px]">Forks</TableHead>
+              <TableHead className="text-xs w-[100px]">Last Activity</TableHead>
               <TableHead className="text-xs w-10" />
             </TableRow>
           </TableHeader>
@@ -119,14 +122,14 @@ export default function GitLabProjectsPage() {
               </TableRow>
             ) : (
               filtered.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
+                <TableRow key={`project-${project.id}-${project.pathWithNamespace}`}>
+                  <TableCell className="max-w-[300px]">
+                    <div className="flex flex-col gap-0.5 min-w-0">
                       <a
                         href={project.webUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs font-medium text-primary hover:underline"
+                        className="text-xs font-medium text-primary hover:underline truncate block"
                       >
                         {project.pathWithNamespace}
                       </a>

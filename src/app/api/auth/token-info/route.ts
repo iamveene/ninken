@@ -41,6 +41,48 @@ export async function GET(request: Request) {
     }
   }
 
+  // PAT-based providers (GitHub, GitLab) — non-refreshable access tokens
+  if (cred.provider === "github" || cred.provider === "gitlab") {
+    try {
+      const scopes = await provider.fetchScopes(cred.credential)
+      return Response.json({
+        valid: true,
+        expiresIn: 0, // PATs don't have a fixed expiry countdown
+        scopes,
+        email: "",
+        issuedAt: Date.now(),
+        provider: cred.provider,
+      })
+    } catch {
+      return Response.json({
+        valid: false,
+        error: "Token validation failed",
+        provider: cred.provider,
+      })
+    }
+  }
+
+  // Slack — browser session tokens, non-refreshable
+  if (cred.provider === "slack") {
+    try {
+      const scopes = await provider.fetchScopes(cred.credential)
+      return Response.json({
+        valid: true,
+        expiresIn: 0,
+        scopes,
+        email: "",
+        issuedAt: Date.now(),
+        provider: "slack",
+      })
+    } catch {
+      return Response.json({
+        valid: false,
+        error: "Session validation failed",
+        provider: "slack",
+      })
+    }
+  }
+
   // Google path — uses provider.getAccessToken() for a fresh token
   try {
     let accessToken: string

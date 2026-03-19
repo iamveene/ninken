@@ -19,7 +19,6 @@ import {
   FileCode,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import type { CollectionItem } from "@/lib/collection-store"
@@ -117,29 +116,31 @@ export function CollectionItemCard({ item, onRemove, onRetry }: CollectionItemCa
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {item.status === "error" && (
           <Tooltip>
-            <TooltipTrigger>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => onRetry(item.id)}
-                className="hover:bg-accent"
-              >
-                <RotateCcw className="size-4" />
-              </Button>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  onClick={() => onRetry(item.id)}
+                  className="inline-flex items-center justify-center size-8 rounded-md hover:bg-accent transition-colors"
+                />
+              }
+            >
+              <RotateCcw className="size-4" />
             </TooltipTrigger>
             <TooltipContent>Retry download</TooltipContent>
           </Tooltip>
         )}
         <Tooltip>
-          <TooltipTrigger>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => onRemove(item.id)}
-              className="hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="size-4" />
-            </Button>
+          <TooltipTrigger
+            render={
+              <button
+                type="button"
+                onClick={() => onRemove(item.id)}
+                className="inline-flex items-center justify-center size-8 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
+              />
+            }
+          >
+            <Trash2 className="size-4" />
           </TooltipTrigger>
           <TooltipContent>Remove from collection</TooltipContent>
         </Tooltip>
