@@ -20,7 +20,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
 import { NinkenLogoCompact } from "@/components/logo"
 
 const navItems: { title: string; href: string; icon: typeof Mail; appId: AppId }[] = [
@@ -48,7 +47,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <button
           className="px-2 py-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -91,15 +90,17 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <CacheIndicator />
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-2"
-          onClick={handleSignOut}
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </Button>
+        <div className="group-data-[collapsible=icon]:hidden">
+          <CacheIndicator />
+        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
+              <LogOut />
+              <span>Sign out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )
