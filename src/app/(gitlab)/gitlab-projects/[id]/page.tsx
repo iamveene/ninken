@@ -357,24 +357,23 @@ export default function GitLabProjectDetailPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {!isFolder && (
-                        <CollectButton
-                          variant="icon-xs"
-                          params={{
-                            type: "file",
-                            source: "gitlab",
-                            title: item.name,
-                            subtitle: item.path,
-                            sourceId: `gitlab-tree-${projectId}-${item.path}`,
-                            metadata: {
-                              projectId: projectId?.toString(),
-                              path: item.path,
-                              ref: effectiveRef,
-                              mode: item.mode,
-                            },
-                          }}
-                        />
-                      )}
+                      <CollectButton
+                        variant="icon-xs"
+                        params={{
+                          type: isFolder ? "group" : "file",
+                          source: "gitlab",
+                          title: item.name,
+                          subtitle: item.path,
+                          sourceId: `gitlab-tree-${projectId}-${item.path}`,
+                          metadata: {
+                            projectId: projectId?.toString(),
+                            path: item.path,
+                            ref: effectiveRef,
+                            mode: item.mode,
+                            itemType: item.type,
+                          },
+                        }}
+                      />
                     </TableCell>
                   </TableRow>
                 )
