@@ -2,98 +2,74 @@
 
 import Link from "next/link"
 import {
+  Mail,
+  HardDrive,
+  Database,
+  Calendar,
   Users,
-  ShieldAlert,
   ShieldCheck,
-  UsersRound,
-  KeyRound,
-  AlertCircle,
   ArrowRight,
   AppWindow,
-  KeySquare,
+  KeyRound,
+  UsersRound,
+  Scan,
+  Clock,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react"
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
 } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAuditUsers, useAuditGroups, useAuditRoles } from "@/hooks/use-audit"
+import { useAuditOverview } from "@/hooks/use-audit"
 import type { LucideIcon } from "lucide-react"
-
-type RiskColor = "blue" | "red" | "amber"
-
-type StatCard = {
-  label: string
-  value: number | null
-  icon: LucideIcon
-  color: RiskColor
-  loading: boolean
-}
-
-const colorMap: Record<RiskColor, { border: string; icon: string; bg: string }> = {
-  blue: {
-    border: "border-l-blue-500",
-    icon: "text-blue-400",
-    bg: "bg-blue-500/10",
-  },
-  red: {
-    border: "border-l-red-500",
-    icon: "text-red-400",
-    bg: "bg-red-500/10",
-  },
-  amber: {
-    border: "border-l-amber-500",
-    icon: "text-amber-400",
-    bg: "bg-amber-500/10",
-  },
-}
 
 const quickLinks = [
   { label: "Users", href: "/audit/users", icon: Users },
   { label: "Groups", href: "/audit/groups", icon: UsersRound },
   { label: "Roles", href: "/audit/roles", icon: ShieldCheck },
   { label: "Apps", href: "/audit/apps", icon: AppWindow },
-  { label: "Delegation", href: "/audit/delegation", icon: KeySquare },
+  { label: "Delegation", href: "/audit/delegation", icon: KeyRound },
 ]
 
-function isPermissionError(err: string | null): boolean {
+function ServiceCard({
+  name,
+  icon: Icon,
+  accessible,
+  loading,
+  children,
+}: {
+  name: string
+  icon: LucideIcon
+  accessible: boolean
+  loading: boolean
+  children?: React.ReactNode
+}) {
   return (
-    err != null &&
-    (err.includes("403") ||
-      err.includes("Forbidden") ||
-      err.includes("insufficient") ||
-      err.includes("scope") ||
-      err.includes("disabled") ||
-      err.includes("Enable it"))
-  )
-}
-
-function StatCardItem({ card }: { card: StatCard }) {
-  const colors = colorMap[card.color]
-  const Icon = card.icon
-
-  return (
-    <Card className={`border-l-4 ${colors.border}`}>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <div className={`rounded-md p-1.5 ${colors.bg}`}>
-            <Icon className={`h-4 w-4 ${colors.icon}`} />
-          </div>
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {card.label}
-          </CardTitle>
-        </div>
+    <Card className={accessible ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-red-500 opacity-60"}>
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          {name}
+          {!loading && (
+            accessible
+              ? <Badge variant="secondary" className="ml-auto text-emerald-400 bg-emerald-500/10 text-[10px]">Accessible</Badge>
+              : <Badge variant="secondary" className="ml-auto text-red-400 bg-red-500/10 text-[10px]">No Access</Badge>
+          )}
+        </CardTitle>
       </CardHeader>
-      <CardContent>
-        {card.loading ? (
-          <Skeleton className="h-8 w-16" />
+      <CardContent className="text-sm text-muted-foreground">
+        {loading ? (
+          <div className="space-y-1.5">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
         ) : (
-          <span className="text-3xl font-bold tracking-tight">
-            {card.value ?? "--"}
-          </span>
+          children
         )}
       </CardContent>
     </Card>
@@ -101,153 +77,130 @@ function StatCardItem({ card }: { card: StatCard }) {
 }
 
 export default function AuditDashboardPage() {
-  const {
-    data: usersData,
-    loading: usersLoading,
-    error: usersError,
-  } = useAuditUsers()
+  const { overview, loading, error } = useAuditOverview()
 
-  const {
-    data: groupsData,
-    loading: groupsLoading,
-    error: groupsError,
-  } = useAuditGroups()
-
-  const {
-    data: rolesData,
-    loading: rolesLoading,
-    error: rolesError,
-  } = useAuditRoles()
-
-  const permissionDenied =
-    isPermissionError(usersError) ||
-    isPermissionError(groupsError) ||
-    isPermissionError(rolesError)
-
-  const anyError = usersError || groupsError || rolesError
-  const hasNonPermError = anyError && !permissionDenied
-
-  const users = usersData.users
-  const totalUsers = usersLoading ? null : users.length
-  const usersWithout2FA = usersLoading
-    ? null
-    : users.filter((u) => !u.isEnrolledIn2Sv && !u.suspended).length
-  const adminUsers = usersLoading
-    ? null
-    : users.filter((u) => u.isAdmin || u.isDelegatedAdmin).length
-  const totalGroups = groupsLoading ? null : groupsData.groups.length
-  const rolesAssigned = rolesLoading
-    ? null
-    : rolesData.roles.reduce((sum, r) => sum + r.assignees.length, 0)
-
-  const cards: StatCard[] = [
-    {
-      label: "Total Users",
-      value: totalUsers,
-      icon: Users,
-      color: "blue",
-      loading: usersLoading,
-    },
-    {
-      label: "Users without 2FA",
-      value: usersWithout2FA,
-      icon: ShieldAlert,
-      color: "red",
-      loading: usersLoading,
-    },
-    {
-      label: "Admin Users",
-      value: adminUsers,
-      icon: ShieldCheck,
-      color: "amber",
-      loading: usersLoading,
-    },
-    {
-      label: "Total Groups",
-      value: totalGroups,
-      icon: UsersRound,
-      color: "blue",
-      loading: groupsLoading,
-    },
-    {
-      label: "Roles Assigned",
-      value: rolesAssigned,
-      icon: KeyRound,
-      color: "amber",
-      loading: rolesLoading,
-    },
-  ]
+  const scopes = overview?.tokenInfo.scopes ?? []
+  const expiresIn = overview?.tokenInfo.expiresInSeconds
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.12)-theme(spacing.8))] flex-col overflow-hidden">
-      <div className="px-4 pt-4">
+    <div className="flex flex-col gap-6 overflow-y-auto">
+      <div>
         <h1 className="text-lg font-semibold">Audit Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Overview of your Google Workspace security posture, user access, and
-          delegation status.
+          What this token can access across Google Workspace — from the current user&apos;s perspective.
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4">
-        {permissionDenied ? (
-          <div className="py-12 flex justify-center">
-            <Card className="max-w-md border-destructive/30 bg-destructive/5">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  Access denied
-                </CardTitle>
-                <CardDescription>
-                  Audit dashboard requires administrator permissions. Contact
-                  your workspace admin for access.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        ) : (
-          <>
-            {hasNonPermError && (
-              <div className="mb-4 flex justify-center">
-                <Card className="max-w-md border-destructive/30 bg-destructive/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-destructive" />
-                      Failed to load some data
-                    </CardTitle>
-                    <CardDescription>
-                      {usersError || groupsError || rolesError}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+      {error && (
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="py-3 text-sm text-destructive">{error}</CardContent>
+        </Card>
+      )}
+
+      {/* Token Info */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Token Status</h2>
+        <Card>
+          <CardContent className="py-4">
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <Scan className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">{overview?.tokenInfo.email || "Unknown"}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {expiresIn != null ? `Access token expires in ${Math.floor(expiresIn / 60)}m ${expiresIn % 60}s` : "Unknown expiry"}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">{scopes.length} scopes</Badge>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {scopes.map((scope) => {
+                    const short = scope.replace("https://www.googleapis.com/auth/", "")
+                    return (
+                      <Badge key={scope} variant="secondary" className="text-[10px] font-mono">
+                        {short}
+                      </Badge>
+                    )
+                  })}
+                </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </div>
 
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {cards.map((card) => (
-                <StatCardItem key={card.label} card={card} />
-              ))}
+      {/* Service Access Grid */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Service Access</h2>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <ServiceCard name="Gmail" icon={Mail} accessible={overview?.gmail.accessible ?? false} loading={loading}>
+            <div className="space-y-0.5">
+              <p>{overview?.gmail.messagesTotal?.toLocaleString()} messages</p>
+              <p>{overview?.gmail.threadsTotal?.toLocaleString()} threads</p>
+              <p>{overview?.gmail.labelCount} labels</p>
             </div>
+          </ServiceCard>
 
-            <div className="mt-8">
-              <h2 className="text-sm font-medium text-muted-foreground mb-3">
-                Quick Links
-              </h2>
-              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {quickLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3 text-sm transition-colors hover:bg-muted/50 hover:border-border"
-                  >
-                    <link.icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="flex-1">{link.label}</span>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Link>
-                ))}
+          <ServiceCard name="Drive" icon={HardDrive} accessible={overview?.drive.accessible ?? false} loading={loading}>
+            <div className="space-y-0.5">
+              <p>{overview?.drive.sharedDriveCount} shared drives visible</p>
+              <p>{overview?.drive.hasFiles ? "Can browse files" : "No file access"}</p>
+            </div>
+          </ServiceCard>
+
+          <ServiceCard name="Calendar" icon={Calendar} accessible={overview?.calendar.accessible ?? false} loading={loading}>
+            <p>{overview?.calendar.calendarCount} calendars visible</p>
+          </ServiceCard>
+
+          <ServiceCard name="GCP Storage" icon={Database} accessible={overview?.storage.accessible ?? false} loading={loading}>
+            <div className="space-y-0.5">
+              <p>{overview?.storage.projectCount} projects visible</p>
+              <p>~{overview?.storage.accessibleProjectsEstimate} with bucket access</p>
+            </div>
+          </ServiceCard>
+
+          <ServiceCard name="Directory (Admin)" icon={Users} accessible={overview?.directory.accessible ?? false} loading={loading}>
+            {overview?.directory.hasAdminAccess ? (
+              <div className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Admin API access</span>
               </div>
-            </div>
-          </>
-        )}
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <XCircle className="h-3.5 w-3.5 text-red-400" />
+                <span>No admin API access</span>
+              </div>
+            )}
+          </ServiceCard>
+        </div>
+      </div>
+
+      {/* Quick Links */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Audit Modules</h2>
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {quickLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3 text-sm transition-colors hover:bg-muted/50 hover:border-border"
+            >
+              <link.icon className="h-4 w-4 text-muted-foreground" />
+              <span className="flex-1">{link.label}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

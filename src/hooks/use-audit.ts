@@ -2,7 +2,40 @@
 
 import { useCallback } from "react"
 import { useCachedQuery } from "@/hooks/use-cached"
-import { CACHE_TTL_LIST } from "@/lib/cache"
+import { CACHE_TTL_LIST, CACHE_TTL_BODY } from "@/lib/cache"
+
+export type AuditOverview = {
+  tokenInfo: {
+    scopes: string[]
+    scopeCount: number
+    expiresInSeconds: number | null
+    email: string | null
+  }
+  gmail: { accessible: boolean; email?: string; messagesTotal?: number; threadsTotal?: number; labelCount?: number }
+  drive: { accessible: boolean; hasFiles?: boolean; sharedDriveCount?: number }
+  calendar: { accessible: boolean; calendarCount?: number }
+  storage: { accessible: boolean; projectCount?: number; accessibleProjectsEstimate?: number }
+  directory: { accessible: boolean; hasAdminAccess?: boolean; userCountEstimate?: number }
+}
+
+export function useAuditOverview() {
+  const fetcher = useCallback(async (): Promise<AuditOverview> => {
+    const res = await fetch("/api/audit/overview")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch audit overview (${res.status})`)
+    }
+    return res.json()
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<AuditOverview>(
+    "audit:overview",
+    fetcher,
+    { ttlMs: CACHE_TTL_BODY }
+  )
+
+  return { overview: data, loading, error, refetch }
+}
 
 export type AuditUser = {
   primaryEmail: string
