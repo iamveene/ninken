@@ -330,11 +330,11 @@ export default function GmailPage() {
             />
           </Panel>
           <ResizeHandle />
-          <Panel defaultSize={38} minSize={30} maxSize={55}>
+          <Panel defaultSize={43} minSize={25}>
             {messageListContent}
           </Panel>
           <ResizeHandle />
-          <Panel defaultSize={50} minSize={30}>
+          <Panel defaultSize={45} minSize={20}>
             {detailContent}
           </Panel>
         </PanelGroup>
