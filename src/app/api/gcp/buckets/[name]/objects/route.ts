@@ -30,10 +30,30 @@ export async function GET(
     const objects = res.data.items || []
 
     // Quick download permission check: try to get metadata of first object
+    // When no objects at this level but prefixes exist, probe an object from a sub-prefix
     let canDownload = true
+    let probeObject: string | null = null
     if (objects.length > 0) {
+      probeObject = objects[0].name!
+    } else if ((res.data.prefixes || []).length > 0) {
+      // No objects here, try to find one in the first sub-prefix
       try {
-        await storage.objects.get({ bucket: name, object: objects[0].name! })
+        const subRes = await storage.objects.list({
+          bucket: name,
+          prefix: res.data.prefixes![0],
+          maxResults: 1,
+        })
+        if (subRes.data.items?.length) {
+          probeObject = subRes.data.items[0].name!
+        }
+      } catch {
+        // If we can't even list sub-prefix, assume not downloadable
+        canDownload = false
+      }
+    }
+    if (probeObject) {
+      try {
+        await storage.objects.get({ bucket: name, object: probeObject })
       } catch (err) {
         const code = err && typeof err === "object" && "code" in err ? (err as { code: number }).code : 0
         if (code === 403) canDownload = false

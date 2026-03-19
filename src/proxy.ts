@@ -25,7 +25,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Protected pages: redirect to landing if no auth
-  if (pathname.startsWith("/gmail") || pathname.startsWith("/drive") || pathname.startsWith("/buckets")) {
+  if (pathname.startsWith("/gmail") || pathname.startsWith("/drive") || pathname.startsWith("/buckets") || pathname.startsWith("/calendar") || pathname.startsWith("/directory")) {
     if (!hasToken) {
       return NextResponse.redirect(new URL("/", request.url))
     }
