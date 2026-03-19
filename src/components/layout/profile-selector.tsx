@@ -198,7 +198,15 @@ export function ProfileSelector() {
                 if (profiles.length <= 1) {
                   router.push("/")
                 } else {
-                  router.refresh()
+                  // After removing, the context auto-activated the next profile
+                  // Navigate to that provider's default route
+                  const remaining = profiles.filter((p) => p.id !== activeProfile?.id)
+                  if (remaining.length > 0) {
+                    const nextProvider = getProvider(remaining[0].provider)
+                    router.push(nextProvider?.defaultRoute ?? "/gmail")
+                  } else {
+                    router.push("/")
+                  }
                 }
               }}
             >

@@ -54,6 +54,9 @@ function AuthPageInner() {
     useState<ServiceProvider | null>(null)
   const [migrating, setMigrating] = useState(true)
   const [hasExistingProfiles, setHasExistingProfiles] = useState(false)
+  const [existingProfiles, setExistingProfiles] = useState<
+    { id: string; provider: string; email?: string }[]
+  >([])
 
   const providers = getAllProviders()
 
@@ -81,6 +84,7 @@ function AuthPageInner() {
         const existing = await getAllProfiles()
         if (existing.length > 0) {
           setHasExistingProfiles(true)
+          setExistingProfiles(existing.map((p) => ({ id: p.id, provider: p.provider, email: p.email })))
           // If ?add=true, stay on landing page for new service upload
           if (isAddMode) {
             setMigrating(false)
@@ -223,26 +227,39 @@ function AuthPageInner() {
           />
         </div>
 
-        {/* Back to active services */}
-        {hasExistingProfiles && (
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={async () => {
-                const profiles = await getAllProfiles()
-                const activeId = getActiveProfileId()
-                const active = profiles.find((p) => p.id === activeId) ?? profiles[0]
-                if (active) {
-                  await activateProfile(active.id)
-                  const providerConfig = getProvider(active.provider)
-                  router.push(providerConfig?.defaultRoute ?? "/gmail")
-                }
-              }}
-              className="inline-flex items-center gap-2 rounded-md border border-neutral-700 bg-neutral-900/50 px-4 py-2 text-sm text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to active services
-            </button>
+        {/* Active sessions panel */}
+        {hasExistingProfiles && existingProfiles.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-center text-xs text-neutral-500 uppercase tracking-wider">
+              Active sessions
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {existingProfiles.map((p) => {
+                const providerConfig = getProvider(p.provider as "google" | "microsoft")
+                if (!providerConfig) return null
+                const PIcon = resolveIcon(providerConfig.iconName)
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={async () => {
+                      await activateProfile(p.id)
+                      router.push(providerConfig.defaultRoute)
+                    }}
+                    className="flex items-center gap-2.5 rounded-md border border-neutral-700 bg-neutral-900/50 px-4 py-2.5 text-sm transition-colors hover:border-emerald-600/50 hover:bg-emerald-950/10 group"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15">
+                      <PIcon className="h-3.5 w-3.5 text-emerald-500" />
+                    </span>
+                    <span className="flex flex-col items-start">
+                      <span className="text-xs font-medium text-neutral-200">{providerConfig.name}</span>
+                      <span className="text-[10px] text-neutral-500">{p.email || "Connected"}</span>
+                    </span>
+                    <ArrowLeft className="h-3 w-3 text-neutral-600 rotate-180 group-hover:text-emerald-500 transition-colors" />
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -282,6 +299,7 @@ function AuthPageInner() {
               [
                 { name: "Microsoft 365", iconName: "Monitor" },
                 { name: "GitHub", iconName: "Globe" },
+                { name: "Slack", iconName: "MessageSquare" },
                 { name: "AWS", iconName: "Globe" },
               ] as const
             )
