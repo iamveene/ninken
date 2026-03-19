@@ -277,7 +277,7 @@ function GmailPage() {
         onTrash={handleBulkTrash}
         hasNextPage={!!nextPageToken}
         hasPrevPage={false}
-        pageInfo={totalEstimate > 0 ? `1-${messages.length} of ${totalEstimate.toLocaleString()}` : undefined}
+        pageInfo={!messagesError && totalEstimate > 0 ? `1-${messages.length} of ${totalEstimate.toLocaleString()}` : undefined}
       />
 
       <MessageList
