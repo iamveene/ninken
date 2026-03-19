@@ -2,11 +2,13 @@ import { registerProvider } from "./registry"
 import { googleProvider } from "./google"
 import { microsoftProvider } from "./microsoft"
 import { slackProvider } from "./slack"
+import { githubProvider } from "./github"
 
 // Auto-register built-in providers
 registerProvider(googleProvider)
 registerProvider(microsoftProvider)
 registerProvider(slackProvider)
+registerProvider(githubProvider)
 
 export type {
   ProviderId,
@@ -31,3 +33,4 @@ export { googleProvider } from "./google"
 export { microsoftProvider, extractAllCredentials } from "./microsoft"
 export type { ExtractedMicrosoftAccount } from "./microsoft"
 export { slackProvider } from "./slack"
+export { githubProvider } from "./github"
