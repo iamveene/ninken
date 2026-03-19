@@ -57,9 +57,11 @@ export function proxy(request: NextRequest) {
   // Protected pages: redirect to landing if no auth
   const protectedPrefixes = [
     // Google
-    "/gmail", "/drive", "/buckets", "/calendar", "/directory", "/audit",
+    "/gmail", "/drive", "/buckets", "/calendar", "/directory", "/audit", "/chat",
     // Microsoft
     "/outlook", "/onedrive", "/teams", "/entra", "/m365-audit",
+    // Cross-service
+    "/studio", "/collection", "/alerts",
   ]
 
   if (protectedPrefixes.some((p) => pathname.startsWith(p))) {

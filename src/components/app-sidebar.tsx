@@ -10,6 +10,8 @@ import { useScopes } from "@/hooks/use-scopes"
 import { useProvider } from "@/components/providers/provider-context"
 import { getProvider } from "@/lib/providers/registry"
 import { resolveIcon } from "@/lib/icon-resolver"
+import { studioNavItems } from "@/lib/studio/nav"
+import { collectionNavItems } from "@/lib/collection/nav"
 import "@/lib/providers"
 
 import {
@@ -28,13 +30,22 @@ import {
 import Image from "next/image"
 import { NinkenIcon } from "@/components/ninken-icon"
 
+type Mode = "operate" | "audit" | "collection" | "studio"
+
+function getMode(pathname: string): Mode {
+  if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit")) return "audit"
+  if (pathname.startsWith("/studio")) return "studio"
+  if (pathname.startsWith("/collection")) return "collection"
+  return "operate"
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { hasApp, loading } = useScopes()
   const { toggleSidebar } = useSidebar()
   const { provider } = useProvider()
-  const isAuditMode = pathname.startsWith("/audit")
+  const mode = getMode(pathname)
 
   const providerConfig = getProvider(provider)
   const operateNavItems = providerConfig?.operateNavItems ?? []
@@ -51,6 +62,24 @@ export function AppSidebar() {
     await fetch("/api/auth", { method: "DELETE" })
     router.push("/")
   }
+
+  // Select nav items based on mode
+  let navItems = visibleItems
+  let groupLabel = "Apps"
+
+  if (mode === "audit") {
+    navItems = auditNavItems
+    groupLabel = "Audit"
+  } else if (mode === "studio") {
+    navItems = studioNavItems
+    groupLabel = "Studio"
+  } else if (mode === "collection") {
+    navItems = collectionNavItems
+    groupLabel = "Collection"
+  }
+
+  // Studio and Collection are not scope-filtered
+  const isLoading = (mode === "operate" || mode === "audit") && loading
 
   return (
     <Sidebar collapsible="icon">
@@ -85,41 +114,10 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{isAuditMode ? "Audit" : "Apps"}</SidebarGroupLabel>
+          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isAuditMode ? (
-                loading ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <SidebarMenuItem key={i}>
-                      <SidebarMenuButton>
-                        <div className="h-4 w-4 animate-pulse rounded bg-muted" />
-                        <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))
-                ) : (
-                  auditNavItems.map((item) => {
-                    const Icon = resolveIcon(item.iconName)
-                    return (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          isActive={
-                            item.href === "/audit"
-                              ? pathname === "/audit"
-                              : pathname.startsWith(item.href)
-                          }
-                          render={<Link href={item.href} />}
-                          tooltip={item.title}
-                        >
-                          <Icon />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })
-                )
-              ) : loading ? (
+              {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <SidebarMenuItem key={i}>
                     <SidebarMenuButton>
@@ -129,12 +127,16 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))
               ) : (
-                visibleItems.map((item) => {
+                navItems.map((item) => {
                   const Icon = resolveIcon(item.iconName)
+                  const isActive =
+                    item.href === "/audit" || item.href === "/m365-audit" || item.href === "/studio" || item.href === "/collection"
+                      ? pathname === item.href
+                      : pathname.startsWith(item.href)
                   return (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
-                        isActive={pathname.startsWith(item.href)}
+                        isActive={isActive}
                         render={<Link href={item.href} />}
                         tooltip={item.title}
                       >

@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { ModeToggle } from "@/components/layout/mode-toggle";
+import { GlobalRefreshButton } from "@/components/layout/global-refresh";
 import { ProfileSelector } from "@/components/layout/profile-selector";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { ServiceIndicator } from "@/components/layout/service-indicator";
@@ -19,6 +20,7 @@ export default function AppLayout({
         <SidebarInset className="overflow-x-hidden">
           <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
             <ModeToggle />
+            <GlobalRefreshButton />
             <div className="ml-auto flex items-center gap-3">
               <ServiceIndicator />
               <AlertBadge />
@@ -26,7 +28,7 @@ export default function AppLayout({
             </div>
           </header>
           <OfflineBanner />
-          <div className="flex-1 p-4 min-w-0">
+          <div className="flex-1 p-4 min-w-0 overflow-hidden">
             {children}
           </div>
         </SidebarInset>

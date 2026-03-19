@@ -159,6 +159,10 @@ export const microsoftProvider: ServiceProvider = {
     { id: "m365-audit-groups", title: "Groups", href: "/m365-audit/groups", iconName: "UsersRound" },
     { id: "m365-audit-roles", title: "Roles", href: "/m365-audit/roles", iconName: "ShieldCheck" },
     { id: "m365-audit-apps", title: "Apps", href: "/m365-audit/apps", iconName: "AppWindow" },
+    { id: "m365-audit-signins", title: "Sign-ins", href: "/m365-audit/sign-ins", iconName: "LogIn" },
+    { id: "m365-audit-risky", title: "Risky Users", href: "/m365-audit/risky-users", iconName: "AlertTriangle" },
+    { id: "m365-audit-ca", title: "Conditional Access", href: "/m365-audit/conditional-access", iconName: "Shield" },
+    { id: "m365-audit-query", title: "Query", href: "/m365-audit/query", iconName: "Search" },
   ],
 
   scopeAppMap: {

@@ -108,6 +108,7 @@ export const googleProvider: ServiceProvider = {
     { id: "buckets", title: "Buckets", href: "/buckets", iconName: "Database" },
     { id: "calendar", title: "Calendar", href: "/calendar", iconName: "Calendar" },
     { id: "directory", title: "Directory", href: "/directory", iconName: "Users" },
+    { id: "chat", title: "Chat", href: "/chat", iconName: "MessageCircle" },
   ],
 
   auditNavItems: [
@@ -117,6 +118,11 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-roles", title: "Roles", href: "/audit/roles", iconName: "ShieldCheck" },
     { id: "audit-apps", title: "Apps", href: "/audit/apps", iconName: "AppWindow" },
     { id: "audit-delegation", title: "Delegation", href: "/audit/delegation", iconName: "KeyRound" },
+    { id: "audit-devices", title: "Devices", href: "/audit/devices", iconName: "Smartphone" },
+    { id: "audit-policies", title: "Policies", href: "/audit/policies", iconName: "Settings" },
+    { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },
+    { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
+    { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
   ],
 
   scopeAppMap: {
@@ -149,6 +155,12 @@ export const googleProvider: ServiceProvider = {
       "https://www.googleapis.com/auth/admin.directory.user",
       "https://www.googleapis.com/auth/admin.directory.group.readonly",
       "https://www.googleapis.com/auth/admin.directory.group",
+    ],
+    chat: [
+      "https://www.googleapis.com/auth/chat.messages.readonly",
+      "https://www.googleapis.com/auth/chat.messages",
+      "https://www.googleapis.com/auth/chat.spaces.readonly",
+      "https://www.googleapis.com/auth/chat.spaces",
     ],
   },
 
