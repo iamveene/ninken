@@ -130,16 +130,19 @@ export async function bootstrapToken(dCookie: string): Promise<{
   return { xoxc_token, team_id, team_domain, user_id }
 }
 
+const SLACK_MAX_RETRIES = 3
+
 /**
  * Authenticated fetch to Slack Web API.
  * Sends both Authorization (xoxc-) and Cookie (d) headers.
- * Handles 429 rate limiting with retry.
+ * Handles 429 rate limiting with bounded retry.
  */
 export async function slackFetch(
   credential: SlackCredential,
   apiMethod: string,
   params?: Record<string, string | number | boolean>,
-  options?: RequestInit
+  options?: RequestInit,
+  _retryCount = 0
 ): Promise<Response> {
   const decodedCookie = decodeURIComponent(credential.d_cookie)
   const url = `${SLACK_API_BASE}/${apiMethod}`
@@ -163,11 +166,16 @@ export async function slackFetch(
     body: body.toString(),
   })
 
-  // Handle rate limiting — retry once after Retry-After
+  // Handle rate limiting — retry after Retry-After, up to max retries
   if (res.status === 429) {
+    if (_retryCount >= SLACK_MAX_RETRIES) {
+      throw new Error(
+        `Slack API rate limited after ${SLACK_MAX_RETRIES} retries (${apiMethod})`
+      )
+    }
     const retryAfter = parseInt(res.headers.get("Retry-After") || "3", 10)
     await new Promise((resolve) => setTimeout(resolve, retryAfter * 1000))
-    return slackFetch(credential, apiMethod, params, options)
+    return slackFetch(credential, apiMethod, params, options, _retryCount + 1)
   }
 
   return res
