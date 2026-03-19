@@ -67,7 +67,13 @@ For EVERY page discovered in Phase 1, the agent must:
   - Verify the page still has proper structure (header, nav, export button)
   - Flag pages where the error UX could be improved
 
-### 3f. Cross-Page Consistency
+### 3f. Provider Registration & Landing Page
+- On the landing page (`/?add=true`), verify that every provider with route groups and API routes is shown as an ACTIVE (clickable, not grayed out) service button
+- Cross-reference: count providers returned by `getAllProviders()` in the page source vs the number of active service buttons rendered
+- Check that "coming soon" grayed-out items do NOT have corresponding registered providers (if they do, the provider exists but wasn't registered)
+- Verify the service grid has the correct icons and names for each registered provider
+
+### 3g. Cross-Page Consistency
 - Verify all audit pages follow the same layout pattern
 - Check that export buttons are present on data pages
 - Verify filter tabs/search bars are consistent in style
