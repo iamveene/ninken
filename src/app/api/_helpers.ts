@@ -8,7 +8,7 @@ export async function getTokenFromRequest(): Promise<TokenData | null> {
 }
 
 export function unauthorized() {
-  return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 }
 
 export function badRequest(message: string) {
@@ -31,6 +31,24 @@ export function serverError(error: unknown) {
       )
     }
   }
+
+  // Detect Google API errors that use the { errors: [...] } shape without a numeric code
+  if (error && typeof error === "object") {
+    const err = error as { errors?: { message?: string; reason?: string }[]; message?: string }
+    if (Array.isArray(err.errors) && err.errors.length > 0) {
+      const msg = err.errors[0].message || err.message || "Request failed"
+      const isInvalid = msg.toLowerCase().includes("invalid") || err.errors[0].reason === "notFound"
+      return NextResponse.json(
+        { error: msg },
+        { status: isInvalid ? 400 : 500 }
+      )
+    }
+    // Catch errors whose message indicates an invalid/bad request
+    if (err.message && /\binvalid\b/i.test(err.message)) {
+      return NextResponse.json({ error: err.message }, { status: 400 })
+    }
+  }
+
   const message = error instanceof Error ? error.message : "Internal server error"
   return NextResponse.json({ error: message }, { status: 500 })
 }
