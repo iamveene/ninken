@@ -15,7 +15,7 @@ const STORAGE_KEYS: Record<Mode, string> = {
 }
 
 const DEFAULT_PATHS: Record<Mode, string> = {
-  operate: "/gmail",
+  operate: "/dashboard",
   audit: "/audit",
   collection: "/collection",
   studio: "/studio",
@@ -25,7 +25,7 @@ function getMode(pathname: string): Mode {
   if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit")) return "audit"
   if (pathname.startsWith("/studio")) return "studio"
   if (pathname.startsWith("/collection")) return "collection"
-  return "operate"
+  return "operate" // includes /dashboard, /m365-dashboard, and all service pages
 }
 
 export function ModeToggle() {

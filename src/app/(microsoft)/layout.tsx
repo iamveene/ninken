@@ -25,7 +25,6 @@ export default function MicrosoftLayout({
               <ModeToggle />
               <GlobalRefreshButton />
               <div className="ml-auto flex items-center gap-3">
-                <AITrigger />
                 <ServiceIndicator />
                 <AlertBadge />
                 <ProfileSelector />
@@ -35,6 +34,7 @@ export default function MicrosoftLayout({
             <div className="flex-1 p-4 min-w-0">
               {children}
             </div>
+            <AITrigger />
           </SidebarInset>
         </SidebarProvider>
       </AIContextProvider>

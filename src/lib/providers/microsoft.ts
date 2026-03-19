@@ -205,7 +205,7 @@ export const microsoftProvider: ServiceProvider = {
   },
 
   emailEndpoint: "/api/microsoft/me",
-  defaultRoute: "/outlook",
+  defaultRoute: "/m365-dashboard",
 
   operateNavItems: [
     { id: "outlook", title: "Outlook", href: "/outlook", iconName: "Mail" },
@@ -213,6 +213,29 @@ export const microsoftProvider: ServiceProvider = {
     { id: "teams", title: "Teams", href: "/teams", iconName: "MessageSquare" },
     { id: "entra", title: "Entra ID", href: "/entra", iconName: "Users" },
   ],
+
+  serviceSubNav: {
+    outlook: [
+      { id: "outlook-inbox", title: "Inbox", href: "/outlook", iconName: "Inbox" },
+      { id: "outlook-sent", title: "Sent", href: "/outlook?folder=sentitems", iconName: "Send" },
+      { id: "outlook-drafts", title: "Drafts", href: "/outlook?folder=drafts", iconName: "FileEdit" },
+      { id: "outlook-junk", title: "Junk", href: "/outlook?folder=junkemail", iconName: "AlertTriangle" },
+      { id: "outlook-deleted", title: "Deleted", href: "/outlook?folder=deleteditems", iconName: "Trash2" },
+    ],
+    onedrive: [
+      { id: "onedrive-root", title: "My Files", href: "/onedrive", iconName: "FolderOpen" },
+      { id: "onedrive-recent", title: "Recent", href: "/onedrive?view=recent", iconName: "Clock" },
+      { id: "onedrive-shared", title: "Shared", href: "/onedrive?view=shared", iconName: "FolderSync" },
+    ],
+    teams: [
+      { id: "teams-main", title: "Teams", href: "/teams", iconName: "MessageSquare" },
+    ],
+    entra: [
+      { id: "entra-users", title: "Users", href: "/entra", iconName: "Users" },
+      { id: "entra-groups", title: "Groups", href: "/entra?tab=groups", iconName: "UsersRound" },
+      { id: "entra-roles", title: "Roles", href: "/entra?tab=roles", iconName: "ShieldCheck" },
+    ],
+  },
 
   auditNavItems: [
     { id: "m365-audit-dashboard", title: "Dashboard", href: "/m365-audit", iconName: "LayoutDashboard" },

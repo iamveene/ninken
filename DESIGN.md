@@ -173,12 +173,26 @@ When no token is loaded, the landing page shows a grid of service cards instead 
 - Each card shows: service name, icon, expected credential format
 - Cards for unimplemented services (GitHub, GitLab, Slack, AWS) show "Coming soon" badge, still clickable for roadmap info. Google and Microsoft are live.
 
-**2. Sidebar Header — Active Service Indicator**
-When authenticated, the sidebar header (where the Ninken logo is) also shows the active service:
-- Small service icon + name next to the logo (e.g., `[G] Google` or `[M365] Microsoft`)
-- Clicking it opens a dropdown to switch services or add another credential
-- When multiple services are loaded, shows a service list with switch buttons
-- The Operate/Audit toggle stays the same — it works across all services
+**2. Sidebar — Service Overlay Navigation** *(implemented 2026-03-19)*
+The sidebar uses a contextual overlay pattern:
+- **Dashboard view** (default after auth): Sidebar shows flat list of all accessible services (Gmail, Drive, etc.)
+- **Service view** (e.g., on `/gmail`): Sidebar replaces its content with service-specific sub-navigation (Inbox, Starred, Sent, Drafts, Spam, Trash for Gmail). At the top: active service name + icon with a dropdown to switch to another service or back to Dashboard.
+- **Service switcher**: Dropdown at top of sidebar lists Dashboard + all accessible services. Active service highlighted in primary color.
+- Each provider defines `serviceSubNav: Record<string, ProviderNavItem[]>` mapping service IDs to sub-items.
+- Audit/Studio/Collection modes keep their own nav items as before.
+
+**3. Service Landing Page / Dashboard** *(implemented 2026-03-19)*
+- Routes: `/dashboard` (Google), `/m365-dashboard` (Microsoft)
+- Default route after authentication (replaces going straight to Gmail/Outlook)
+- Shows: services accessible count, OAuth scopes count, token expiry, blocked services
+- Service cards with green/red Accessible/No Scope badges, matched scope counts
+- Granted Scopes section listing all scopes in monospace badges
+
+**4. AI Chat — Floating Panel** *(implemented 2026-03-19)*
+- Chat trigger: fixed-position circular button (bottom-right, `MessageCircle` icon)
+- Panel: 400px wide floating card anchored above the FAB — no overlay, no blur, no backdrop
+- FAB toggles between `MessageCircle` and `X` icon when panel is open/closed
+- Proper markdown rendering via `react-markdown` + `remark-gfm` (tables, code blocks, lists, etc.)
 
 **3. Profile Selector — Multi-Service Profiles**
 The existing profile selector expands to show which service each profile belongs to:

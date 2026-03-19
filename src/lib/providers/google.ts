@@ -112,6 +112,36 @@ export const googleProvider: ServiceProvider = {
     { id: "chat", title: "Chat", href: "/chat", iconName: "MessageCircle" },
   ],
 
+  serviceSubNav: {
+    gmail: [
+      { id: "gmail-inbox", title: "Inbox", href: "/gmail", iconName: "Inbox" },
+      { id: "gmail-starred", title: "Starred", href: "/gmail?label=STARRED", iconName: "Star" },
+      { id: "gmail-sent", title: "Sent", href: "/gmail?label=SENT", iconName: "Send" },
+      { id: "gmail-drafts", title: "Drafts", href: "/gmail?label=DRAFT", iconName: "FileEdit" },
+      { id: "gmail-spam", title: "Spam", href: "/gmail?label=SPAM", iconName: "AlertTriangle" },
+      { id: "gmail-trash", title: "Trash", href: "/gmail?label=TRASH", iconName: "Trash2" },
+    ],
+    drive: [
+      { id: "drive-my", title: "My Drive", href: "/drive", iconName: "FolderOpen" },
+      { id: "drive-shared", title: "Shared Drives", href: "/drive?view=shared", iconName: "FolderSync" },
+      { id: "drive-recent", title: "Recent", href: "/drive?view=recent", iconName: "Clock" },
+      { id: "drive-starred", title: "Starred", href: "/drive?view=starred", iconName: "Star" },
+    ],
+    calendar: [
+      { id: "calendar-main", title: "Calendar", href: "/calendar", iconName: "Calendar" },
+    ],
+    directory: [
+      { id: "directory-users", title: "People", href: "/directory", iconName: "Users" },
+      { id: "directory-groups", title: "Groups", href: "/directory?tab=groups", iconName: "UsersRound" },
+    ],
+    chat: [
+      { id: "chat-spaces", title: "Spaces", href: "/chat", iconName: "MessageCircle" },
+    ],
+    buckets: [
+      { id: "buckets-main", title: "Cloud Storage", href: "/buckets", iconName: "Database" },
+    ],
+  },
+
   auditNavItems: [
     { id: "audit-dashboard", title: "Dashboard", href: "/audit", iconName: "LayoutDashboard" },
     { id: "audit-users", title: "Users", href: "/audit/users", iconName: "Users" },
@@ -211,5 +241,5 @@ export const googleProvider: ServiceProvider = {
     } as GoogleCredential
   },
 
-  defaultRoute: "/gmail",
+  defaultRoute: "/dashboard",
 }

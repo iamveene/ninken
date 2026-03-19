@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LogOut, Home } from "lucide-react"
+import { LogOut, Home, ChevronDown, LayoutDashboard } from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
 import { TokenLifecycle } from "@/components/layout/token-lifecycle"
@@ -27,6 +27,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import Image from "next/image"
 import { NinkenIcon } from "@/components/ninken-icon"
 
@@ -37,6 +46,17 @@ function getMode(pathname: string): Mode {
   if (pathname.startsWith("/studio")) return "studio"
   if (pathname.startsWith("/collection")) return "collection"
   return "operate"
+}
+
+/**
+ * Detect which service is active from the pathname.
+ * Returns the service ID (e.g., "gmail", "drive") or null if on the dashboard.
+ */
+function getActiveServiceId(pathname: string, operateNavItems: { id: string; href: string }[]): string | null {
+  for (const item of operateNavItems) {
+    if (pathname.startsWith(item.href)) return item.id
+  }
+  return null
 }
 
 export function AppSidebar() {
@@ -50,10 +70,15 @@ export function AppSidebar() {
   const providerConfig = getProvider(provider)
   const operateNavItems = providerConfig?.operateNavItems ?? []
   const auditNavItems = providerConfig?.auditNavItems ?? []
+  const serviceSubNav = providerConfig?.serviceSubNav ?? {}
 
   const visibleItems = loading
     ? []
     : operateNavItems.filter((item) => hasApp(item.id))
+
+  const activeServiceId = mode === "operate" ? getActiveServiceId(pathname, operateNavItems) : null
+  const activeService = activeServiceId ? operateNavItems.find((i) => i.id === activeServiceId) : null
+  const activeSubNav = activeServiceId ? serviceSubNav[activeServiceId] : null
 
   const handleSignOut = async () => {
     await cacheClear()
@@ -64,7 +89,11 @@ export function AppSidebar() {
     router.push("/?add=true")
   }
 
-  // Select nav items based on mode
+  // Determine what to show in sidebar based on mode
+  const isOperateWithService = mode === "operate" && activeService && activeSubNav
+  const isLoading = (mode === "operate" || mode === "audit") && loading
+
+  // For non-operate modes or operate without active service (dashboard)
   let navItems = visibleItems
   let groupLabel = "Apps"
 
@@ -78,9 +107,6 @@ export function AppSidebar() {
     navItems = collectionNavItems
     groupLabel = "Collection"
   }
-
-  // Studio and Collection are not scope-filtered
-  const isLoading = (mode === "operate" || mode === "audit") && loading
 
   return (
     <Sidebar collapsible="icon">
@@ -113,27 +139,75 @@ export function AppSidebar() {
           <NinkenIcon className="h-5 w-5" />
         </button>
       </SidebarHeader>
+
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <SidebarMenuItem key={i}>
-                    <SidebarMenuButton>
-                      <div className="h-4 w-4 animate-pulse rounded bg-muted" />
-                      <div className="h-4 w-16 animate-pulse rounded bg-muted" />
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))
-              ) : (
-                navItems.map((item) => {
+        {isOperateWithService ? (
+          /* ─── Service Overlay Mode ─── */
+          <SidebarGroup>
+            {/* Service Switcher Dropdown */}
+            <div className="px-2 pb-2 group-data-[collapsible=icon]:px-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="outline-none w-full"
+                  render={
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium hover:bg-muted/50 transition-colors cursor-pointer outline-none group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                    />
+                  }
+                >
+                  {(() => {
+                    const ServiceIcon = resolveIcon(activeService.iconName)
+                    return (
+                      <>
+                        <ServiceIcon className="h-4 w-4 shrink-0" />
+                        <span className="flex-1 text-left group-data-[collapsible=icon]:hidden">{activeService.title}</span>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground group-data-[collapsible=icon]:hidden" />
+                      </>
+                    )
+                  })()}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={4} className="w-48">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Switch Service</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      className="gap-2"
+                      onClick={() => {
+                        const dashRoute = provider === "google" ? "/dashboard" : "/m365-dashboard"
+                        router.push(dashRoute)
+                      }}
+                    >
+                      <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs">Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {visibleItems.map((item) => {
+                      const ItemIcon = resolveIcon(item.iconName)
+                      const isCurrent = item.id === activeServiceId
+                      return (
+                        <DropdownMenuItem
+                          key={item.id}
+                          className="gap-2"
+                          onClick={() => {
+                            if (!isCurrent) router.push(item.href)
+                          }}
+                        >
+                          <ItemIcon className={`h-3.5 w-3.5 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className={`text-xs ${isCurrent ? "text-primary font-medium" : ""}`}>{item.title}</span>
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Service Sub-Navigation */}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {activeSubNav.map((item) => {
                   const Icon = resolveIcon(item.iconName)
-                  const isActive =
-                    item.href === "/audit" || item.href === "/m365-audit" || item.href === "/studio" || item.href === "/collection"
-                      ? pathname === item.href
-                      : pathname.startsWith(item.href)
+                  const isActive = pathname === item.href || (item.href.includes("?") && pathname === item.href.split("?")[0])
                   return (
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
@@ -146,12 +220,52 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
-                })
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : (
+          /* ─── Standard Mode (Dashboard / Audit / Studio / Collection) ─── */
+          <SidebarGroup>
+            <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <SidebarMenuItem key={i}>
+                      <SidebarMenuButton>
+                        <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                        <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                ) : (
+                  navItems.map((item) => {
+                    const Icon = resolveIcon(item.iconName)
+                    const isActive =
+                      item.href === "/audit" || item.href === "/m365-audit" || item.href === "/studio" || item.href === "/collection"
+                        ? pathname === item.href
+                        : pathname.startsWith(item.href)
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          render={<Link href={item.href} />}
+                          tooltip={item.title}
+                        >
+                          <Icon />
+                          <span>{item.title}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
+
       <SidebarFooter>
         <TokenLifecycle />
         <div className="group-data-[collapsible=icon]:hidden">

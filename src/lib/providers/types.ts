@@ -91,6 +91,8 @@ export interface ServiceProvider {
   // Navigation
   readonly operateNavItems: ProviderNavItem[]
   readonly auditNavItems: ProviderNavItem[]
+  // Service-specific sub-navigation (e.g., gmail → Inbox, Starred, Sent)
+  readonly serviceSubNav?: Record<string, ProviderNavItem[]>
 
   // Scope/capability checking
   readonly scopeAppMap: Record<string, string[]>

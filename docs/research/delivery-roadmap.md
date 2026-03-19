@@ -238,6 +238,38 @@ INDEPENDENT (ship anytime after Phase 0):
 
 ---
 
+## UX: Menu Overlay + Service Landing Page ✅ COMPLETED (2026-03-19)
+
+**Priority:** HIGH — affects every navigation interaction
+**Effort:** MEDIUM (~1 sprint)
+**Prerequisite:** None (independent of API/credential work)
+**Status:** Implemented — sidebar overlay, service switcher, Google/Microsoft dashboards, AI chat panel moved to floating card.
+
+### Menu Overlay Navigation
+
+| | |
+|---|---|
+| **What** | When navigating between services (Gmail, Drive, Calendar, etc.), the left sidebar dynamically replaces its content with the active service's menu. At the top of the sidebar: the active service name + icon, a service switcher dropdown to jump to another service or back to the **Service Landing Page**. Below: service-specific navigation (e.g., Gmail → Inbox, Starred, Sent, Drafts, Labels; Drive → My Drive, Shared Drives, Recent, Starred). |
+| **Why** | Current sidebar shows a flat list of all services at all times. For services with deep navigation (Gmail labels, Drive folder trees, Audit sub-pages), the sidebar can't provide contextual navigation. The overlay pattern (used by Slack, VS Code, Notion) gives each service full sidebar real estate while keeping cross-service switching one click away. |
+| **Current behavior** | Sidebar lists all services. Clicking "Gmail" navigates to `/gmail`. Service-specific nav (labels, folders) lives inside each page's own layout, creating inconsistent patterns. |
+| **Target behavior** | Clicking "Gmail" → sidebar morphs to Gmail menu (Inbox, Starred, Sent, Drafts, Labels). Top of sidebar shows "Gmail" with a dropdown to switch to Drive, Calendar, etc. or return to the Service Landing Page. Each service defines its own sidebar menu items. |
+| **Files** | `src/components/app-sidebar.tsx` (major rewrite), provider `operateNavItems` (extend with sub-items), `src/app/(google)/layout.tsx`, `src/app/(microsoft)/layout.tsx` |
+| **Design notes** | Service switcher at top of sidebar — compact dropdown or segmented control. Back arrow or home icon to return to Service Landing Page. Active service highlighted. Smooth transition when switching (no full page reload). |
+
+### Service Landing Page
+
+| | |
+|---|---|
+| **What** | A provider-level dashboard that serves as the default route after authentication (instead of going straight to Gmail/Outlook). Displays: permission summary (what scopes are available, what's accessible), graphs (token expiry timeline, API usage), red team insights (high-value targets found, sensitive data indicators, privilege escalation paths), per-service accessibility matrix (green/yellow/red for each service based on scopes). |
+| **Why** | Currently Google → `/gmail` and Microsoft → `/outlook` immediately. There's no overview of what the token can actually do. A landing page gives the operator situational awareness before diving into a specific service — critical for red team ops where you need to assess the full attack surface before committing to a path. |
+| **Current behavior** | Auth → redirect to first service (Gmail or Outlook). No overview. |
+| **Target behavior** | Auth → Service Landing Page with: scope/permission heatmap, service accessibility cards, token metadata, red team quick-wins summary. Each card links to the corresponding service. |
+| **Routes** | `src/app/(google)/page.tsx` (new), `src/app/(microsoft)/page.tsx` (new) |
+| **Design notes** | Design TBD — will include graphs, statistics, permissions summary, insights, red team insights. Think ROADtools-style dashboard meets Bloodhound overview. Dark theme, data-dense, actionable. |
+| **Blocks** | Nothing — can be iteratively enhanced as new modules ship. Start with scope summary + service cards, add graphs and insights over time. |
+
+---
+
 ## Hardcoded Assumptions — Fix Priority
 
 These are the exact locations that cause cascading breakage if not addressed. Ordered by "fix now to avoid pain later":
