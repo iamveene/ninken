@@ -57,6 +57,7 @@ export const googleProvider: ServiceProvider = {
 
     const credential: GoogleCredential = {
       provider: "google",
+      credentialKind: "oauth",
       refresh_token: obj.refresh_token as string,
       client_id: obj.client_id as string,
       client_secret: obj.client_secret as string,
@@ -192,6 +193,22 @@ export const googleProvider: ServiceProvider = {
     }
 
     return null
+  },
+
+  canRefresh(credential: BaseCredential): boolean {
+    return credential.credentialKind !== "access-token"
+  },
+
+  minimalCredential(credential: BaseCredential): BaseCredential {
+    const c = credential as GoogleCredential
+    return {
+      provider: "google",
+      credentialKind: c.credentialKind,
+      refresh_token: c.refresh_token,
+      client_id: c.client_id,
+      client_secret: c.client_secret,
+      token_uri: c.token_uri,
+    } as GoogleCredential
   },
 
   defaultRoute: "/gmail",

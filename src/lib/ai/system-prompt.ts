@@ -3,8 +3,10 @@
  * Context-aware prompt with role, service context, capabilities, and OPSEC guidelines.
  */
 
+import type { ProviderId } from "@/lib/providers/types"
+
 export type AIServiceContext = {
-  provider: "google" | "microsoft"
+  provider: ProviderId
   userEmail?: string
   currentPage?: string
 }
@@ -16,10 +18,14 @@ export function buildSystemPrompt(ctx: AIServiceContext): string {
 You are currently connected to a **Google Workspace** environment.
 Available tools: search_gmail, list_drive_files, search_drive.
 The active user email is: ${ctx.userEmail ?? "unknown"}.`
-      : `
+      : ctx.provider === "microsoft"
+        ? `
 You are currently connected to a **Microsoft 365** environment.
 Available tools: search_outlook, list_onedrive_files, list_entra_users.
 The active user email is: ${ctx.userEmail ?? "unknown"}.`
+        : `
+You are connected to a **${ctx.provider}** environment.
+No specific tools are currently available for this provider.`
 
   const pageHint = ctx.currentPage
     ? `\nThe operator is currently viewing: **${ctx.currentPage}**.`

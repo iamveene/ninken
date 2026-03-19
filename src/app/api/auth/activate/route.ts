@@ -4,9 +4,6 @@ import { getProvider } from "@/lib/providers/registry"
 import type {
   ProviderId,
   ActiveTokenCookie,
-  BaseCredential,
-  GoogleCredential,
-  MicrosoftCredential,
 } from "@/lib/providers/types"
 
 // Must import providers/index to trigger auto-registration
@@ -22,35 +19,6 @@ const COOKIE_OPTS = {
 
 // Max cookie payload ~4000 bytes (4096 limit minus header overhead)
 const MAX_COOKIE_SIZE = 4000
-
-/**
- * Strip credential to only the fields the server-side API routes need.
- * This keeps the httpOnly cookie under the 4KB browser limit.
- * Microsoft tokens are especially large (~1500 chars refresh_token).
- */
-function minimalCredential(credential: BaseCredential): BaseCredential {
-  if (credential.provider === "google") {
-    const c = credential as GoogleCredential
-    return {
-      provider: "google",
-      refresh_token: c.refresh_token,
-      client_id: c.client_id,
-      client_secret: c.client_secret,
-      token_uri: c.token_uri,
-    } as GoogleCredential
-  }
-  if (credential.provider === "microsoft") {
-    const c = credential as MicrosoftCredential
-    return {
-      provider: "microsoft",
-      refresh_token: c.refresh_token,
-      client_id: c.client_id,
-      tenant_id: c.tenant_id,
-      token_uri: c.token_uri,
-    } as MicrosoftCredential
-  }
-  return credential
-}
 
 export const dynamic = "force-dynamic"
 
@@ -82,7 +50,7 @@ export async function POST(request: Request) {
   }
 
   // Store only essential fields in the cookie to stay under 4KB limit
-  const minimal = minimalCredential(result.credential)
+  const minimal = provider.minimalCredential(result.credential)
 
   const tokenCookie: ActiveTokenCookie = {
     provider: provider.id,

@@ -6,9 +6,17 @@ export type ProviderId =
   | "slack"
   | "aws"
 
+export type CredentialKind =
+  | "oauth"
+  | "foci"
+  | "service-account"
+  | "service-principal"
+  | "access-token"
+
 // Base credential shape — every provider extends this
 export type BaseCredential = {
   provider: ProviderId
+  credentialKind?: CredentialKind
 }
 
 // Google-specific credential (wraps existing TokenData shape)
@@ -89,6 +97,10 @@ export interface ServiceProvider {
 
   // Error parsing — return null if not recognized
   parseApiError(error: unknown): { status: number; message: string } | null
+
+  // Credential lifecycle
+  canRefresh?(credential: BaseCredential): boolean
+  minimalCredential(credential: BaseCredential): BaseCredential
 
   // Default route after auth
   readonly defaultRoute: string

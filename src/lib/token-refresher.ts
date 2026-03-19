@@ -52,6 +52,11 @@ async function refreshProfile(profile: StoredProfile): Promise<void> {
   const provider = getProvider(profile.provider)
   if (!provider) return
 
+  // Skip non-refreshable credentials (raw access tokens, etc.)
+  if (provider.canRefresh && !provider.canRefresh(profile.credential)) {
+    return
+  }
+
   const status = statuses.get(profile.id)
   if (status && !status.autoRefreshEnabled) return
 

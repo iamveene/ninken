@@ -4,6 +4,7 @@
  */
 
 import type Anthropic from "@anthropic-ai/sdk"
+import type { ProviderId } from "@/lib/providers/types"
 
 export type ToolName =
   | "search_gmail"
@@ -151,9 +152,11 @@ export const MICROSOFT_TOOLS: Anthropic.Tool[] = [
 ]
 
 export function getToolsForProvider(
-  provider: "google" | "microsoft"
+  provider: ProviderId
 ): Anthropic.Tool[] {
-  return provider === "google" ? GOOGLE_TOOLS : MICROSOFT_TOOLS
+  if (provider === "google") return GOOGLE_TOOLS
+  if (provider === "microsoft") return MICROSOFT_TOOLS
+  return []
 }
 
 /**
