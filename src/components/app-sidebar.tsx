@@ -57,10 +57,11 @@ export function AppSidebar() {
 
   const handleSignOut = async () => {
     await cacheClear()
-    const { clearAllProfiles } = await import("@/lib/token-store")
-    await clearAllProfiles()
+    const { removeProfile, getActiveProfileId } = await import("@/lib/token-store")
+    const activeId = getActiveProfileId()
+    if (activeId) await removeProfile(activeId)
     await fetch("/api/auth", { method: "DELETE" })
-    router.push("/")
+    router.push("/?add=true")
   }
 
   // Select nav items based on mode

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ClipboardPaste,
   ArrowRight,
+  X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
@@ -18,6 +19,7 @@ import type { ServiceProvider } from "@/lib/providers/types"
 import {
   addProfile,
   getAllProfiles,
+  removeProfile,
 } from "@/lib/token-store"
 import { activateProfile, migrateFromCookies } from "@/lib/token-sync"
 
@@ -227,24 +229,44 @@ function AuthPageInner() {
                   if (!providerConfig) return null
                   const PIcon = resolveIcon(providerConfig.iconName)
                   return (
-                    <button
+                    <div
                       key={p.id}
-                      type="button"
-                      onClick={async () => {
-                        await activateProfile(p.id)
-                        router.push(providerConfig.defaultRoute)
-                      }}
-                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-emerald-950/15 group ${
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 ${
                         i > 0 ? "border-t border-neutral-800/60" : ""
                       }`}
                     >
-                      <PIcon className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                      <span className="flex-1 truncate text-xs text-neutral-300">
-                        {p.email || providerConfig.name}
-                      </span>
-                      <span className="text-[10px] text-neutral-600">{providerConfig.name}</span>
-                      <ArrowRight className="h-3 w-3 shrink-0 text-neutral-600 group-hover:text-emerald-500 transition-colors" />
-                    </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await activateProfile(p.id)
+                          router.push(providerConfig.defaultRoute)
+                        }}
+                        className="flex flex-1 items-center gap-2.5 text-left transition-colors hover:opacity-80 group min-w-0"
+                      >
+                        <PIcon className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                        <span className="flex-1 truncate text-xs text-neutral-300">
+                          {p.email || providerConfig.name}
+                        </span>
+                        <span className="text-[10px] text-neutral-600 shrink-0">{providerConfig.name}</span>
+                        <ArrowRight className="h-3 w-3 shrink-0 text-neutral-600 group-hover:text-emerald-500 transition-colors" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation()
+                          await removeProfile(p.id)
+                          await fetch("/api/auth", { method: "DELETE" })
+                          const remaining = await getAllProfiles()
+                          setExistingProfiles(remaining.map((r) => ({ id: r.id, provider: r.provider, email: r.email })))
+                          if (remaining.length === 0) setHasExistingProfiles(false)
+                        }}
+                        className="shrink-0 p-0.5 rounded text-neutral-600 hover:text-red-400 hover:bg-red-950/20 transition-colors"
+                        aria-label={`Remove ${p.email || providerConfig.name}`}
+                        title="Sign out"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
                   )
                 })}
               </div>
