@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server"
 import { Readable } from "stream"
-import { createStorageService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../../../_helpers"
+import { createStorageServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../../../_helpers"
 
 export async function GET(
   request: Request,
   ctx: RouteContext<"/api/gcp/buckets/[name]/objects">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { name } = await ctx.params
@@ -18,7 +18,7 @@ export async function GET(
     const pageToken = searchParams.get("pageToken") || undefined
     const maxResults = Math.min(Number(searchParams.get("maxResults")) || 50, 200)
 
-    const storage = createStorageService(token)
+    const storage = createStorageServiceFromToken(accessToken)
     const res = await storage.objects.list({
       bucket: name,
       prefix,
@@ -75,8 +75,8 @@ export async function POST(
   request: Request,
   ctx: RouteContext<"/api/gcp/buckets/[name]/objects">
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { name } = await ctx.params
@@ -101,7 +101,7 @@ export async function POST(
     const objectName = prefix ? prefix + file.name : file.name
     const mimeType = file.type || "application/octet-stream"
 
-    const storage = createStorageService(token)
+    const storage = createStorageServiceFromToken(accessToken)
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 

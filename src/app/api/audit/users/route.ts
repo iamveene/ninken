@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService, createGmailService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createDirectoryServiceFromToken, createGmailServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 /**
  * GET /api/audit/users
@@ -9,15 +9,15 @@ import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
  * Falls back to current user's own profile if admin access denied.
  */
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("query") || undefined
     const pageToken = searchParams.get("pageToken") || undefined
 
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
 
     // Try full admin listing first
     try {
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
       if (code !== 403) throw adminErr
 
       // Fallback: get current user's own profile
-      const gmail = createGmailService(token)
+      const gmail = createGmailServiceFromToken(accessToken)
       const profile = await gmail.users.getProfile({ userId: "me" })
       const email = profile.data.emailAddress || ""
 

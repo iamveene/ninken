@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { createStorageService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../_helpers"
+import { createStorageServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { searchParams } = new URL(request.url)
     const project = searchParams.get("project")
     if (!project) return badRequest("Missing required query parameter: project")
 
-    const storage = createStorageService(token)
+    const storage = createStorageServiceFromToken(accessToken)
     const res = await storage.buckets.list({ project })
     const buckets = res.data.items || []
 

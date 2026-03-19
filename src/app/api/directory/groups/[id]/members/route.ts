@@ -1,20 +1,20 @@
 import { NextResponse } from "next/server"
-import { createDirectoryService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../../../_helpers"
+import { createDirectoryServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../../../_helpers"
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
     const { id } = await params
     const { searchParams } = new URL(request.url)
     const pageToken = searchParams.get("pageToken") || undefined
 
-    const admin = createDirectoryService(token)
+    const admin = createDirectoryServiceFromToken(accessToken)
     const res = await admin.members.list({
       groupKey: id,
       pageToken,

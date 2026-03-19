@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server"
-import { createResourceManagerService, createStorageService } from "@/lib/google"
-import { getTokenFromRequest, unauthorized, serverError } from "../../_helpers"
+import { createResourceManagerServiceFromToken, createStorageServiceFromToken } from "@/lib/google"
+import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   try {
-    const crm = createResourceManagerService(token)
+    const crm = createResourceManagerServiceFromToken(accessToken)
     const res = await crm.projects.search()
     const allProjects = res.data.projects || []
 
-    const storage = createStorageService(token)
+    const storage = createStorageServiceFromToken(accessToken)
     const accessChecks = await Promise.allSettled(
       allProjects.map(async (project) => {
         const projectId = project.projectId

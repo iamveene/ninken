@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { getTokenFromRequest, unauthorized } from "../../_helpers"
+import { getGoogleAccessToken, unauthorized } from "../../_helpers"
 
 export async function GET() {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
+  const accessToken = await getGoogleAccessToken()
+  if (!accessToken) return unauthorized()
 
   // Google Admin SDK does not provide a "list all OAuth grants" endpoint.
   // admin.tokens.list() requires a specific userKey and cannot accept "all".
