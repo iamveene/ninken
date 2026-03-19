@@ -29,10 +29,21 @@ export type GoogleCredential = BaseCredential & {
   token_uri?: string
 }
 
+// Google Service Account credential (JWT assertion flow)
+export type GoogleServiceAccountCredential = BaseCredential & {
+  provider: "google"
+  credentialKind: "service-account"
+  client_email: string
+  private_key: string
+  private_key_id: string
+  project_id: string
+  token_uri?: string
+}
+
 // Microsoft-specific credential (FOCI public client — no client_secret)
 export type MicrosoftCredential = BaseCredential & {
   provider: "microsoft"
-  refresh_token: string
+  refresh_token?: string
   client_id: string
   tenant_id: string
   access_token?: string
@@ -40,6 +51,16 @@ export type MicrosoftCredential = BaseCredential & {
   token_uri?: string
   account?: string
   foci?: boolean
+}
+
+// Microsoft Service Principal credential (client_credentials grant)
+export type MicrosoftServicePrincipalCredential = BaseCredential & {
+  provider: "microsoft"
+  credentialKind: "service-principal"
+  client_id: string
+  client_secret: string
+  tenant_id: string
+  token_uri?: string
 }
 
 // Profile stored in IndexedDB — credential + metadata

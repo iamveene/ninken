@@ -43,6 +43,10 @@ export async function POST(request: Request) {
   // Determine scope to request
   const requestScope = scope || fociClient?.notableScopes.join(" ") || "openid profile offline_access"
 
+  if (!credential.refresh_token) {
+    return badRequest("FOCI exchange requires a refresh token credential")
+  }
+
   try {
     const tokenUri =
       credential.token_uri ||

@@ -1,4 +1,7 @@
-import type { MicrosoftCredential } from "./providers/types"
+import type {
+  MicrosoftCredential,
+  MicrosoftServicePrincipalCredential,
+} from "./providers/types"
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 const LOGIN_BASE = "https://login.microsoftonline.com"
@@ -10,7 +13,8 @@ export const DEFAULT_RESOURCE = "https://graph.microsoft.com/.default"
 const tokenCache = new Map<string, { token: string; expiresAt: number }>()
 
 function credentialKey(cred: MicrosoftCredential, resource: string = DEFAULT_RESOURCE): string {
-  return `${cred.tenant_id}:${cred.client_id}:${cred.refresh_token.slice(0, 16)}:${resource}`
+  const credId = cred.refresh_token?.slice(0, 16) || cred.client_id
+  return `${cred.tenant_id}:${cred.client_id}:${credId}:${resource}`
 }
 
 /**
@@ -52,6 +56,10 @@ export async function refreshAccessToken(
   const tokenUri =
     credential.token_uri ||
     `${LOGIN_BASE}/${credential.tenant_id}/oauth2/v2.0/token`
+
+  if (!credential.refresh_token) {
+    throw new Error("Cannot refresh: no refresh_token on credential")
+  }
 
   const res = await fetch(tokenUri, {
     method: "POST",
@@ -104,6 +112,45 @@ export async function getAccessToken(
   })
 
   return result.access_token
+}
+
+/**
+ * Acquire an access token using the client_credentials grant (service principal).
+ * Does NOT use the refresh token cache — service principals get short-lived tokens.
+ */
+export async function clientCredentialsGrant(
+  credential: MicrosoftServicePrincipalCredential,
+  scope: string = "https://graph.microsoft.com/.default",
+): Promise<{ access_token: string; expires_in: number }> {
+  const tokenUri =
+    credential.token_uri ||
+    `${LOGIN_BASE}/${credential.tenant_id}/oauth2/v2.0/token`
+
+  const res = await fetch(tokenUri, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: credential.client_id,
+      client_secret: credential.client_secret,
+      scope,
+    }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "Client credentials grant failed")
+    throw new Error(`Microsoft client_credentials grant failed: ${text}`)
+  }
+
+  const data = await res.json()
+  if (!data.access_token) {
+    throw new Error("No access_token in client_credentials response")
+  }
+
+  return {
+    access_token: data.access_token as string,
+    expires_in: (data.expires_in as number) || 3600,
+  }
 }
 
 /**

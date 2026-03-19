@@ -3,117 +3,24 @@ import type {
   MicrosoftCredential,
   ServiceProvider,
 } from "./types"
+import type { CredentialStrategy } from "./credential-strategy"
+import { decodeScopesFromJwt } from "../microsoft"
 import {
-  getAccessToken as msGetAccessToken,
-  decodeJwtPayload,
-  decodeScopesFromJwt,
-} from "../microsoft"
+  microsoftOAuthStrategy,
+  normalizeRaw,
+  TEAMS_FOCI_CLIENT_ID,
+} from "./strategies/microsoft-oauth"
+import { microsoftServicePrincipalStrategy } from "./strategies/microsoft-service-principal"
 
-// Teams FOCI client ID (public client, no secret needed)
-const TEAMS_FOCI_CLIENT_ID = "1fec8e78-bce4-4aaf-ab1b-5451cc387264"
+const strategies: CredentialStrategy[] = [
+  // Service principal must be checked before OAuth because both may have client_id + tenant_id,
+  // but service principal has client_secret and no refresh_token.
+  microsoftServicePrincipalStrategy,
+  microsoftOAuthStrategy,
+]
 
-function isMicrosoftShape(obj: Record<string, unknown>): boolean {
-  // Explicit platform marker
-  if (obj.platform === "microsoft" || obj.provider === "microsoft") return true
-
-  const hasTenantId =
-    typeof obj.tenant_id === "string" ||
-    typeof obj.tenantId === "string"
-
-  // Service principal: has client_secret + tenant_id (no refresh_token needed)
-  if (typeof obj.client_secret === "string" && obj.client_secret && hasTenantId) {
-    return true
-  }
-
-  // Must have refresh_token for remaining checks
-  if (typeof obj.refresh_token !== "string" || !obj.refresh_token) return false
-
-  // Positive: has tenant_id
-  if (hasTenantId) return true
-
-  // Positive: token_uri contains Microsoft endpoint
-  const tokenUri = typeof obj.token_uri === "string" ? obj.token_uri : ""
-  if (tokenUri.includes("login.microsoftonline.com")) return true
-
-  return false
-}
-
-/**
- * Normalize the raw credential JSON, handling various formats:
- * - Direct: { refresh_token, client_id, tenant_id, ... }
- * - Richter token: { accessToken, refreshToken, tenantId, clientId, ... }
- * - Nested: { token: { refresh_token, ... }, tenant_id, ... }
- */
-function normalizeRaw(raw: Record<string, unknown>): Record<string, unknown> {
-  // Richter / camelCase format
-  if (typeof raw.refreshToken === "string") {
-    return {
-      refresh_token: raw.refreshToken,
-      client_id: raw.clientId || raw.client_id || TEAMS_FOCI_CLIENT_ID,
-      tenant_id: raw.tenantId || raw.tenant_id,
-      access_token: raw.accessToken || raw.access_token,
-      scope: raw.scope,
-      foci: raw.foci,
-      account: raw.account || raw.userId || raw.userPrincipalName,
-    }
-  }
-
-  // Nested token format
-  if (raw.token && typeof raw.token === "object") {
-    const inner = raw.token as Record<string, unknown>
-    return {
-      ...inner,
-      tenant_id: inner.tenant_id || raw.tenant_id || raw.tenantId,
-      client_id: inner.client_id || raw.client_id || TEAMS_FOCI_CLIENT_ID,
-    }
-  }
-
-  // Azure CLI MSAL cache: { AccessToken: {...}, RefreshToken: {...}, Account: {...}, ... }
-  if (raw.RefreshToken && typeof raw.RefreshToken === "object") {
-    const rtEntries = Object.values(raw.RefreshToken as Record<string, Record<string, unknown>>)
-    if (rtEntries.length > 0) {
-      const first = rtEntries[0]
-      return {
-        refresh_token: first.secret as string,
-        client_id: (first.client_id as string) || TEAMS_FOCI_CLIENT_ID,
-        tenant_id: (first.realm as string) || (first.environment as string),
-        foci: first.family_id === "1",
-        account: first.username as string,
-      }
-    }
-  }
-
-  // Azure PowerShell: { Contexts: { "Default": { Account: { Id, Tenants }, ... } } }
-  if (raw.Contexts && typeof raw.Contexts === "object") {
-    const contexts = raw.Contexts as Record<string, Record<string, unknown>>
-    const firstKey = Object.keys(contexts)[0]
-    if (firstKey) {
-      const ctx = contexts[firstKey]
-      const account = ctx.Account as Record<string, unknown> | undefined
-      const tenant = (account?.Tenants as string[])?.[0] || ""
-      return {
-        provider: "microsoft",
-        tenant_id: tenant,
-        client_id: TEAMS_FOCI_CLIENT_ID,
-        refresh_token: "",
-        account: account?.Id as string,
-      }
-    }
-  }
-
-  // Service principal: { client_id, client_secret, tenant_id }
-  if (
-    typeof raw.client_secret === "string" && raw.client_secret &&
-    typeof raw.client_id === "string" && raw.client_id &&
-    (typeof raw.tenant_id === "string" || typeof raw.tenantId === "string")
-  ) {
-    return {
-      ...raw,
-      tenant_id: (raw.tenant_id || raw.tenantId) as string,
-    }
-  }
-
-  return raw
+function strategyForKind(credential: BaseCredential) {
+  return strategies.find((s) => s.kind === credential.credentialKind)
 }
 
 /** Extracted account from a multi-account cache file */
@@ -130,15 +37,17 @@ export type ExtractedMicrosoftAccount = {
  * For single-credential formats, returns a one-element array.
  */
 export function extractAllCredentials(
-  raw: Record<string, unknown>
+  raw: Record<string, unknown>,
 ): ExtractedMicrosoftAccount[] {
   // Azure CLI MSAL cache: { AccessToken: {...}, RefreshToken: {...}, Account: {...}, ... }
   if (raw.RefreshToken && typeof raw.RefreshToken === "object") {
     const rtEntries = Object.values(
-      raw.RefreshToken as Record<string, Record<string, unknown>>
+      raw.RefreshToken as Record<string, Record<string, unknown>>,
     )
     const accounts = raw.Account
-      ? Object.values(raw.Account as Record<string, Record<string, unknown>>)
+      ? Object.values(
+          raw.Account as Record<string, Record<string, unknown>>,
+        )
       : []
 
     const results: ExtractedMicrosoftAccount[] = []
@@ -149,20 +58,24 @@ export function extractAllCredentials(
       const homeId = rt.home_account_id as string | undefined
       const account = accounts.find(
         (a) =>
-          a.home_account_id === homeId ||
-          a.username === rt.username
+          a.home_account_id === homeId || a.username === rt.username,
       )
 
       const isFoci = rt.family_id === "1"
-      const email = (account?.username ?? rt.username) as string | undefined
-      const tenantId = (rt.realm ?? rt.environment) as string | undefined
+      const email = (account?.username ?? rt.username) as
+        | string
+        | undefined
+      const tenantId = (rt.realm ?? rt.environment) as
+        | string
+        | undefined
 
       results.push({
         credential: {
           provider: "microsoft",
           credentialKind: isFoci ? "foci" : "oauth",
           refresh_token: rt.secret as string,
-          client_id: (rt.client_id as string) || TEAMS_FOCI_CLIENT_ID,
+          client_id:
+            (rt.client_id as string) || TEAMS_FOCI_CLIENT_ID,
           tenant_id: tenantId || "",
           foci: isFoci,
           account: email,
@@ -182,8 +95,11 @@ export function extractAllCredentials(
     >
     const results: ExtractedMicrosoftAccount[] = []
     for (const [name, ctx] of Object.entries(contexts)) {
-      const account = ctx.Account as Record<string, unknown> | undefined
-      const tenant = (account?.Tenants as string[])?.[0] || ""
+      const account = ctx.Account as
+        | Record<string, unknown>
+        | undefined
+      const tenant =
+        (account?.Tenants as string[])?.[0] || ""
       const email = account?.Id as string | undefined
 
       results.push({
@@ -210,7 +126,9 @@ export function extractAllCredentials(
     return []
   }
 
-  const tenantId = (obj.tenant_id || obj.tenantId) as string | undefined
+  const tenantId = (obj.tenant_id || obj.tenantId) as
+    | string
+    | undefined
   if (!tenantId) return []
 
   const clientId =
@@ -233,14 +151,18 @@ export function extractAllCredentials(
         client_id: clientId,
         tenant_id: tenantId,
         access_token:
-          typeof obj.access_token === "string" ? obj.access_token : undefined,
+          typeof obj.access_token === "string"
+            ? obj.access_token
+            : undefined,
         scope: Array.isArray(obj.scope)
           ? (obj.scope as string[])
           : typeof obj.scope === "string"
             ? (obj.scope as string).split(" ").filter(Boolean)
             : undefined,
         token_uri:
-          typeof obj.token_uri === "string" ? obj.token_uri : undefined,
+          typeof obj.token_uri === "string"
+            ? obj.token_uri
+            : undefined,
         account:
           typeof obj.account === "string" ? obj.account : undefined,
         foci: isFoci,
@@ -263,80 +185,32 @@ export const microsoftProvider: ServiceProvider = {
   iconName: "Monitor",
 
   detectCredential(raw: unknown): boolean {
-    // Raw JWT string: check for Microsoft-specific claims
-    if (typeof raw === "string" && raw.startsWith("eyJ")) {
-      const payload = decodeJwtPayload(raw)
-      if (payload) {
-        return !!(payload.tid || (typeof payload.iss === "string" && payload.iss.includes("sts.windows.net")))
-      }
-      return false
-    }
-    if (!raw || typeof raw !== "object") return false
-    const obj = normalizeRaw(raw as Record<string, unknown>)
-    return isMicrosoftShape(obj)
+    return strategies.some((s) => s.detect(raw))
   },
 
   validateCredential(
-    raw: unknown
+    raw: unknown,
   ):
-    | { valid: true; credential: MicrosoftCredential; email?: string }
+    | { valid: true; credential: BaseCredential; email?: string }
     | { valid: false; error: string } {
-    if (!raw || typeof raw !== "object") {
-      return { valid: false, error: "Invalid JSON" }
+    const strategy = strategies.find((s) => s.detect(raw))
+    if (!strategy) {
+      return {
+        valid: false,
+        error: "Unrecognized Microsoft credential format",
+      }
     }
-
-    const obj = normalizeRaw(raw as Record<string, unknown>)
-
-    if (typeof obj.refresh_token !== "string" || !obj.refresh_token) {
-      return { valid: false, error: "Missing required field: refresh_token" }
-    }
-
-    // tenant_id is required
-    const tenantId = (obj.tenant_id || obj.tenantId) as string | undefined
-    if (!tenantId) {
-      return { valid: false, error: "Missing required field: tenant_id" }
-    }
-
-    // Default client_id to Teams FOCI if not provided
-    const clientId =
-      typeof obj.client_id === "string" && obj.client_id
-        ? obj.client_id
-        : TEAMS_FOCI_CLIENT_ID
-
-    const isFoci = obj.foci === true || obj.foci === "1"
-
-    const credential: MicrosoftCredential = {
-      provider: "microsoft",
-      credentialKind: isFoci ? "foci" : "oauth",
-      refresh_token: obj.refresh_token as string,
-      client_id: clientId,
-      tenant_id: tenantId,
-      access_token:
-        typeof obj.access_token === "string" ? obj.access_token : undefined,
-      scope: Array.isArray(obj.scope)
-        ? (obj.scope as string[])
-        : typeof obj.scope === "string"
-          ? (obj.scope as string).split(" ").filter(Boolean)
-          : undefined,
-      token_uri:
-        typeof obj.token_uri === "string" ? obj.token_uri : undefined,
-      account:
-        typeof obj.account === "string" ? obj.account : undefined,
-      foci: isFoci,
-    }
-
-    const email =
-      typeof obj.email === "string"
-        ? obj.email
-        : typeof obj.account === "string"
-          ? obj.account
-          : undefined
-
-    return { valid: true, credential, email }
+    return strategy.validate(raw)
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
-    return msGetAccessToken(credential as MicrosoftCredential)
+    const strategy = strategyForKind(credential)
+    if (!strategy) {
+      throw new Error(
+        `No Microsoft strategy for credential kind: ${credential.credentialKind}`,
+      )
+    }
+    return strategy.getAccessToken(credential)
   },
 
   async fetchScopes(credential: BaseCredential): Promise<string[]> {
@@ -349,50 +223,183 @@ export const microsoftProvider: ServiceProvider = {
 
   operateNavItems: [
     { id: "outlook", title: "Outlook", href: "/outlook", iconName: "Mail" },
-    { id: "onedrive", title: "OneDrive", href: "/onedrive", iconName: "HardDrive" },
-    { id: "teams", title: "Teams", href: "/teams", iconName: "MessageSquare" },
+    {
+      id: "onedrive",
+      title: "OneDrive",
+      href: "/onedrive",
+      iconName: "HardDrive",
+    },
+    {
+      id: "teams",
+      title: "Teams",
+      href: "/teams",
+      iconName: "MessageSquare",
+    },
     { id: "entra", title: "Entra ID", href: "/entra", iconName: "Users" },
   ],
 
   serviceSubNav: {
     outlook: [
-      { id: "outlook-inbox", title: "Inbox", href: "/outlook", iconName: "Inbox" },
-      { id: "outlook-sent", title: "Sent", href: "/outlook?folder=sentitems", iconName: "Send" },
-      { id: "outlook-drafts", title: "Drafts", href: "/outlook?folder=drafts", iconName: "FileEdit" },
-      { id: "outlook-junk", title: "Junk", href: "/outlook?folder=junkemail", iconName: "AlertTriangle" },
-      { id: "outlook-deleted", title: "Deleted", href: "/outlook?folder=deleteditems", iconName: "Trash2" },
+      {
+        id: "outlook-inbox",
+        title: "Inbox",
+        href: "/outlook",
+        iconName: "Inbox",
+      },
+      {
+        id: "outlook-sent",
+        title: "Sent",
+        href: "/outlook?folder=sentitems",
+        iconName: "Send",
+      },
+      {
+        id: "outlook-drafts",
+        title: "Drafts",
+        href: "/outlook?folder=drafts",
+        iconName: "FileEdit",
+      },
+      {
+        id: "outlook-junk",
+        title: "Junk",
+        href: "/outlook?folder=junkemail",
+        iconName: "AlertTriangle",
+      },
+      {
+        id: "outlook-deleted",
+        title: "Deleted",
+        href: "/outlook?folder=deleteditems",
+        iconName: "Trash2",
+      },
     ],
     onedrive: [
-      { id: "onedrive-root", title: "My Files", href: "/onedrive", iconName: "FolderOpen" },
-      { id: "onedrive-recent", title: "Recent", href: "/onedrive?view=recent", iconName: "Clock" },
-      { id: "onedrive-shared", title: "Shared", href: "/onedrive?view=shared", iconName: "FolderSync" },
+      {
+        id: "onedrive-root",
+        title: "My Files",
+        href: "/onedrive",
+        iconName: "FolderOpen",
+      },
+      {
+        id: "onedrive-recent",
+        title: "Recent",
+        href: "/onedrive?view=recent",
+        iconName: "Clock",
+      },
+      {
+        id: "onedrive-shared",
+        title: "Shared",
+        href: "/onedrive?view=shared",
+        iconName: "FolderSync",
+      },
     ],
     teams: [
-      { id: "teams-main", title: "Teams", href: "/teams", iconName: "MessageSquare" },
+      {
+        id: "teams-main",
+        title: "Teams",
+        href: "/teams",
+        iconName: "MessageSquare",
+      },
     ],
     entra: [
-      { id: "entra-users", title: "Users", href: "/entra", iconName: "Users" },
-      { id: "entra-groups", title: "Groups", href: "/entra?tab=groups", iconName: "UsersRound" },
-      { id: "entra-roles", title: "Roles", href: "/entra?tab=roles", iconName: "ShieldCheck" },
+      {
+        id: "entra-users",
+        title: "Users",
+        href: "/entra",
+        iconName: "Users",
+      },
+      {
+        id: "entra-groups",
+        title: "Groups",
+        href: "/entra?tab=groups",
+        iconName: "UsersRound",
+      },
+      {
+        id: "entra-roles",
+        title: "Roles",
+        href: "/entra?tab=roles",
+        iconName: "ShieldCheck",
+      },
     ],
   },
 
   auditNavItems: [
-    { id: "m365-audit-dashboard", title: "Dashboard", href: "/m365-audit", iconName: "LayoutDashboard" },
-    { id: "m365-audit-users", title: "Users", href: "/m365-audit/users", iconName: "Users" },
-    { id: "m365-audit-groups", title: "Groups", href: "/m365-audit/groups", iconName: "UsersRound" },
-    { id: "m365-audit-roles", title: "Roles", href: "/m365-audit/roles", iconName: "ShieldCheck" },
-    { id: "m365-audit-apps", title: "Apps", href: "/m365-audit/apps", iconName: "AppWindow" },
-    { id: "m365-audit-signins", title: "Sign-ins", href: "/m365-audit/sign-ins", iconName: "LogIn" },
-    { id: "m365-audit-risky", title: "Risky Users", href: "/m365-audit/risky-users", iconName: "AlertTriangle" },
-    { id: "m365-audit-ca", title: "Conditional Access", href: "/m365-audit/conditional-access", iconName: "Shield" },
-{ id: "m365-audit-cross-tenant", title: "Cross-Tenant", href: "/m365-audit/cross-tenant", iconName: "ArrowLeftRight" },
-
-{ id: "m365-audit-auth-methods", title: "Auth Methods", href: "/m365-audit/auth-methods", iconName: "KeyRound" },
-
-{ id: "m365-audit-pivot", title: "Resource Pivot", href: "/m365-audit/pivot", iconName: "GitBranch" },
-    { id: "m365-audit-query", title: "Query", href: "/m365-audit/query", iconName: "Search" },
-    { id: "m365-audit-foci", title: "FOCI Pivot", href: "/m365-audit/foci-pivot", iconName: "Shuffle" },
+    {
+      id: "m365-audit-dashboard",
+      title: "Dashboard",
+      href: "/m365-audit",
+      iconName: "LayoutDashboard",
+    },
+    {
+      id: "m365-audit-users",
+      title: "Users",
+      href: "/m365-audit/users",
+      iconName: "Users",
+    },
+    {
+      id: "m365-audit-groups",
+      title: "Groups",
+      href: "/m365-audit/groups",
+      iconName: "UsersRound",
+    },
+    {
+      id: "m365-audit-roles",
+      title: "Roles",
+      href: "/m365-audit/roles",
+      iconName: "ShieldCheck",
+    },
+    {
+      id: "m365-audit-apps",
+      title: "Apps",
+      href: "/m365-audit/apps",
+      iconName: "AppWindow",
+    },
+    {
+      id: "m365-audit-signins",
+      title: "Sign-ins",
+      href: "/m365-audit/sign-ins",
+      iconName: "LogIn",
+    },
+    {
+      id: "m365-audit-risky",
+      title: "Risky Users",
+      href: "/m365-audit/risky-users",
+      iconName: "AlertTriangle",
+    },
+    {
+      id: "m365-audit-ca",
+      title: "Conditional Access",
+      href: "/m365-audit/conditional-access",
+      iconName: "Shield",
+    },
+    {
+      id: "m365-audit-cross-tenant",
+      title: "Cross-Tenant",
+      href: "/m365-audit/cross-tenant",
+      iconName: "ArrowLeftRight",
+    },
+    {
+      id: "m365-audit-auth-methods",
+      title: "Auth Methods",
+      href: "/m365-audit/auth-methods",
+      iconName: "KeyRound",
+    },
+    {
+      id: "m365-audit-pivot",
+      title: "Resource Pivot",
+      href: "/m365-audit/pivot",
+      iconName: "GitBranch",
+    },
+    {
+      id: "m365-audit-query",
+      title: "Query",
+      href: "/m365-audit/query",
+      iconName: "Search",
+    },
+    {
+      id: "m365-audit-foci",
+      title: "FOCI Pivot",
+      href: "/m365-audit/foci-pivot",
+      iconName: "Shuffle",
+    },
   ],
 
   scopeAppMap: {
@@ -421,7 +428,9 @@ export const microsoftProvider: ServiceProvider = {
     ],
   },
 
-  parseApiError(error: unknown): { status: number; message: string } | null {
+  parseApiError(
+    error: unknown,
+  ): { status: number; message: string } | null {
     if (!error || typeof error !== "object") return null
 
     // Graph API error shape: { error: { code, message } }
@@ -457,7 +466,10 @@ export const microsoftProvider: ServiceProvider = {
     }
 
     // Direct error with status
-    if (typeof graphError.status === "number" && graphError.message) {
+    if (
+      typeof graphError.status === "number" &&
+      graphError.message
+    ) {
       return { status: graphError.status, message: graphError.message }
     }
 
@@ -465,19 +477,27 @@ export const microsoftProvider: ServiceProvider = {
   },
 
   canRefresh(credential: BaseCredential): boolean {
-    const kind = credential.credentialKind
-    return kind !== "access-token" && kind !== "service-principal"
+    const strategy = strategyForKind(credential)
+    if (!strategy) {
+      const kind = credential.credentialKind
+      return kind !== "access-token" && kind !== "service-principal"
+    }
+    return strategy.canRefresh(credential)
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
-    const c = credential as MicrosoftCredential
-    return {
-      provider: "microsoft",
-      credentialKind: c.credentialKind,
-      refresh_token: c.refresh_token,
-      client_id: c.client_id,
-      tenant_id: c.tenant_id,
-      token_uri: c.token_uri,
-    } as MicrosoftCredential
+    const strategy = strategyForKind(credential)
+    if (!strategy) {
+      const c = credential as MicrosoftCredential
+      return {
+        provider: "microsoft",
+        credentialKind: c.credentialKind,
+        refresh_token: c.refresh_token,
+        client_id: c.client_id,
+        tenant_id: c.tenant_id,
+        token_uri: c.token_uri,
+      } as MicrosoftCredential
+    }
+    return strategy.minimalCredential(credential)
   },
 }
