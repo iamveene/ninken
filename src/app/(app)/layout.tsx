@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ProfileSelector } from "@/components/layout/profile-selector";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
@@ -13,6 +14,7 @@ export default function AppLayout({
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <ModeToggle />
           <div className="ml-auto">
             <ProfileSelector />
           </div>

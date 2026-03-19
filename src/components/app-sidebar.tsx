@@ -2,7 +2,19 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Mail, HardDrive, Database, Users, Calendar, LogOut } from "lucide-react"
+import {
+  Mail,
+  HardDrive,
+  Database,
+  Users,
+  Calendar,
+  LogOut,
+  LayoutDashboard,
+  UsersRound,
+  ShieldCheck,
+  AppWindow,
+  KeyRound,
+} from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
 import { useScopes, type AppId } from "@/hooks/use-scopes"
@@ -30,11 +42,21 @@ const navItems: { title: string; href: string; icon: typeof Mail; appId: AppId }
   { title: "Directory", href: "/directory", icon: Users, appId: "directory" },
 ]
 
+const auditNavItems: { title: string; href: string; icon: typeof Mail }[] = [
+  { title: "Dashboard", href: "/audit", icon: LayoutDashboard },
+  { title: "Users", href: "/audit/users", icon: Users },
+  { title: "Groups", href: "/audit/groups", icon: UsersRound },
+  { title: "Roles", href: "/audit/roles", icon: ShieldCheck },
+  { title: "Apps", href: "/audit/apps", icon: AppWindow },
+  { title: "Delegation", href: "/audit/delegation", icon: KeyRound },
+]
+
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { hasApp, loading } = useScopes()
   const { toggleSidebar } = useSidebar()
+  const isAuditMode = pathname.startsWith("/audit")
 
   const visibleItems = loading
     ? [] // show nothing while loading to avoid flash
@@ -59,10 +81,27 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Apps</SidebarGroupLabel>
+          <SidebarGroupLabel>{isAuditMode ? "Audit" : "Apps"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {loading ? (
+              {isAuditMode ? (
+                auditNavItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      isActive={
+                        item.href === "/audit"
+                          ? pathname === "/audit"
+                          : pathname.startsWith(item.href)
+                      }
+                      render={<Link href={item.href} />}
+                      tooltip={item.title}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <SidebarMenuItem key={i}>
                     <SidebarMenuButton>
