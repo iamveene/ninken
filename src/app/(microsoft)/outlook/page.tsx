@@ -4,6 +4,8 @@ import { Suspense, useState, useCallback, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
+import { FolderSidebar } from "@/components/outlook/folder-sidebar"
+import { SidebarSlotContent } from "@/components/sidebar-slot"
 import {
   useOutlookMessages,
   useOutlookMessage,
@@ -438,6 +440,17 @@ function OutlookPage() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
+      {/* Inject folder sidebar into main sidebar */}
+      <SidebarSlotContent>
+        <FolderSidebar
+          folders={folders}
+          activeFolderId={effectiveFolderId}
+          onFolderChange={handleFolderChange}
+          onCompose={handleCompose}
+          loading={foldersLoading}
+        />
+      </SidebarSlotContent>
+
       {isMobile ? (
         <>
           {showMobileList && messageListContent}

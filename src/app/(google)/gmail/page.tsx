@@ -4,6 +4,8 @@ import { Suspense, useState, useCallback, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
+import { LabelSidebar } from "@/components/gmail/label-sidebar"
+import { SidebarSlotContent } from "@/components/sidebar-slot"
 import { MessageList } from "@/components/gmail/message-list"
 import { MessageView } from "@/components/gmail/message-view"
 import { ThreadView } from "@/components/gmail/thread-view"
@@ -17,6 +19,7 @@ import {
   useMessages,
   useMessage,
   useThread,
+  useLabels,
   useTrashMessage,
   useModifyLabels,
 } from "@/hooks/use-gmail"
@@ -89,8 +92,23 @@ function GmailPage() {
   const { data: messages, loading: messagesLoading, error: messagesError, totalEstimate, nextPageToken, refetch } = useMessages(effectiveQuery)
   const { data: selectedMessage, loading: messageLoading, error: messageError } = useMessage(selectedMessageId)
   const { data: thread, loading: threadLoading } = useThread(showThread ? selectedThreadId : null)
+  const { data: labels, loading: labelsLoading } = useLabels()
   const { trash } = useTrashMessage()
   const { modify } = useModifyLabels()
+
+  const handleLabelChange = useCallback((labelId: string) => {
+    setActiveLabel(labelId)
+    setSearchQuery("")
+    setSelectedMessageId(null)
+    setSelectedThreadId(null)
+    setShowThread(false)
+    setSelectedIds(new Set())
+    if (isMobile) setMobileView("list")
+  }, [isMobile])
+
+  const handleCompose = useCallback(() => {
+    setCompose({ open: true, mode: "new" })
+  }, [])
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -173,10 +191,6 @@ function GmailPage() {
     setSelectedMessageId(null)
     refetch()
   }, [modify, refetch])
-
-  const handleCompose = useCallback(() => {
-    setCompose({ open: true, mode: "new" })
-  }, [])
 
   const handleReply = useCallback((message: GmailMessage) => {
     setCompose({
@@ -318,6 +332,17 @@ function GmailPage() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] -m-4 bg-background">
+      {/* Inject full label sidebar into main sidebar */}
+      <SidebarSlotContent>
+        <LabelSidebar
+          labels={labels}
+          activeLabel={activeLabel}
+          onLabelChange={handleLabelChange}
+          onCompose={handleCompose}
+          loading={labelsLoading}
+        />
+      </SidebarSlotContent>
+
       {isMobile ? (
         <>
           {showMobileList && messageListContent}
