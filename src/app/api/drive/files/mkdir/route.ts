@@ -1,0 +1,31 @@
+import { NextResponse } from "next/server"
+import { createDriveService } from "@/lib/google"
+import { getTokenFromRequest, unauthorized, badRequest, serverError } from "../../../_helpers"
+
+export async function POST(request: Request) {
+  const token = await getTokenFromRequest()
+  if (!token) return unauthorized()
+
+  try {
+    const body = await request.json()
+    const { name, parent } = body
+
+    if (!name) {
+      return badRequest("Missing required field: name")
+    }
+
+    const drive = createDriveService(token)
+    const res = await drive.files.create({
+      requestBody: {
+        name,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: parent ? [parent] : undefined,
+      },
+      fields: "id, name, mimeType, modifiedTime, webViewLink",
+    })
+
+    return NextResponse.json(res.data)
+  } catch (error) {
+    return serverError(error)
+  }
+}
