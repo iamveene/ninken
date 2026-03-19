@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { CollectButton } from "@/components/collection/collect-button"
 import { KeyRound } from "lucide-react"
 import { CACHE_TTL_LIST } from "@/lib/cache"
 
@@ -104,6 +105,7 @@ export default function SecretsAuditPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-xs w-8" />
                 <TableHead className="text-xs">Secret Name</TableHead>
                 <TableHead className="text-xs">Created</TableHead>
                 <TableHead className="text-xs">Last Updated</TableHead>
@@ -113,7 +115,7 @@ export default function SecretsAuditPage() {
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 3 }).map((__, j) => (
+                    {Array.from({ length: 4 }).map((__, j) => (
                       <TableCell key={j}>
                         <div className="h-4 animate-pulse rounded bg-muted" />
                       </TableCell>
@@ -122,13 +124,32 @@ export default function SecretsAuditPage() {
                 ))
               ) : !secrets || secrets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-xs text-muted-foreground py-8">
+                  <TableCell colSpan={4} className="text-center text-xs text-muted-foreground py-8">
                     No secrets found
                   </TableCell>
                 </TableRow>
               ) : (
                 secrets.map((s) => (
                   <TableRow key={s.name}>
+                    <TableCell className="px-1">
+                      <CollectButton
+                        variant="icon-xs"
+                        params={{
+                          type: "audit-finding",
+                          source: "github",
+                          title: `Secret: ${s.name}`,
+                          subtitle: selectedRepo,
+                          sourceId: `secret:${selectedRepo}:${s.name}`,
+                          metadata: {
+                            findingType: "secret",
+                            repo: selectedRepo,
+                            name: s.name,
+                            createdAt: s.createdAt,
+                            updatedAt: s.updatedAt,
+                          },
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs font-mono font-medium">{s.name}</TableCell>
                     <TableCell>
                       <span className="text-xs text-muted-foreground">

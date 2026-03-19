@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { CollectButton } from "@/components/collection/collect-button"
 import { Key } from "lucide-react"
 import { CACHE_TTL_LIST } from "@/lib/cache"
 
@@ -108,6 +109,7 @@ export default function DeployKeysAuditPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="text-xs w-8" />
                 <TableHead className="text-xs">Title</TableHead>
                 <TableHead className="text-xs">Key (fingerprint)</TableHead>
                 <TableHead className="text-xs">Access</TableHead>
@@ -119,7 +121,7 @@ export default function DeployKeysAuditPage() {
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 6 }).map((__, j) => (
                       <TableCell key={j}>
                         <div className="h-4 animate-pulse rounded bg-muted" />
                       </TableCell>
@@ -128,13 +130,32 @@ export default function DeployKeysAuditPage() {
                 ))
               ) : !keys || keys.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
                     No deploy keys found
                   </TableCell>
                 </TableRow>
               ) : (
                 keys.map((k) => (
                   <TableRow key={k.id}>
+                    <TableCell className="px-1">
+                      <CollectButton
+                        variant="icon-xs"
+                        params={{
+                          type: "audit-finding",
+                          source: "github",
+                          title: `Deploy Key: ${k.title}`,
+                          subtitle: selectedRepo,
+                          sourceId: `deploy-key:${selectedRepo}:${k.id}`,
+                          metadata: {
+                            findingType: "deploy-key",
+                            repo: selectedRepo,
+                            title: k.title,
+                            readOnly: k.readOnly,
+                            createdAt: k.createdAt,
+                          },
+                        }}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs font-medium">{k.title}</TableCell>
                     <TableCell>
                       <span className="text-xs font-mono text-muted-foreground truncate max-w-[200px] block">

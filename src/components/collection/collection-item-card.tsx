@@ -6,6 +6,7 @@ import {
   FileText,
   HardDrive,
   MessageSquare,
+  ShieldAlert,
   Clock,
   Download,
   CheckCircle2,
@@ -25,6 +26,7 @@ const TYPE_CONFIG = {
   file: { icon: FileText, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/40" },
   object: { icon: HardDrive, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
   "chat-message": { icon: MessageSquare, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/40" },
+  "audit-finding": { icon: ShieldAlert, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/40" },
 }
 
 const STATUS_CONFIG = {
