@@ -136,6 +136,53 @@ export function useRiskyUsers() {
 }
 
 // ---------------------------------------------------------------------------
+// Risk Detections
+// ---------------------------------------------------------------------------
+
+export type RiskDetection = {
+  id: string
+  riskEventType: string
+  riskLevel: string
+  riskState: string
+  riskDetail: string
+  detectionTimingType: string
+  activity: string
+  ipAddress: string
+  location: SignInLocation
+  activityDateTime: string
+  detectedDateTime: string
+  userDisplayName: string
+  userPrincipalName: string
+  userId: string
+}
+
+export function useRiskDetections(userId?: string) {
+  const fetcher = useCallback(async (): Promise<RiskDetection[]> => {
+    const params = new URLSearchParams({ top: "200" })
+    if (userId) params.set("userId", userId)
+    const res = await fetch(`/api/microsoft/audit/risk-detections?${params}`)
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch risk detections (${res.status})`)
+    }
+    const json = await res.json()
+    return json.riskDetections ?? []
+  }, [userId])
+
+  const cacheKey = userId
+    ? `m365-audit:risk-detections:${userId}`
+    : "m365-audit:risk-detections"
+
+  const { data, loading, error, refetch } = useCachedQuery<RiskDetection[]>(
+    cacheKey,
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST }
+  )
+
+  return { riskDetections: data ?? [], loading, error, refetch }
+}
+
+// ---------------------------------------------------------------------------
 // Conditional Access Policies
 // ---------------------------------------------------------------------------
 
