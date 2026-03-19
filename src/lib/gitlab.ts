@@ -58,7 +58,6 @@ export async function gitlabFetch(
     ...fetchOptions,
     headers: {
       "PRIVATE-TOKEN": token,
-      "Content-Type": "application/json",
       ...(fetchOptions?.headers as Record<string, string> | undefined),
     },
   })
@@ -172,6 +171,7 @@ export async function gitlabPaginateAll<T>(
     allItems.push(...result.items)
 
     if (!result.nextPage || result.items.length === 0) break
+    if (result.nextPage <= page) break // safety: prevent non-advancing pagination
     page = result.nextPage
   }
 

@@ -56,8 +56,6 @@ export type GitLabGroup = {
   avatarUrl: string | null
   parentId: number | null
   createdAt: string
-  projectCount: number
-  memberCount: number
 }
 
 export type GitLabSnippet = {
