@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LogOut } from "lucide-react"
+import { LogOut, Home } from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
 import { TokenLifecycle } from "@/components/layout/token-lifecycle"
@@ -158,6 +158,12 @@ export function AppSidebar() {
           <CacheIndicator />
         </div>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Home" render={<Link href="/" />}>
+              <Home />
+              <span>Home</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
               <LogOut />

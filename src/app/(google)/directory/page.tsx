@@ -2,19 +2,14 @@
 
 import { useState, useCallback } from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
 import { UserSearch } from "@/components/directory/user-search"
 import { UserCard } from "@/components/directory/user-card"
 import { UserDetail } from "@/components/directory/user-detail"
 import { GroupList } from "@/components/directory/group-list"
+import { ServiceError } from "@/components/ui/service-error"
 import { useUsers, useUserDetail, useGroups } from "@/hooks/use-directory"
 import type { DirectoryUser } from "@/hooks/use-directory"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 export default function DirectoryPage() {
   const [activeTab, setActiveTab] = useState("people")
@@ -22,7 +17,7 @@ export default function DirectoryPage() {
   const [groupsQuery, setGroupsQuery] = useState("")
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
-  const { users, loading: usersLoading, error: usersError } = useUsers(peopleQuery)
+  const { users, loading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers(peopleQuery)
   const { user: userDetail, loading: detailLoading, error: detailError } = useUserDetail(selectedUserId)
   const { groups, loading: groupsLoading, error: groupsError } = useGroups(groupsQuery)
 
@@ -33,11 +28,6 @@ export default function DirectoryPage() {
   const handleBack = useCallback(() => {
     setSelectedUserId(null)
   }, [])
-
-  const isPermissionError = (err: string | null) =>
-    err != null && (err.includes("403") || err.includes("Forbidden") || err.includes("insufficient") || err.includes("scope") || err.includes("disabled") || err.includes("Enable it"))
-  const usersPermissionDenied = isPermissionError(usersError)
-  const groupsPermissionDenied = isPermissionError(groupsError)
 
   if (selectedUserId) {
     return (
@@ -69,7 +59,7 @@ export default function DirectoryPage() {
         </div>
 
         <TabsContent value="people" className="flex flex-col flex-1 overflow-hidden px-4">
-          {!usersPermissionDenied && (
+          {!usersError && (
             <div className="pb-3">
               <UserSearch
                 value={peopleQuery}
@@ -84,21 +74,7 @@ export default function DirectoryPage() {
                 <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading users...
               </div>
             ) : usersError ? (
-              <div className="py-12 flex justify-center">
-                <Card className="max-w-md border-destructive/30 bg-destructive/5">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-destructive" />
-                      {usersPermissionDenied ? "Access denied" : "Failed to load users"}
-                    </CardTitle>
-                    <CardDescription>
-                      {usersPermissionDenied
-                        ? "Directory access requires administrator permissions. Contact your workspace admin for access."
-                        : usersError}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </div>
+              <ServiceError error={usersError} onRetry={refetchUsers} />
             ) : users.length === 0 ? (
               <div className="py-12 text-center text-sm text-muted-foreground">
                 No users found.
@@ -114,7 +90,7 @@ export default function DirectoryPage() {
         </TabsContent>
 
         <TabsContent value="groups" className="flex flex-col flex-1 overflow-hidden px-4">
-          {!groupsPermissionDenied && (
+          {!groupsError && (
             <div className="pb-3">
               <UserSearch
                 value={groupsQuery}

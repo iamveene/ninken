@@ -19,7 +19,8 @@ function isPermissionError(err: string): boolean {
     lower.includes("enable it") ||
     lower.includes("not been used in project") ||
     lower.includes("access denied") ||
-    lower.includes("permission")
+    lower.includes("permission") ||
+    lower.includes("not authorized")
   )
 }
 
@@ -56,8 +57,8 @@ export function ServiceError({ error, onRetry, className }: ServiceErrorProps) {
   const { title, description } = getErrorInfo(error)
 
   return (
-    <div className={className ?? "py-8 flex justify-center px-4"}>
-      <Card className="max-w-md border-destructive/30 bg-destructive/5">
+    <div className={className ?? "py-8 flex justify-center px-4 w-full"}>
+      <Card className="max-w-md w-full border-destructive/30 bg-destructive/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
