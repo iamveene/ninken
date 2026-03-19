@@ -98,6 +98,6 @@ export async function GET(request: Request) {
       })
     }
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

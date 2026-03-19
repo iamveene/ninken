@@ -19,6 +19,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

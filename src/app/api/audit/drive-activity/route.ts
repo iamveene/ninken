@@ -133,7 +133,7 @@ export async function GET(request: Request) {
         scope: "denied",
       })
     }
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 

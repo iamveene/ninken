@@ -77,6 +77,6 @@ export async function GET(request: Request) {
       throw err
     }
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

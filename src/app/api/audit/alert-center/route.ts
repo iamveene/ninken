@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 

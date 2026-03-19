@@ -25,6 +25,6 @@ export async function GET() {
 
     return NextResponse.json({ labels: detailed })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

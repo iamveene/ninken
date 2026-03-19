@@ -138,6 +138,6 @@ export async function GET(request: Request) {
 
     return badRequest("Invalid source parameter. Expected: directory, contacts, or other")
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

@@ -36,6 +36,6 @@ export async function GET() {
 
     return NextResponse.json({ roles })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
