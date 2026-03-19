@@ -191,8 +191,10 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },
     { id: "audit-access", title: "Access Policies", href: "/audit/access-policies", iconName: "ShieldAlert" },
     { id: "audit-query", title: "Query", href: "/audit/query", iconName: "Search" },
-    { id: "audit-reports", title: "Admin Reports", href: "/audit/admin-reports", iconName: "FileText" },
+{ id: "audit-reports", title: "Admin Reports", href: "/audit/admin-reports", iconName: "FileText" },
     { id: "audit-alert-center", title: "Alert Center", href: "/audit/alert-center", iconName: "Bell" },
+
+{ id: "audit-drive-activity", title: "Drive Activity", href: "/audit/drive-activity", iconName: "Activity" },
   ],
 
   scopeAppMap: {
@@ -232,13 +234,17 @@ export const googleProvider: ServiceProvider = {
       "https://www.googleapis.com/auth/chat.spaces.readonly",
       "https://www.googleapis.com/auth/chat.spaces",
     ],
-    "admin-reports": [
+"admin-reports": [
       "https://www.googleapis.com/auth/admin.reports.audit.readonly",
       "https://www.googleapis.com/auth/admin.reports.usage.readonly",
     ],
     "alert-center": [
       "https://www.googleapis.com/auth/apps.alerts",
       "https://www.googleapis.com/auth/apps.alerts.readonly",
+
+"drive-activity": [
+      "https://www.googleapis.com/auth/drive.activity.readonly",
+      "https://www.googleapis.com/auth/drive.activity",
     ],
   },
 
