@@ -182,6 +182,8 @@ export default function CollectionPage() {
               <SelectItem value="outlook">Outlook</SelectItem>
               <SelectItem value="onedrive">OneDrive</SelectItem>
               <SelectItem value="teams">Teams</SelectItem>
+              <SelectItem value="github">GitHub</SelectItem>
+              <SelectItem value="gitlab">GitLab</SelectItem>
             </SelectContent>
           </Select>
         </div>
