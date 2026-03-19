@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { CollectButton } from "@/components/collection/collect-button"
 
 function getInitials(name: string): string {
   return name
@@ -371,6 +372,22 @@ function OutlookPage() {
               <Button variant="ghost" size="icon" onClick={() => handleTrash(selectedMessage)} title="Delete">
                 <Trash2 className="h-4 w-4" />
               </Button>
+              <CollectButton
+                params={{
+                  type: "email",
+                  source: "outlook",
+                  title: selectedMessage.subject || "(No subject)",
+                  subtitle: selectedMessage.from?.emailAddress?.address || selectedMessage.from?.emailAddress?.name || "",
+                  sourceId: selectedMessage.id,
+                  mimeType: "message/rfc822",
+                  metadata: {
+                    from: selectedMessage.from,
+                    toRecipients: selectedMessage.toRecipients,
+                    receivedDateTime: selectedMessage.receivedDateTime,
+                    hasAttachments: selectedMessage.hasAttachments,
+                  },
+                }}
+              />
               {!isMobile && (
                 <Button variant="ghost" size="icon" onClick={handleBack} title="Close">
                   <X className="h-4 w-4" />
