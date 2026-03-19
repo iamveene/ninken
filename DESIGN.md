@@ -291,12 +291,12 @@ src/components/buckets/
 ### Future Service Roadmap
 | Priority | Service | Credential | UI Views |
 |----------|---------|------------|----------|
-| v1.0 | Google Workspace | OAuth token.json | Gmail, Drive, GCP Buckets, Calendar, Directory, Chat — **Implemented** |
-| **v2.0** | **Microsoft 365** | **FOCI public client OAuth2 refresh token** | **Outlook, OneDrive, Teams, Entra ID, M365 Audit (Sign-ins, Risky Users, Conditional Access) — Implemented** |
-| v3.0 | GitHub | PAT (ghp_/github_pat_) | Repos, Issues, PRs, Actions, Secrets, Orgs, Gists |
+| v1.0 | Google Workspace | OAuth token.json, ADC, Service Account Keys | Gmail, Drive, GCP Buckets, Calendar, Directory, Chat + Audit (Admin Reports, Alert Center, Drive Activity, Groups Settings, Contacts) — **Implemented** |
+| **v2.0** | **Microsoft 365** | **FOCI, Service Principal, Raw Access Token** | **Outlook, OneDrive, Teams, Entra ID, M365 Audit (Sign-ins, Risky Users, CA, Cross-Tenant, Auth Methods, Resource Pivot, FOCI Pivot) — Implemented** |
+| **v3.0** | **GitHub** | **PAT (ghp_/github_pat_)** | **Repos, Orgs, Actions, Gists, GitHub Audit (Members, Repo Access, Branch Protections, Webhooks, Deploy Keys, Apps, Actions Security, Secrets, Dependabot, Code Scanning) — Implemented** |
 | v3.0 | GitLab | PAT (glpat-) | Projects, Issues, MRs, CI/CD, Secrets, Groups |
-| v4.0 | Slack | Bot/User token (xoxb/xoxp) | Channels, Messages, Files, Users, Search |
-| v4.1 | Microsoft 365 — Phase 2 | PRT / session cookies / advanced token flows | SharePoint, PRT exchange, browser cookie SSO, Studio module |
+| **v4.0** | **Slack** | **Bot/User token (xoxb/xoxp), d_cookie bootstrap** | **Channels, Messages, Files, Users — Implemented** |
+| v4.1 | Microsoft 365 — Phase 2 | PRT / session cookies / advanced token flows | SharePoint, PRT exchange, browser cookie SSO |
 | v5.0 | AWS | Access Key + Secret | S3, IAM, Lambda, EC2, CloudTrail, Secrets Manager |
 | v6.0 | Custom REST | URL + token/key | Configurable API explorer |
 
@@ -341,6 +341,10 @@ src/components/buckets/
 | **Service Principal Auth (Microsoft)** | High | **Implemented** | Azure service principal client_credentials grant support. Files: `src/lib/providers/strategies/microsoft-service-principal.ts`, modified `src/lib/microsoft.ts`. |
 | **Raw Access Token Ingestion** | High | **Implemented** | Accept raw bearer tokens (JWT or opaque) for immediate probing. Google ya29.* detection, Microsoft JWT claim parsing, expiry countdown display. Files: `src/lib/providers/strategies/google-access-token.ts`, `src/lib/providers/strategies/microsoft-access-token.ts`. |
 | **Capability Probing on Import** | High | **Implemented** | Auto-probe credential capabilities after import before navigation. Service accessibility grid with green/red indicators. Files: `src/components/capabilities-card.tsx`, modified `src/app/page.tsx`. |
+| **GitHub Integration** | High | **Implemented** | Full GitHub provider with PAT support. API routes: repos, orgs (members, hooks, installations, outside collaborators, teams), repo detail (branches, collaborators, deploy keys, environments, hooks, secrets, actions runners/runs/workflows), user (emails, GPG keys, SSH keys), gists, search. Audit mode: 10 audit pages (members, repo access, branch protections, webhooks, deploy keys, apps, actions security, secrets, dependabot, code scanning). Files: `src/lib/github.ts`, `src/lib/providers/github.ts`, `src/app/(github)/`, `src/app/api/github/`. |
+| **Slack Integration** | High | **Implemented** | Full Slack provider with bot/user token and d_cookie bootstrap support. API routes: channels, messages, replies, files, users. Dashboard + channels + files + users pages. d_cookie bootstrap endpoint for extracting xoxc tokens from browser cookies. Files: `src/lib/slack.ts`, `src/lib/providers/slack.ts`, `src/app/(slack)/`, `src/app/api/slack/`. |
+| **Route-Aware Sidebar Navigation** | Medium | **Implemented** | Sidebar navigation now uses URL pathname to determine which provider's nav items to show, regardless of active profile. Fixes context mismatch when navigating across provider route groups. `ROUTE_PROVIDER_MAP` in `app-sidebar.tsx` maps URL prefixes to provider IDs. Falls back to active profile for provider-agnostic routes (studio, collection, alerts). |
+| **Regression & Remediation Pipeline** | Medium | **Implemented** | Custom `/fire_regression` and `/fire_remediation` commands in `.claude/commands/`. Regression: parallel backend (build, API audit) + frontend (Playwright MCP page-by-page) agents, produces `REGRESSION_BUGS.md`. Remediation: reads tracker, spawns fix agent teams, merges, verifies. Mandatory after every significant implementation. Bounded API client retry (max 3) on 429. Per-token GitHub rate limiting. |
 
 ### Alert System
 
