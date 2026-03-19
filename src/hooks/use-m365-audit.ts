@@ -192,11 +192,35 @@ export function useCrossTenantAccess() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       throw new Error(data.error || `Failed to fetch cross-tenant access policy (${res.status})`)
+
+// Resource Pivot Probing
+// ---------------------------------------------------------------------------
+
+export type ResourceProbeEntry = {
+  accessible: boolean
+  tokenObtained: boolean
+  httpStatus?: number
+  error?: string
+}
+
+export type ResourcePivotResult = {
+  arm: ResourceProbeEntry & { subscriptions?: { id: string; name: string }[] }
+  keyVault: ResourceProbeEntry & { vaults?: string[] }
+  storage: ResourceProbeEntry
+  devops: ResourceProbeEntry & { projects?: string[] }
+}
+
+export function useResourcePivot() {
+  const fetcher = useCallback(async (): Promise<ResourcePivotResult> => {
+    const res = await fetch("/api/microsoft/audit/resource-pivot")
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || `Failed to fetch resource pivot data (${res.status})`)
     }
     return res.json()
   }, [])
 
-  const { data, loading, error, refetch } = useCachedQuery<{
+const { data, loading, error, refetch } = useCachedQuery<{
     defaultPolicy: CrossTenantDefaultPolicy
     partners: CrossTenantPartner[]
   }>(
@@ -212,6 +236,14 @@ export function useCrossTenantAccess() {
     error,
     refetch,
   }
+
+const { data, loading, error, refetch } = useCachedQuery<ResourcePivotResult>(
+    "m365-audit:resource-pivot",
+    fetcher,
+    { ttlMs: CACHE_TTL_BODY }
+  )
+
+  return { pivot: data, loading, error, refetch }
 }
 
 // ---------------------------------------------------------------------------

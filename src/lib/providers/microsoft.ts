@@ -249,6 +249,8 @@ export const microsoftProvider: ServiceProvider = {
 { id: "m365-audit-cross-tenant", title: "Cross-Tenant", href: "/m365-audit/cross-tenant", iconName: "ArrowLeftRight" },
 
 { id: "m365-audit-auth-methods", title: "Auth Methods", href: "/m365-audit/auth-methods", iconName: "KeyRound" },
+
+{ id: "m365-audit-pivot", title: "Resource Pivot", href: "/m365-audit/pivot", iconName: "GitBranch" },
     { id: "m365-audit-query", title: "Query", href: "/m365-audit/query", iconName: "Search" },
   ],
 
