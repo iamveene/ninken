@@ -2,7 +2,13 @@ import { cookies } from "next/headers"
 import { getTokenFromCookies, type TokenData } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { getProvider } from "@/lib/providers/registry"
-import type { ProviderId, ActiveTokenCookie, GoogleCredential } from "@/lib/providers/types"
+import type {
+  ProviderId,
+  ActiveTokenCookie,
+  BaseCredential,
+  GoogleCredential,
+  MicrosoftCredential,
+} from "@/lib/providers/types"
 
 // Ensure providers are registered
 import "@/lib/providers"
@@ -34,6 +40,38 @@ export async function getTokenFromRequest(): Promise<TokenData | null> {
 
   // Fallback to legacy cookie format
   return getTokenFromCookies(cookieStore)
+}
+
+/**
+ * Generic credential reader — returns { provider, credential } for any provider.
+ */
+export async function getCredentialFromRequest(): Promise<{
+  provider: ProviderId
+  credential: BaseCredential
+} | null> {
+  const cookieStore = await cookies()
+  const newCookie = cookieStore.get("ninken_token")
+  if (!newCookie?.value) return null
+
+  try {
+    const parsed = JSON.parse(newCookie.value) as ActiveTokenCookie
+    if (parsed.provider && parsed.credential) {
+      return { provider: parsed.provider, credential: parsed.credential }
+    }
+  } catch {
+    // Malformed cookie
+  }
+
+  return null
+}
+
+/**
+ * Convenience: get a MicrosoftCredential from the request cookie, or null.
+ */
+export async function getMicrosoftCredential(): Promise<MicrosoftCredential | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "microsoft") return null
+  return result.credential as MicrosoftCredential
 }
 
 export async function getProviderFromRequest(): Promise<ProviderId | null> {

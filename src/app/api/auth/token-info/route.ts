@@ -1,19 +1,56 @@
-import { getTokenFromRequest, getProviderFromRequest, unauthorized, serverError } from "@/app/api/_helpers"
+import { getTokenFromRequest, getCredentialFromRequest, getProviderFromRequest, unauthorized, serverError } from "@/app/api/_helpers"
+import { getProvider } from "@/lib/providers/registry"
+import { decodeJwtPayload, decodeScopesFromJwt } from "@/lib/microsoft"
+import type { MicrosoftCredential } from "@/lib/providers/types"
 
 export async function GET(request: Request) {
-  const token = await getTokenFromRequest()
-  if (!token) return unauthorized()
-
   const provider = await getProviderFromRequest()
   const url = new URL(request.url)
   const forceRefresh = url.searchParams.get("refresh") === "true"
+
+  // Microsoft provider path — JWT-based, no tokeninfo endpoint needed
+  if (provider === "microsoft") {
+    const cred = await getCredentialFromRequest()
+    if (!cred) return unauthorized()
+
+    const msProvider = getProvider("microsoft")
+    if (!msProvider) return unauthorized()
+
+    try {
+      const accessToken = await msProvider.getAccessToken(cred.credential)
+      const payload = decodeJwtPayload(accessToken)
+      const scopes = decodeScopesFromJwt(accessToken)
+      const msCred = cred.credential as MicrosoftCredential
+
+      return Response.json({
+        valid: true,
+        expiresIn: payload?.exp
+          ? Math.max(0, (payload.exp as number) - Math.floor(Date.now() / 1000))
+          : 3600,
+        scopes,
+        email: (payload?.preferred_username as string) || (payload?.upn as string) || msCred.account || "",
+        issuedAt: Date.now(),
+        provider: "microsoft",
+        refreshed: true,
+      })
+    } catch (error) {
+      return Response.json({
+        valid: false,
+        error: error instanceof Error ? error.message : "Token refresh failed",
+        provider: "microsoft",
+      })
+    }
+  }
+
+  // Google path (existing logic)
+  const token = await getTokenFromRequest()
+  if (!token) return unauthorized()
 
   try {
     let accessToken = token.token || ""
     let expiresIn = 0
     let refreshed = false
 
-    // Only call the refresh endpoint when forced or when there's no existing access token
     if (forceRefresh || !accessToken) {
       const tokenUri = token.token_uri || "https://oauth2.googleapis.com/token"
       const refreshRes = await fetch(tokenUri, {
@@ -42,13 +79,11 @@ export async function GET(request: Request) {
       refreshed = true
     }
 
-    // Get token info (scopes, email, expiry)
     const infoRes = await fetch(
       `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`
     )
 
     if (!infoRes.ok) {
-      // Token might be expired — try a refresh
       if (!refreshed) {
         const tokenUri = token.token_uri || "https://oauth2.googleapis.com/token"
         const refreshRes = await fetch(tokenUri, {
@@ -74,7 +109,6 @@ export async function GET(request: Request) {
         accessToken = refreshData.access_token as string
         expiresIn = (refreshData.expires_in as number) || 3600
 
-        // Retry tokeninfo with fresh token
         const retryRes = await fetch(
           `https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`
         )

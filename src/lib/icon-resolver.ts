@@ -13,6 +13,7 @@ import {
   Circle,
   Monitor,
   Bell,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,6 +32,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Circle,
   Monitor,
   Bell,
+  MessageSquare,
 }
 
 export function resolveIcon(name: string): LucideIcon {

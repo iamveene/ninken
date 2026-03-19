@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useState, useCallback, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Upload,
   FileJson,
@@ -11,6 +11,7 @@ import {
   Lock,
   Zap,
   ClipboardPaste,
+  ArrowLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
@@ -20,6 +21,7 @@ import type { ServiceProvider } from "@/lib/providers/types"
 import {
   addProfile,
   getAllProfiles,
+  getActiveProfileId,
   setActiveProfileId,
 } from "@/lib/token-store"
 import { activateProfile, migrateFromCookies } from "@/lib/token-sync"
@@ -27,7 +29,23 @@ import { activateProfile, migrateFromCookies } from "@/lib/token-sync"
 type Status = "idle" | "dragging" | "validating" | "success" | "error"
 
 export default function AuthPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-neutral-950 to-neutral-900">
+          <div className="animate-pulse text-sm text-neutral-500">Loading...</div>
+        </div>
+      }
+    >
+      <AuthPageInner />
+    </Suspense>
+  )
+}
+
+function AuthPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isAddMode = searchParams.get("add") === "true"
   const [status, setStatus] = useState<Status>("idle")
   const [errorMessage, setErrorMessage] = useState("")
   const [showPaste, setShowPaste] = useState(false)
@@ -35,6 +53,7 @@ export default function AuthPage() {
   const [selectedProvider, setSelectedProvider] =
     useState<ServiceProvider | null>(null)
   const [migrating, setMigrating] = useState(true)
+  const [hasExistingProfiles, setHasExistingProfiles] = useState(false)
 
   const providers = getAllProviders()
 
@@ -46,6 +65,12 @@ export default function AuthPage() {
         if (migrated) {
           const profiles = await getAllProfiles()
           if (profiles.length > 0) {
+            setHasExistingProfiles(true)
+            // If ?add=true, stay on landing page for new service upload
+            if (isAddMode) {
+              setMigrating(false)
+              return
+            }
             const providerConfig = getProvider(profiles[0].provider)
             router.push(providerConfig?.defaultRoute ?? "/gmail")
             return
@@ -55,6 +80,12 @@ export default function AuthPage() {
         // Also check if we already have profiles in IndexedDB
         const existing = await getAllProfiles()
         if (existing.length > 0) {
+          setHasExistingProfiles(true)
+          // If ?add=true, stay on landing page for new service upload
+          if (isAddMode) {
+            setMigrating(false)
+            return
+          }
           await activateProfile(existing[0].id)
           const providerConfig = getProvider(existing[0].provider)
           router.push(providerConfig?.defaultRoute ?? "/gmail")
@@ -66,7 +97,7 @@ export default function AuthPage() {
       setMigrating(false)
     }
     init()
-  }, [router])
+  }, [router, isAddMode])
 
   const submitToken = useCallback(
     async (text: string) => {
@@ -192,10 +223,35 @@ export default function AuthPage() {
           />
         </div>
 
+        {/* Back to active services */}
+        {hasExistingProfiles && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={async () => {
+                const profiles = await getAllProfiles()
+                const activeId = getActiveProfileId()
+                const active = profiles.find((p) => p.id === activeId) ?? profiles[0]
+                if (active) {
+                  await activateProfile(active.id)
+                  const providerConfig = getProvider(active.provider)
+                  router.push(providerConfig?.defaultRoute ?? "/gmail")
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-700 bg-neutral-900/50 px-4 py-2 text-sm text-neutral-300 transition-colors hover:border-neutral-500 hover:text-neutral-100"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to active services
+            </button>
+          </div>
+        )}
+
         {/* Service grid */}
         <div className="space-y-4">
           <p className="text-center text-xs text-neutral-500 uppercase tracking-wider">
-            Select a service or drop any credential
+            {hasExistingProfiles
+              ? "Add another service"
+              : "Select a service or drop any credential"}
           </p>
           <div className="grid grid-cols-3 gap-3">
             {providers.map((p) => {

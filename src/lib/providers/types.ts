@@ -21,6 +21,19 @@ export type GoogleCredential = BaseCredential & {
   token_uri?: string
 }
 
+// Microsoft-specific credential (FOCI public client — no client_secret)
+export type MicrosoftCredential = BaseCredential & {
+  provider: "microsoft"
+  refresh_token: string
+  client_id: string
+  tenant_id: string
+  access_token?: string
+  scope?: string[]
+  token_uri?: string
+  account?: string
+  foci?: boolean
+}
+
 // Profile stored in IndexedDB — credential + metadata
 export type StoredProfile = {
   id: string

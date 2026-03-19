@@ -71,8 +71,8 @@ Ninken is designed for zero-footprint reconnaissance. Every API interaction shou
 
 **Ninken (忍犬)** is a universal red team data exploration platform. Red teamers paste or upload stolen credentials (OAuth tokens, PATs, API keys) and Ninken renders a full native-quality UI for that service — no need to touch the target's actual web UI.
 
-Currently supports: **Google Workspace** (Gmail + Drive)
-Roadmap: GitHub, GitLab, Slack, Microsoft 365, AWS, and more.
+Currently supports: **Google Workspace** (Gmail + Drive), **Microsoft 365** (Outlook, OneDrive, Teams, Entra ID, M365 Audit)
+Roadmap: GitHub, GitLab, Slack, AWS, and more.
 
 ## Future Platform Architecture
 
@@ -171,7 +171,7 @@ When no token is loaded, the landing page shows a grid of service cards instead 
 - Click a service → shows the credential upload zone scoped to that service
 - Or drag-drop any credential → auto-detect triggers, falls back to manual selector
 - Each card shows: service name, icon, expected credential format
-- Cards for unimplemented services show "Coming soon" badge, still clickable for roadmap info
+- Cards for unimplemented services (GitHub, GitLab, Slack, AWS) show "Coming soon" badge, still clickable for roadmap info. Google and Microsoft are live.
 
 **2. Sidebar Header — Active Service Indicator**
 When authenticated, the sidebar header (where the Ninken logo is) also shows the active service:
@@ -208,21 +208,22 @@ Option B (current flat structure — simpler but doesn't scale):
 /gmail, /drive, /buckets, /outlook, /onedrive, /repos
 ```
 
-**Recommendation**: Start with Option A. Use a `(google)` route group initially (rename current `(app)` to `(google)`), then add `(microsoft)` when M365 launches. The service switcher reads the route prefix to determine active service.
+**Recommendation**: Option A is implemented. Google routes live under the `(google)` route group, Microsoft routes under `(microsoft)`. The service switcher reads the route prefix to determine active service.
 
-**State Management**:
-- Active service derived from URL prefix (same pattern as Operate/Audit mode)
-- Service-specific credentials stored in separate cookies (`ninken_google_profiles`, `ninken_m365_profiles`, etc.)
-- Each service module registers its nav items, audit views, and credential validator
-- Shared components (mode toggle, cache indicator, sign out) stay in the common layout
+**State Management** (implemented):
+- Active service derived from URL prefix and provider registry (same pattern as Operate/Audit mode)
+- All profiles stored in IndexedDB (`src/lib/token-store.ts`), active profile's credentials set as httpOnly cookie for API routes
+- Each service module registers its nav items, audit views, and credential validator via `ServiceProvider` interface (`src/lib/providers/`)
+- Shared components (mode toggle, cache indicator, sign out, profile switcher) stay in the common layout
+- Service switching: profile dropdown shows provider icon + email, switching profiles navigates to that provider's `defaultRoute`
 
 **Implementation Order**:
-1. Restructure routes: rename `(app)` to `(google)`, add route prefix
-2. Build the landing page service grid
-3. Add service indicator to sidebar header
-4. Update profile selector for multi-service
-5. Implement M365 credential handler (OAuth2 refresh token + PRT)
-6. Build first M365 module (Outlook or Entra ID)
+1. ~~Restructure routes: rename `(app)` to `(google)`, add route prefix~~ Done
+2. ~~Build the landing page service grid~~ Done
+3. ~~Add service indicator to sidebar header~~ Done
+4. ~~Update profile selector for multi-service~~ Done — profile dropdown shows service icon + email, "Add new service" redirects to `/?add=true`, back button returns to previous service
+5. ~~Implement M365 credential handler (OAuth2 refresh token + FOCI public client)~~ Done
+6. ~~Build M365 modules (Outlook, OneDrive, Teams, Entra ID, M365 Audit)~~ Done
 
 ### Sidebar Updates
 When multiple services are loaded, the sidebar shows:
@@ -276,28 +277,31 @@ src/components/buckets/
 | Priority | Service | Credential | UI Views |
 |----------|---------|------------|----------|
 | v1.0 | Google Workspace | OAuth token.json | Gmail, Drive, GCP Buckets (Cloud Storage) |
-| v2.0 | GitHub | PAT (ghp_/github_pat_) | Repos, Issues, PRs, Actions, Secrets, Orgs, Gists |
-| v2.0 | GitLab | PAT (glpat-) | Projects, Issues, MRs, CI/CD, Secrets, Groups |
-| v3.0 | Slack | Bot/User token (xoxb/xoxp) | Channels, Messages, Files, Users, Search |
-| v3.0 | Microsoft 365 | OAuth2 refresh token / PRT / session cookies | Outlook, OneDrive, Teams, SharePoint, Entra ID Directory + Studio module |
-| v4.0 | AWS | Access Key + Secret | S3, IAM, Lambda, EC2, CloudTrail, Secrets Manager |
-| v5.0 | Custom REST | URL + token/key | Configurable API explorer |
+| **v2.0** | **Microsoft 365** | **FOCI public client OAuth2 refresh token** | **Outlook, OneDrive, Teams, Entra ID, M365 Audit — Implemented** |
+| v3.0 | GitHub | PAT (ghp_/github_pat_) | Repos, Issues, PRs, Actions, Secrets, Orgs, Gists |
+| v3.0 | GitLab | PAT (glpat-) | Projects, Issues, MRs, CI/CD, Secrets, Groups |
+| v4.0 | Slack | Bot/User token (xoxb/xoxp) | Channels, Messages, Files, Users, Search |
+| v4.1 | Microsoft 365 — Phase 2 | PRT / session cookies / advanced token flows | SharePoint, PRT exchange, browser cookie SSO, Studio module |
+| v5.0 | AWS | Access Key + Secret | S3, IAM, Lambda, EC2, CloudTrail, Secrets Manager |
+| v6.0 | Custom REST | URL + token/key | Configurable API explorer |
 
 ### Cross-Cutting Features (not tied to a specific service version)
 
 | Feature | Priority | Status | Description |
 |---------|----------|--------|-------------|
+| **Microsoft 365 Integration** | High | Implemented | Full Microsoft 365 provider with FOCI public client token support (no client_secret). Graph API client (`src/lib/microsoft.ts`: graphFetch, graphJson, graphPaginated, JWT decode, OData sanitization, token cache). ServiceProvider implementation (`src/lib/providers/microsoft.ts`). API routes: Outlook (7), OneDrive (5), Teams (3), Entra ID (5), M365 Audit (1). Hooks: use-outlook, use-onedrive, use-teams, use-entra, use-m365-audit. UI pages: Outlook (3-panel email), OneDrive (file browser), Teams (3-column), Entra ID (tabbed Users/Groups/Roles), M365 Audit (dashboard + 4 sub-pages). Service switching: profile dropdown redirects to provider's defaultRoute, "Add new service" goes to `/?add=true` with back button. Cookie size fix: credentials stripped to essential fields in activate route (Microsoft refresh tokens are ~1500 chars). Panel sizing: pixel strings with unique panel IDs, matching Google pages. |
 | **Global Token Refresher** | Medium | Implemented | Background system that auto-refreshes all refreshable tokens at 45min interval. Per-profile toggle via localStorage. Runs across all providers. Files: `src/lib/token-refresher.ts`, `src/hooks/use-token-refresher.ts`. |
 | **Token Lifecycle Panel** | Medium | Implemented | Sidebar footer widget showing access token countdown (color-coded), scope count, manual refresh button. API: `/api/auth/token-info`. Files: `src/components/layout/token-lifecycle.tsx`, `src/hooks/use-token-info.ts`. |
-| **Per-Service Layouts** | Built-in | Architecture ready | Google/Microsoft share workspace-style layout (sidebar + content). Each provider's route group has its own `layout.tsx`. |
+| **Per-Service Layouts** | Built-in | Implemented | Google `(google)` and Microsoft `(microsoft)` route groups each have their own `layout.tsx` with service-specific sidebar navigation. Workspace-style layout (sidebar + content) shared across both. |
 | **AI Partner** | Low | Planned | AI assistant for data exploration. Anthropic API key stored in `.env`. Defer until after Microsoft + Studio are solid. |
-| **Studio Module** | After Microsoft | Planned | Token Intelligence Hub — deferred until solid multi-provider foundation. |
-| **Resizable Panels** | Medium | Implemented | `react-resizable-panels` on Gmail (3-panel), Drive (file list + preview), Calendar (sidebar + view), Buckets (sidebar + browser). File: `src/components/ui/resize-handle.tsx`. |
+| **Studio Module** | Medium | Planned | Token Intelligence Hub — multi-provider foundation now in place (Google + Microsoft live). Ready for implementation. |
+| **Resizable Panels** | Medium | Implemented | `react-resizable-panels` on Gmail (3-panel), Drive (file list + preview), Calendar (sidebar + view), Buckets (sidebar + browser), Outlook (3-panel), Teams (3-column). **CRITICAL: Use pixel strings for sizes (`"200px"`, `"1fr"`), NOT plain numbers. Add unique `id` props to each panel for persistence. Use `className="h-full"` on PanelGroup, NOT `id`.** File: `src/components/ui/resize-handle.tsx`. |
 | **Adaptive Empty States** | Medium | Implemented | Gmail: message list expands full-width when no message selected, detail panel appears only when a message is clicked. |
 | **Sidebar Slogan** | Low | Implemented | "Track. Hunt. Retrieve." in red below Ninken logo, hidden when collapsed via `group-data-[collapsible=icon]:hidden`. |
 | **Alert System** | Medium | Implemented | IndexedDB alert store, bell icon badge with unread count, dropdown panel, full `/alerts` page with filters. Files: `src/lib/alert-store.ts`, `src/hooks/use-alerts.ts`, `src/components/layout/alert-badge.tsx`, `src/components/layout/alert-panel.tsx`, `src/app/alerts/`. |
 | **Collection Mode** | High | Planned | Cross-service artifact collection. Third mode alongside Operate/Audit. "Send to Collection" on emails (with attachments), Drive files/folders, bucket objects, etc. Items downloaded in background and stored locally for offline access. Zip download of entire collection or individual items. Survives token revocation and offline. Massive feature — requires local storage engine, background download manager, cross-service item registry. |
 | **Global Refresh Button** | Low | Planned | Refresh icon/badge in top-right header that triggers a full content refresh across all visible data (messages, files, events, etc.). |
+| **Google Chat** | Medium | Planned | Browse chat history (DMs, spaces, rooms), search through messages, view attachments and threads. Uses Google Chat API (`chat.googleapis.com`). Scopes: `chat.messages.readonly`, `chat.spaces.readonly`. UI: space/room list sidebar, message thread view, search with filters. Route: `/chat`. Nav item under Google Operate. |
 
 ### Alert System
 
@@ -370,8 +374,8 @@ All modules will support:
 
 | Bug | Severity | Status | Description |
 |-----|----------|--------|-------------|
-| **Sign out button does not work** | High | Open | Clicking "Sign out" in the sidebar footer does not properly clear the session. The `handleSignOut` function calls `cacheClear()` + `DELETE /api/auth` + `router.push("/")`, but navigation doesn't redirect properly or cookies are not cleared. Needs investigation. |
-| **Horizontal overflow on responsive views** | Medium | Open | Some pages (Gmail message list, alert center filters) may cause horizontal scrolling on narrower viewports. Need to add `overflow-x-hidden` guards and ensure all content truncates properly. |
+| **Sign out button does not work** | High | Fixed | Was only clearing server cookie, not IndexedDB profiles. Fixed by adding `clearAllProfiles()` call in `handleSignOut` in `app-sidebar.tsx`. |
+| **Horizontal overflow on responsive views** | Medium | Fixed | Added `overflow-x-hidden` to html element (`globals.css`) and `SidebarInset` (`(google)/layout.tsx`), plus `min-w-0` on content areas. |
 
 ## Dual-Mode Architecture: Operate & Audit
 
@@ -684,8 +688,8 @@ Each new service (GitHub, GitLab, Slack, M365, AWS) will get its own audit mode 
 └─────────────────────────────────────────────────────┘
           │
           ▼
-    Google APIs (googleapis npm)
-    Gmail API v1 + Drive API v3
+    Google APIs (googleapis npm)        Microsoft Graph API (fetch)
+    Gmail API v1 + Drive API v3         /me/messages, /me/drive, /users, etc.
 ```
 
 ## Tech Stack
@@ -697,7 +701,8 @@ Each new service (GitHub, GitLab, Slack, M365, AWS) will get its own audit mode 
 | Icons | lucide-react |
 | Date formatting | date-fns |
 | Google APIs | googleapis + google-auth-library (npm) |
-| Auth storage | httpOnly cookie (token.json contents) |
+| Microsoft Graph API | Direct fetch() to graph.microsoft.com — no SDK, custom client in `src/lib/microsoft.ts` |
+| Auth storage | httpOnly cookie (active profile credentials), IndexedDB (all profiles via `src/lib/token-store.ts`) |
 | Testing | Playwright MCP |
 
 ## Auth Flow
@@ -867,6 +872,7 @@ workspace-ui/
 | Integration review | integrator | Clean build, zero warnings, all security checks pass |
 | Ninken rebrand | designer | SVG logo, kanji, favicon, dark default, stealth aesthetic |
 | Drive E2E tests | tester-drive | Playwright tests |
+| Microsoft 365 — Phase 1 | multi-agent | Full M365 provider: FOCI public client tokens, Graph API client (`src/lib/microsoft.ts`), ServiceProvider (`src/lib/providers/microsoft.ts`). Outlook (7 API routes, 3-panel email UI), OneDrive (5 routes, file browser), Teams (3 routes, 3-column UI), Entra ID (5 routes, tabbed Users/Groups/Roles), M365 Audit (1 route, dashboard + 4 sub-pages). Service switching via profile dropdown + `/?add=true`. Cookie size fix for large refresh tokens. |
 
 ### IN PROGRESS
 | Task | Agent | Notes |
@@ -880,18 +886,17 @@ workspace-ui/
 | Local cache + offline resilience (IndexedDB) | Next |
 | Docker Compose containerization | Next |
 | GCP Buckets (Cloud Storage) explorer | v1.0 |
-| GitHub module (PAT → repos, issues, PRs, secrets) | v2.0 |
-| GitLab module (PAT → projects, MRs, CI/CD, secrets) | v2.0 |
-| Slack module (token → channels, messages, files) | v3.0 |
-| Microsoft 365 — Phase 1: OAuth2 refresh token → Graph API (Outlook, OneDrive, Teams, SharePoint, Directory) | v3.0 |
-| Microsoft 365 — Phase 2: PRT, FOCI, browser session cookies, advanced token flows | v3.1 |
-| NinLoader — universal token collector CLI (Python + PowerShell), service-agnostic plugin architecture | v3.2 |
-| Studio module — multi-platform Token Analyzer, Service Map, Extraction Guide, Converter, OPSEC Stealth Scores, Scope Calculator (Google + Microsoft + future platforms) | v3.3 |
-| AWS module (access key → S3, IAM, Lambda, Secrets Manager) | v4.0 |
-| Custom REST API explorer | v5.0 |
-| Credential auto-detection (paste anything, Ninken detects type) | v2.0 |
-| Audit Query — cross-service keyword search with pre-built red team query library (credentials, API keys, PII, infra) | v2.0 |
-| Cross-service search and data export | v3.0 |
+| GitHub module (PAT → repos, issues, PRs, secrets) | v3.0 |
+| GitLab module (PAT → projects, MRs, CI/CD, secrets) | v3.0 |
+| Slack module (token → channels, messages, files) | v4.0 |
+| Microsoft 365 — Phase 2: PRT, browser session cookies, advanced token flows, SharePoint | v4.1 |
+| NinLoader — universal token collector CLI (Python + PowerShell), service-agnostic plugin architecture | v4.2 |
+| Studio module — multi-platform Token Analyzer, Service Map, Extraction Guide, Converter, OPSEC Stealth Scores, Scope Calculator (Google + Microsoft + future platforms) | v4.3 |
+| AWS module (access key → S3, IAM, Lambda, Secrets Manager) | v5.0 |
+| Custom REST API explorer | v6.0 |
+| Credential auto-detection (paste anything, Ninken detects type) | v3.0 |
+| Audit Query — cross-service keyword search with pre-built red team query library (credentials, API keys, PII, infra) | v3.0 |
+| Cross-service search and data export | v4.0 |
 
 ## Agent Team
 
@@ -1390,7 +1395,7 @@ type Profile = {
 
 ---
 
-## NinLoader — Universal Token Collector CLI (v3.2)
+## NinLoader — Universal Token Collector CLI (v4.2)
 
 ### Overview
 
@@ -1876,65 +1881,95 @@ This is a critical red team technique: you only need ONE refresh token from ANY 
 
 ### Microsoft 365 Integration — Implementation Phases
 
-#### Phase 1: OAuth2 Refresh Token Flow (v3.0)
+#### Phase 1: OAuth2 Refresh Token Flow (v2.0) — IMPLEMENTED
 
-Direct mirror of the Google flow — same UX, swap the SDK.
+Implemented as a FOCI public client flow (no client_secret required). Uses direct token exchange with Microsoft's OAuth2 endpoint instead of MSAL SDK.
 
 **Auth input (token.json for M365):**
 ```json
 {
   "platform": "microsoft",
   "refresh_token": "0.AVYAxxxxxxxxxx...",
-  "client_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "client_secret": "optional-for-public-clients",
+  "client_id": "1fec8e78-bce4-4aaf-ab1b-5451cc387264",
   "tenant_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 ```
 
-**SDK:** `@azure/msal-node` (MSAL — Microsoft Authentication Library)
+Note: `client_secret` is NOT required — Microsoft FOCI public clients (Teams, Office, etc.) issue refresh tokens without a secret. This is the standard red team scenario where tokens are extracted from desktop apps.
 
-**Graph API endpoints to implement:**
+**SDK:** No SDK — direct `fetch()` to Microsoft OAuth2 token endpoint and Graph API. Token exchange, JWT decoding, OData sanitization, and paginated fetching are all implemented in `src/lib/microsoft.ts`.
+
+**Key implementation files:**
+- `src/lib/microsoft.ts` — Graph API client (graphFetch, graphJson, graphPaginated, JWT decode without external deps, OData query sanitization, in-memory access token cache)
+- `src/lib/providers/microsoft.ts` — Full ServiceProvider implementation (validate, refresh, getProfile, getSidebarItems, defaultRoute)
+- `src/hooks/use-outlook.ts`, `use-onedrive.ts`, `use-teams.ts`, `use-entra.ts`, `use-m365-audit.ts` — React data-fetching hooks
+
+**Graph API endpoints implemented:**
 
 | Service | Graph Endpoint | Ninken UI View |
 |---------|---------------|----------------|
-| **Outlook (Mail)** | `GET /me/messages`, `GET /me/messages/{id}`, `POST /me/sendMail` | Email browser (same layout as Gmail module) |
-| **OneDrive** | `GET /me/drive/root/children`, `GET /me/drive/items/{id}/children` | File browser (same layout as Drive module) |
-| **Calendar** | `GET /me/calendar/events`, `GET /me/calendars` | Calendar view (same layout as Calendar module) |
-| **Directory (Entra ID)** | `GET /users`, `GET /groups`, `GET /directoryRoles` | Directory browser (same layout as Directory module) |
-| **SharePoint** | `GET /sites`, `GET /sites/{id}/drives`, `GET /sites/{id}/lists` | Site/document browser |
-| **Teams** | `GET /me/joinedTeams`, `GET /teams/{id}/channels`, `GET /teams/{id}/channels/{id}/messages` | Channel message browser |
+| **Outlook (Mail)** | `GET /me/messages`, `GET /me/messages/{id}`, `GET /me/messages/{id}/attachments`, `GET /me/mailFolders`, `POST /me/sendMail`, etc. | 3-panel email browser (folder list, message list, message detail) |
+| **OneDrive** | `GET /me/drive/root/children`, `GET /me/drive/items/{id}/children`, `GET /me/drive/items/{id}/content`, search | File browser with breadcrumbs, download, file type icons |
+| **Teams** | `GET /me/joinedTeams`, `GET /teams/{id}/channels`, `GET /teams/{id}/channels/{id}/messages` | 3-column layout (teams, channels, messages) |
+| **Entra ID (Directory)** | `GET /users`, `GET /groups`, `GET /directoryRoles`, `GET /groups/{id}/members`, `GET /directoryRoles/{id}/members` | Tabbed view (Users, Groups, Roles) with member expansion |
+| **M365 Audit** | `GET /auditLogs/signIns` + client-side aggregation | Dashboard with 4 sub-pages (Sign-ins, Apps, Risky Users, Conditional Access) |
 
-**API routes structure:**
+**API routes structure (implemented):**
 ```
 src/app/api/microsoft/
-  auth/route.ts                    # POST (store M365 token), DELETE, GET
-  mail/
-    messages/route.ts              # GET list, POST send
-    messages/[id]/route.ts         # GET read, PATCH update, DELETE
-    messages/[id]/attachments/[aid]/route.ts  # GET download
-  drive/
-    files/route.ts                 # GET list, POST upload
-    files/[id]/route.ts            # GET info, download
+  outlook/
+    messages/route.ts              # GET list messages
+    messages/[id]/route.ts         # GET read message
+    messages/[id]/attachments/route.ts         # GET list attachments
+    messages/[id]/attachments/[aid]/route.ts   # GET download attachment
+    folders/route.ts               # GET mail folders
+    send/route.ts                  # POST send mail
+    profile/route.ts               # GET user profile
+  onedrive/
+    files/route.ts                 # GET list root files
+    files/[id]/route.ts            # GET file info
     files/[id]/children/route.ts   # GET folder contents
-  calendar/
-    events/route.ts                # GET list, POST create
-    events/[id]/route.ts           # GET read, PATCH, DELETE
-  directory/
+    files/[id]/content/route.ts    # GET download file
+    search/route.ts                # GET search files
+  teams/
+    teams/route.ts                 # GET joined teams
+    teams/[id]/channels/route.ts   # GET channels
+    teams/[id]/channels/[cid]/messages/route.ts  # GET channel messages
+  entra/
     users/route.ts                 # GET list users
     users/[id]/route.ts            # GET user details
     groups/route.ts                # GET list groups
     groups/[id]/members/route.ts   # GET group members
-    roles/route.ts                 # GET directory roles
-  sharepoint/
-    sites/route.ts                 # GET list sites
-    sites/[id]/drives/route.ts     # GET document libraries
-  teams/
-    teams/route.ts                 # GET joined teams
-    teams/[id]/channels/route.ts   # GET channels
-    teams/[id]/channels/[id]/messages/route.ts  # GET messages
+    roles/route.ts                 # GET directory roles + members
+  audit/
+    route.ts                       # GET audit logs (sign-ins, aggregations)
 ```
 
-#### Phase 2: PRT & Advanced Token Flows (v3.1)
+**UI pages (implemented):**
+```
+src/app/(microsoft)/
+  outlook/page.tsx                 # 3-panel Outlook email view
+  onedrive/page.tsx                # OneDrive file browser
+  teams/page.tsx                   # 3-column Teams view
+  entra/page.tsx                   # Tabbed Entra ID directory
+  m365-audit/page.tsx              # M365 Audit dashboard
+  m365-audit/sign-ins/page.tsx     # Sign-in log details
+  m365-audit/apps/page.tsx         # App registration analysis
+  m365-audit/risky-users/page.tsx  # Risky users view
+  m365-audit/conditional-access/page.tsx  # Conditional Access analysis
+  layout.tsx                       # Microsoft route group layout with sidebar
+```
+
+**Service switching flow:**
+1. Profile dropdown shows active account (service icon + email)
+2. "Add new service" option redirects to `/?add=true` (landing page with service grid)
+3. Landing page shows service cards (Google, Microsoft) — user selects and uploads credentials
+4. Back button returns to previous service view
+5. Switching profiles redirects to that provider's `defaultRoute` (e.g., `/outlook` for Microsoft, `/gmail` for Google)
+
+**Cookie size fix:** Microsoft refresh tokens are ~1500 chars (vs Google's ~70). The activate route strips credentials to essential fields only (`refresh_token`, `client_id`, `tenant_id`, `platform`) to stay within cookie limits.
+
+#### Phase 2: PRT & Advanced Token Flows (v4.1) — Planned
 
 **PRT input (extracted from non-TPM device):**
 ```json
@@ -1989,7 +2024,7 @@ FOCI RT → (cross-client exchange) → Access Token → Graph API
 Refresh Token → (standard exchange) → Access Token → Graph API
 ```
 
-#### Phase 3: Studio Module — Token Intelligence Hub (v3.2)
+#### Phase 3: Studio Module — Token Intelligence Hub (v4.3)
 
 A new top-level mode in the Ninken mode switcher (alongside Operate and Audit) that serves as the red teamer's reference and toolkit for understanding tokens, services, extraction techniques, and access mapping.
 

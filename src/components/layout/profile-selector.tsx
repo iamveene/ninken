@@ -1,14 +1,11 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Check,
   Plus,
   Trash2,
-  Upload,
-  ClipboardPaste,
-  FileJson,
 } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -64,7 +61,6 @@ export function ProfileSelector() {
     updateEmail,
     loading,
   } = useProvider()
-  const [showAddDialog, setShowAddDialog] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
   // Fetch email for active profile if missing
@@ -123,10 +119,11 @@ export function ProfileSelector() {
                 <DropdownMenuItem
                   key={p.id}
                   className="gap-2"
-                  onClick={() => {
+                  onClick={async () => {
                     if (p.id !== activeProfile?.id) {
-                      switchProfile(p.id)
-                      router.refresh()
+                      await switchProfile(p.id)
+                      const targetProvider = getProvider(p.provider)
+                      router.push(targetProvider?.defaultRoute ?? "/gmail")
                     }
                   }}
                 >
@@ -153,10 +150,10 @@ export function ProfileSelector() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="gap-2"
-            onClick={() => setShowAddDialog(true)}
+            onClick={() => router.push("/?add=true")}
           >
             <Plus className="h-4 w-4" />
-            Add account
+            Add new service
           </DropdownMenuItem>
           {profiles.length > 0 && (
             <DropdownMenuItem
@@ -170,15 +167,6 @@ export function ProfileSelector() {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <AddAccountDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSuccess={() => {
-          setShowAddDialog(false)
-          router.refresh()
-        }}
-      />
 
       <Dialog
         open={confirmRemove}
@@ -220,178 +208,5 @@ export function ProfileSelector() {
         </DialogContent>
       </Dialog>
     </>
-  )
-}
-
-function AddAccountDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-}) {
-  const [mode, setMode] = useState<"file" | "paste">("file")
-  const [status, setStatus] = useState<"idle" | "validating" | "error">("idle")
-  const [errorMessage, setErrorMessage] = useState("")
-  const [pasteValue, setPasteValue] = useState("")
-  const { addCredential } = useProvider()
-
-  const reset = () => {
-    setMode("file")
-    setStatus("idle")
-    setErrorMessage("")
-    setPasteValue("")
-  }
-
-  const submitToken = async (text: string) => {
-    setStatus("validating")
-    setErrorMessage("")
-
-    try {
-      const data = JSON.parse(text)
-      const result = await addCredential(data)
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to authenticate")
-      }
-
-      // Try to fetch email
-      try {
-        const profileRes = await fetch("/api/gmail/profile")
-        if (profileRes.ok) {
-          const profileData = await profileRes.json()
-          if (profileData.emailAddress) {
-            // Email will be updated through the provider context
-          }
-        }
-      } catch {
-        // Non-critical
-      }
-
-      reset()
-      onSuccess()
-    } catch (e) {
-      setStatus("error")
-      setErrorMessage(
-        e instanceof SyntaxError
-          ? "Invalid JSON"
-          : e instanceof Error
-            ? e.message
-            : "Unknown error"
-      )
-    }
-  }
-
-  const handleFile = async (file: File) => {
-    const text = await file.text()
-    submitToken(text)
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) reset()
-        onOpenChange(v)
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add account</DialogTitle>
-          <DialogDescription>
-            Upload or paste a credential file for any supported service.
-          </DialogDescription>
-        </DialogHeader>
-
-        {mode === "file" ? (
-          <div className="space-y-3">
-            <div
-              className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-muted-foreground/25 p-6 cursor-pointer hover:border-muted-foreground/50 transition-colors"
-              onDrop={(e) => {
-                e.preventDefault()
-                const file = e.dataTransfer.files[0]
-                if (file) handleFile(file)
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onClick={() =>
-                document.getElementById("add-account-file")?.click()
-              }
-            >
-              <input
-                id="add-account-file"
-                type="file"
-                accept=".json,application/json"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleFile(file)
-                }}
-              />
-              {status === "validating" ? (
-                <FileJson className="h-8 w-8 text-muted-foreground animate-pulse" />
-              ) : (
-                <Upload className="h-8 w-8 text-muted-foreground" />
-              )}
-              <p className="text-sm text-muted-foreground">
-                {status === "validating"
-                  ? "Validating..."
-                  : "Drop credential file or click to browse"}
-              </p>
-            </div>
-            {status === "error" && (
-              <p className="text-sm text-destructive">{errorMessage}</p>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setMode("paste")
-                setStatus("idle")
-                setErrorMessage("")
-              }}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ClipboardPaste className="h-3 w-3" />
-              Or paste JSON
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <textarea
-              value={pasteValue}
-              onChange={(e) => setPasteValue(e.target.value)}
-              placeholder='{"refresh_token": "...", "client_id": "...", "client_secret": "..."}'
-              spellCheck={false}
-              className="w-full h-28 rounded-md border bg-muted/50 p-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-            />
-            {status === "error" && (
-              <p className="text-sm text-destructive">{errorMessage}</p>
-            )}
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("file")
-                  setStatus("idle")
-                  setErrorMessage("")
-                }}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Upload className="h-3 w-3" />
-                Upload file instead
-              </button>
-              <Button
-                size="sm"
-                disabled={!pasteValue.trim() || status === "validating"}
-                onClick={() => submitToken(pasteValue.trim())}
-              >
-                {status === "validating" ? "Validating..." : "Add account"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
   )
 }

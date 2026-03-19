@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server"
-import { getTokenFromRequest, unauthorized, serverError } from "@/app/api/_helpers"
+import { getCredentialFromRequest, getTokenFromRequest, unauthorized, serverError } from "@/app/api/_helpers"
+import { getProvider } from "@/lib/providers/registry"
 import { OAuth2Client } from "google-auth-library"
 
 export async function GET() {
+  // Try provider-generic path first
+  const cred = await getCredentialFromRequest()
+  if (cred) {
+    const provider = getProvider(cred.provider)
+    if (provider) {
+      try {
+        const scopes = await provider.fetchScopes(cred.credential)
+        return NextResponse.json({ scopes })
+      } catch (err) {
+        return serverError(err, cred.provider)
+      }
+    }
+  }
+
+  // Fallback: legacy Google-only path
   const token = await getTokenFromRequest()
   if (!token) return unauthorized()
 
@@ -13,7 +29,6 @@ export async function GET() {
       refresh_token: token.refresh_token,
     })
 
-    // Ensure we have a valid access token
     const { credentials } = await oauth2Client.refreshAccessToken()
     const accessToken = credentials.access_token
 
