@@ -19,6 +19,27 @@ export type BaseCredential = {
   credentialKind?: CredentialKind
 }
 
+// Raw access token credential (non-refreshable, any provider)
+export type AccessTokenCredential = BaseCredential & {
+  credentialKind: "access-token"
+  access_token: string
+  expires_at?: number    // Unix timestamp (seconds)
+  email?: string
+  scopes?: string[]
+}
+
+/** Strip an AccessTokenCredential down to its essential fields. */
+export function minimalAccessToken(credential: AccessTokenCredential): AccessTokenCredential {
+  return {
+    provider: credential.provider,
+    credentialKind: "access-token",
+    access_token: credential.access_token,
+    expires_at: credential.expires_at,
+    email: credential.email,
+    scopes: credential.scopes,
+  }
+}
+
 // Google-specific credential (wraps existing TokenData shape)
 export type GoogleCredential = BaseCredential & {
   provider: "google"

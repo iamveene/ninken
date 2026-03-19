@@ -9,6 +9,7 @@ registerProvider(microsoftProvider)
 export type {
   ProviderId,
   BaseCredential,
+  AccessTokenCredential,
   GoogleCredential,
   MicrosoftCredential,
   StoredProfile,
@@ -16,6 +17,7 @@ export type {
   ProviderNavItem,
   ServiceProvider,
 } from "./types"
+export { minimalAccessToken } from "./types"
 export { registerProvider, getProvider, getAllProviders, detectProvider } from "./registry"
 export { googleProvider } from "./google"
 export { microsoftProvider, extractAllCredentials } from "./microsoft"

@@ -1,13 +1,19 @@
-import type {
-  BaseCredential,
-  MicrosoftCredential,
-  ServiceProvider,
+import {
+  minimalAccessToken,
+  type AccessTokenCredential,
+  type BaseCredential,
+  type MicrosoftCredential,
+  type ServiceProvider,
 } from "./types"
 import {
   getAccessToken as msGetAccessToken,
   decodeJwtPayload,
   decodeScopesFromJwt,
 } from "../microsoft"
+import {
+  detectMicrosoftAccessToken,
+  validateMicrosoftAccessToken,
+} from "./strategies/microsoft-access-token"
 
 // Teams FOCI client ID (public client, no secret needed)
 const TEAMS_FOCI_CLIENT_ID = "1fec8e78-bce4-4aaf-ab1b-5451cc387264"
@@ -264,13 +270,7 @@ export const microsoftProvider: ServiceProvider = {
 
   detectCredential(raw: unknown): boolean {
     // Raw JWT string: check for Microsoft-specific claims
-    if (typeof raw === "string" && raw.startsWith("eyJ")) {
-      const payload = decodeJwtPayload(raw)
-      if (payload) {
-        return !!(payload.tid || (typeof payload.iss === "string" && payload.iss.includes("sts.windows.net")))
-      }
-      return false
-    }
+    if (detectMicrosoftAccessToken(raw)) return true
     if (!raw || typeof raw !== "object") return false
     const obj = normalizeRaw(raw as Record<string, unknown>)
     return isMicrosoftShape(obj)
@@ -279,8 +279,12 @@ export const microsoftProvider: ServiceProvider = {
   validateCredential(
     raw: unknown
   ):
-    | { valid: true; credential: MicrosoftCredential; email?: string }
+    | { valid: true; credential: MicrosoftCredential | AccessTokenCredential; email?: string }
     | { valid: false; error: string } {
+    // Raw access token JWT string
+    if (typeof raw === "string" && detectMicrosoftAccessToken(raw)) {
+      return validateMicrosoftAccessToken(raw)
+    }
     if (!raw || typeof raw !== "object") {
       return { valid: false, error: "Invalid JSON" }
     }
@@ -336,6 +340,10 @@ export const microsoftProvider: ServiceProvider = {
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
+    // Access token credentials: return stored token directly (non-refreshable)
+    if (credential.credentialKind === "access-token") {
+      return (credential as AccessTokenCredential).access_token
+    }
     return msGetAccessToken(credential as MicrosoftCredential)
   },
 
@@ -470,6 +478,9 @@ export const microsoftProvider: ServiceProvider = {
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
+    if (credential.credentialKind === "access-token") {
+      return minimalAccessToken(credential as AccessTokenCredential)
+    }
     const c = credential as MicrosoftCredential
     return {
       provider: "microsoft",

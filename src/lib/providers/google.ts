@@ -1,8 +1,14 @@
-import type {
-  BaseCredential,
-  GoogleCredential,
-  ServiceProvider,
+import {
+  minimalAccessToken,
+  type AccessTokenCredential,
+  type BaseCredential,
+  type GoogleCredential,
+  type ServiceProvider,
 } from "./types"
+import {
+  detectGoogleAccessToken,
+  validateGoogleAccessToken,
+} from "./strategies/google-access-token"
 
 /**
  * Normalize raw credential JSON into a flat object with the fields we need.
@@ -64,6 +70,8 @@ export const googleProvider: ServiceProvider = {
   iconName: "Globe",
 
   detectCredential(raw: unknown): boolean {
+    // Raw access token string (ya29.* prefix)
+    if (detectGoogleAccessToken(raw)) return true
     if (!raw || typeof raw !== "object") return false
     return isGoogleShape(raw as Record<string, unknown>)
   },
@@ -71,8 +79,12 @@ export const googleProvider: ServiceProvider = {
   validateCredential(
     raw: unknown
   ):
-    | { valid: true; credential: GoogleCredential; email?: string }
+    | { valid: true; credential: GoogleCredential | AccessTokenCredential; email?: string }
     | { valid: false; error: string } {
+    // Raw access token string
+    if (typeof raw === "string" && detectGoogleAccessToken(raw)) {
+      return validateGoogleAccessToken(raw)
+    }
     if (!raw || typeof raw !== "object") {
       return { valid: false, error: "Invalid JSON" }
     }
@@ -108,6 +120,10 @@ export const googleProvider: ServiceProvider = {
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
+    // Access token credentials: return stored token directly (non-refreshable)
+    if (credential.credentialKind === "access-token") {
+      return (credential as AccessTokenCredential).access_token
+    }
     // Uses raw fetch to avoid importing google-auth-library in client bundles
     const cred = credential as GoogleCredential
     const tokenUri = cred.token_uri || "https://oauth2.googleapis.com/token"
@@ -292,6 +308,9 @@ export const googleProvider: ServiceProvider = {
   },
 
   minimalCredential(credential: BaseCredential): BaseCredential {
+    if (credential.credentialKind === "access-token") {
+      return minimalAccessToken(credential as AccessTokenCredential)
+    }
     const c = credential as GoogleCredential
     return {
       provider: "google",
