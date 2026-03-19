@@ -123,6 +123,16 @@ export async function getGitHubAccessToken(): Promise<string | null> {
   return (result.credential as AccessTokenCredential).access_token
 }
 
+/**
+ * Convenience: get a GitLab access token from the request cookie, or null.
+ * GitLab credentials are AccessTokenCredential (PATs).
+ */
+export async function getGitLabAccessToken(): Promise<string | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "gitlab") return null
+  return (result.credential as AccessTokenCredential).access_token
+}
+
 export async function getProviderFromRequest(): Promise<ProviderId | null> {
   const cookieStore = await cookies()
   const providerCookie = cookieStore.get("ninken_provider")

@@ -68,6 +68,13 @@ const ROUTE_PROVIDER_MAP: [string, ProviderId][] = [
   ["/slack-dashboard", "slack"],
   ["/slack-files", "slack"],
   ["/slack-users", "slack"],
+  // GitLab routes
+  ["/gitlab-dashboard", "gitlab"],
+  ["/gitlab-projects", "gitlab"],
+  ["/gitlab-groups", "gitlab"],
+  ["/gitlab-pipelines", "gitlab"],
+  ["/gitlab-snippets", "gitlab"],
+  ["/gitlab-audit", "gitlab"],
 ]
 
 function getProviderFromPathname(pathname: string): ProviderId | null {
@@ -82,7 +89,7 @@ function getProviderFromPathname(pathname: string): ProviderId | null {
 type Mode = "operate" | "audit" | "collection" | "studio"
 
 function getMode(pathname: string): Mode {
-  if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit")) return "audit"
+  if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit") || pathname.startsWith("/gitlab-audit") || pathname.startsWith("/github-audit")) return "audit"
   if (pathname.startsWith("/studio")) return "studio"
   if (pathname.startsWith("/collection")) return "collection"
   return "operate"
