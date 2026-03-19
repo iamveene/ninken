@@ -211,7 +211,7 @@ function AuthPageInner() {
       <div className="w-full max-w-2xl flex flex-col gap-5">
         {/* Compact logo */}
         <div className="flex justify-center">
-          <NinkenLogo className="text-center max-w-[360px]" />
+          <NinkenLogo className="text-center max-w-[520px]" />
         </div>
 
         {/* Active sessions — scrollable listbox */}
