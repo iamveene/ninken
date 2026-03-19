@@ -20,6 +20,6 @@ export async function GET(request: NextRequest) {
       nextPageToken: res.data.nextPageToken || null,
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

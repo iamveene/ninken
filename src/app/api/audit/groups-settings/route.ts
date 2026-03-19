@@ -192,6 +192,6 @@ export async function GET() {
       skippedCount,
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

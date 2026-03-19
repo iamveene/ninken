@@ -109,6 +109,6 @@ export async function GET() {
       directory: directoryResult.status === "fulfilled" ? directoryResult.value : { accessible: false, hasAdminAccess: false },
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

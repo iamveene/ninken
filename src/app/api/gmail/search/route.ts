@@ -43,6 +43,6 @@ export async function GET(request: Request) {
       resultSizeEstimate: res.data.resultSizeEstimate || 0,
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

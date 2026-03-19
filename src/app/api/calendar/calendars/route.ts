@@ -14,6 +14,6 @@ export async function GET() {
       calendars: res.data.items || [],
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

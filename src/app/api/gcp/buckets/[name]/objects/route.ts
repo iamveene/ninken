@@ -67,7 +67,7 @@ export async function GET(
       canDownload,
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 
@@ -116,6 +116,6 @@ export async function POST(
 
     return NextResponse.json(res.data)
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

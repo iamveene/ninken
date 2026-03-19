@@ -50,6 +50,6 @@ export async function GET(
       clientAssignedMessageId: m.clientAssignedMessageId || "",
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

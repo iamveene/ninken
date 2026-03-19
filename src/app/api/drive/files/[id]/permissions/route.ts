@@ -21,7 +21,7 @@ export async function GET(
       permissions: res.data.permissions || [],
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 
@@ -67,6 +67,6 @@ export async function POST(
 
     return NextResponse.json(res.data)
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

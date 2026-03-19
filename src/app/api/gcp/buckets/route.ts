@@ -62,6 +62,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ buckets: enriched })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

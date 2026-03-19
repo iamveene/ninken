@@ -20,6 +20,6 @@ export async function GET(
 
     return NextResponse.json(res.data)
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

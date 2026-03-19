@@ -55,6 +55,6 @@ export async function GET(
       },
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

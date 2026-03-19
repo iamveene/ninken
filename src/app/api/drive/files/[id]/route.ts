@@ -19,7 +19,7 @@ export async function GET(
 
     return NextResponse.json(res.data)
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 
@@ -51,7 +51,7 @@ export async function PATCH(
 
     return NextResponse.json(res.data)
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
 
@@ -69,6 +69,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }

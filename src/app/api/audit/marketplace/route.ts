@@ -102,6 +102,6 @@ export async function GET() {
       scope,
     })
   } catch (error) {
-    return serverError(error)
+    return serverError(error, "google")
   }
 }
