@@ -24,6 +24,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
+  // Reject API tokens — they don't need bootstrap
+  if (body.d_cookie && typeof body.d_cookie === "string" &&
+      (body.d_cookie.startsWith("xoxb-") || body.d_cookie.startsWith("xoxp-"))) {
+    return NextResponse.json(
+      { error: "API tokens (xoxb-/xoxp-) do not need bootstrap. Use /api/slack/validate-token instead." },
+      { status: 400 }
+    )
+  }
+
   const dCookie = body.d_cookie
   if (!dCookie || typeof dCookie !== "string") {
     return NextResponse.json(

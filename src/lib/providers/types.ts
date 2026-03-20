@@ -13,6 +13,7 @@ export type CredentialKind =
   | "service-principal"
   | "access-token"
   | "browser-session"
+  | "api-token"
 
 // Base credential shape — every provider extends this
 export type BaseCredential = {
@@ -86,14 +87,31 @@ export type MicrosoftServicePrincipalCredential = BaseCredential & {
 }
 
 // Slack browser session credential (exfiltrated d cookie + bootstrapped xoxc token)
-export type SlackCredential = BaseCredential & {
+export type SlackBrowserSessionCredential = BaseCredential & {
   provider: "slack"
+  credentialKind: "browser-session"
   d_cookie: string      // xoxd-... (the browser session cookie)
   xoxc_token: string    // xoxc-... (extracted from page boot_data)
   team_id: string       // T01234...
   team_domain: string   // workspace subdomain
   user_id: string       // U01234...
 }
+
+// Slack API token credential (xoxb- bot token or xoxp- user token)
+export type SlackApiTokenCredential = BaseCredential & {
+  provider: "slack"
+  credentialKind: "api-token"
+  token_type: "bot" | "user"
+  access_token: string
+  team_id?: string
+  team_domain?: string
+  user_id?: string
+  bot_id?: string
+  scopes?: string[]
+}
+
+// Union of all Slack credential types
+export type SlackCredential = SlackBrowserSessionCredential | SlackApiTokenCredential
 
 // Profile stored in IndexedDB — credential + metadata
 export type StoredProfile = {
