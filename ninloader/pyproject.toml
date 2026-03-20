@@ -1,0 +1,13 @@
+[project]
+name = "ninloader"
+version = "1.0.0"
+description = "NinLoader — Universal Token Collector CLI"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+[project.scripts]
+ninloader = "ninloader.cli:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.backends._legacy:_Backend"
