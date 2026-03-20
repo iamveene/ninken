@@ -32,6 +32,17 @@ Thumbs.db
 /blob-report/
 /playwright/.cache/
 
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# NinLoader output
+/ninloader/tokens/
+
 # Docker
 docker-compose.override.yml
 install.log
