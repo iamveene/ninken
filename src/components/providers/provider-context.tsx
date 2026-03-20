@@ -85,8 +85,15 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
           await refreshProfiles()
           startTokenRefresher()
         }
-      } catch {
-        // Non-critical — will just show empty state
+      } catch (err) {
+        // Still load profiles from IndexedDB even if activation failed
+        if (!cancelled) {
+          try {
+            await refreshProfiles()
+          } catch {
+            // Truly non-critical
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
