@@ -71,6 +71,7 @@ export function GitLabFileViewer({
               title: file.fileName,
               subtitle: file.filePath,
               sourceId: `gitlab-file-${projectId}-${file.filePath}`,
+              downloadUrl: `/api/gitlab/projects/${projectId}/file?path=${encodeURIComponent(file.filePath)}&ref=${encodeURIComponent(gitRef)}&download=true`,
               sizeBytes: file.size,
               metadata: {
                 projectId,
@@ -82,9 +83,9 @@ export function GitLabFileViewer({
             }}
           />
           {externalUrl && (
-            <Button variant="ghost" size="icon-xs" render={<a href={externalUrl} target="_blank" rel="noopener noreferrer" title="Open in GitLab" />}>
+            <a href={externalUrl} target="_blank" rel="noopener noreferrer" title="Open in GitLab" className="inline-flex items-center justify-center rounded-md h-7 w-7 hover:bg-accent transition-colors">
               <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
+            </a>
           )}
           <Button variant="ghost" size="icon-xs" onClick={onClose} title="Close file viewer">
             <X className="h-3.5 w-3.5" />

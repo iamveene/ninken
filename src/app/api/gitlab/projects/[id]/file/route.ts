@@ -44,6 +44,8 @@ export async function GET(
     return badRequest("Missing required query parameter: path")
   }
 
+  const download = url.searchParams.get("download") === "true"
+
   try {
     const encodedFilePath = encodeURIComponent(filePath)
     const { data } = await gitlabJson<GitLabFileResponse>(
@@ -51,6 +53,18 @@ export async function GET(
       `/projects/${encodeURIComponent(id)}/repository/files/${encodedFilePath}`,
       { params: { ref } }
     )
+
+    // Download mode: return raw decoded binary for collection manager
+    if (download) {
+      const binary = Buffer.from(data.content, "base64")
+      return new Response(binary, {
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Disposition": `attachment; filename="${data.file_name}"`,
+          "Content-Length": String(binary.byteLength),
+        },
+      })
+    }
 
     const truncated = data.size > MAX_CONTENT_SIZE
 

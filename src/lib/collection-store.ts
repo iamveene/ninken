@@ -71,7 +71,7 @@ export async function addItem(
   const newItem: CollectionItem = {
     ...item,
     id: crypto.randomUUID(),
-    status: "pending",
+    status: item.downloadUrl ? "pending" : "done",
     collectedAt: Date.now(),
     retries: 0,
   }

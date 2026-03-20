@@ -364,6 +364,7 @@ export default function GitLabProjectDetailPage() {
                           title: item.name,
                           subtitle: item.path,
                           sourceId: `gitlab-tree-${projectId}-${item.path}`,
+                          downloadUrl: !isFolder ? `/api/gitlab/projects/${projectId}/file?path=${encodeURIComponent(item.path)}&ref=${encodeURIComponent(effectiveRef)}&download=true` : undefined,
                           metadata: {
                             projectId: projectId?.toString(),
                             path: item.path,
