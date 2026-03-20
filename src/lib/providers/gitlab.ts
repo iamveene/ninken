@@ -83,7 +83,6 @@ export const gitlabProvider: ServiceProvider = {
   defaultRoute: "/gitlab-dashboard",
 
   operateNavItems: [
-    { id: "gitlab-dashboard", title: "Dashboard", href: "/gitlab-dashboard", iconName: "LayoutDashboard" },
     { id: "gitlab-projects", title: "Projects", href: "/gitlab-projects", iconName: "FolderGit2" },
     { id: "gitlab-groups", title: "Groups", href: "/gitlab-groups", iconName: "Building2" },
     { id: "gitlab-pipelines", title: "Pipelines", href: "/gitlab-pipelines", iconName: "Play" },
