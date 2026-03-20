@@ -1,0 +1,359 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - button "Toggle sidebar" [ref=e7] [cursor=pointer]:
+        - img "Ninken 忍犬" [ref=e8]
+      - generic [ref=e10]:
+        - generic [ref=e11]: Apps
+        - list [ref=e13]:
+          - listitem [ref=e155]:
+            - link "Dashboard" [ref=e156] [cursor=pointer]:
+              - /url: /gitlab-dashboard
+              - img [ref=e157]
+              - generic [ref=e162]: Dashboard
+          - listitem [ref=e163]:
+            - link "Projects" [ref=e164] [cursor=pointer]:
+              - /url: /gitlab-projects
+              - img [ref=e165]
+              - generic [ref=e167]: Projects
+          - listitem [ref=e168]:
+            - link "Groups" [ref=e169] [cursor=pointer]:
+              - /url: /gitlab-groups
+              - img [ref=e170]
+              - generic [ref=e172]: Groups
+          - listitem [ref=e173]:
+            - link "Pipelines" [ref=e174] [cursor=pointer]:
+              - /url: /gitlab-pipelines
+              - img [ref=e175]
+              - generic [ref=e177]: Pipelines
+          - listitem [ref=e178]:
+            - link "Snippets" [ref=e179] [cursor=pointer]:
+              - /url: /gitlab-snippets
+              - img [ref=e180]
+              - generic [ref=e182]: Snippets
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e184]: PAT active
+          - generic [ref=e185]:
+            - img [ref=e186]
+            - generic [ref=e188]: 5 scopes
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - img [ref=e33]
+            - generic [ref=e37]: 632.5 KB
+          - button "Clear cache" [ref=e38]
+        - list [ref=e39]:
+          - listitem [ref=e40]:
+            - button "Sign out" [ref=e41]:
+              - img [ref=e42]
+              - generic [ref=e45]: Sign out
+    - main [ref=e46]:
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - link "Operate" [ref=e49] [cursor=pointer]:
+            - /url: /gitlab-projects/76236706
+          - link "Audit" [ref=e50] [cursor=pointer]:
+            - /url: /audit
+          - link "Collect" [ref=e51] [cursor=pointer]:
+            - /url: /collection
+          - link "Studio" [ref=e52] [cursor=pointer]:
+            - /url: /studio
+        - button "Refresh all data" [ref=e53]:
+          - img
+        - generic [ref=e54]:
+          - button "GitLab" [ref=e189] [cursor=pointer]:
+            - img [ref=e190]
+            - text: GitLab
+          - button "Alerts" [ref=e55]:
+            - img [ref=e56]
+          - button "MV" [ref=e192]:
+            - generic [ref=e194]: MV
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - link "Back to projects" [ref=e63] [cursor=pointer]:
+              - /url: /gitlab-projects
+              - img
+            - heading "questrade/infra/operators/redis-operator" [level=1] [ref=e195]:
+              - img [ref=e66]
+              - text: questrade/infra/operators/redis-operator
+          - link "GitLab" [ref=e197] [cursor=pointer]:
+            - /url: https://gitlab.com/questrade/infra/operators/redis-operator
+            - img
+            - text: GitLab
+        - generic [ref=e68]:
+          - combobox [ref=e69]:
+            - img
+            - generic [ref=e70]: master
+            - img: ▼
+          - textbox [ref=e71]: master
+          - navigation "breadcrumb" [ref=e72]:
+            - list [ref=e73]:
+              - listitem [ref=e74]:
+                - link "root" [disabled] [ref=e75]:
+                  - img [ref=e76]
+                  - text: root
+        - table [ref=e80]:
+          - rowgroup [ref=e81]:
+            - row "Name Type" [ref=e82]:
+              - columnheader "Name" [ref=e83]
+              - columnheader "Type" [ref=e84]
+              - columnheader [ref=e85]
+          - rowgroup [ref=e86]:
+            - row "cfg dir Collect cfg" [ref=e198] [cursor=pointer]:
+              - cell "cfg" [ref=e199]:
+                - generic [ref=e200]:
+                  - img [ref=e201]
+                  - generic [ref=e203]: cfg
+              - cell "dir" [ref=e204]:
+                - generic [ref=e205]: dir
+              - cell "Collect cfg" [ref=e206]:
+                - button "Collect cfg" [ref=e207]:
+                  - img
+            - row "examples dir Collect examples" [ref=e208] [cursor=pointer]:
+              - cell "examples" [ref=e209]:
+                - generic [ref=e210]:
+                  - img [ref=e211]
+                  - generic [ref=e213]: examples
+              - cell "dir" [ref=e214]:
+                - generic [ref=e215]: dir
+              - cell "Collect examples" [ref=e216]:
+                - button "Collect examples" [ref=e217]:
+                  - img
+            - row "redis_operator dir Collect redis_operator" [ref=e218] [cursor=pointer]:
+              - cell "redis_operator" [ref=e219]:
+                - generic [ref=e220]:
+                  - img [ref=e221]
+                  - generic [ref=e223]: redis_operator
+              - cell "dir" [ref=e224]:
+                - generic [ref=e225]: dir
+              - cell "Collect redis_operator" [ref=e226]:
+                - button "Collect redis_operator" [ref=e227]:
+                  - img
+            - row "scripts dir Collect scripts" [ref=e228] [cursor=pointer]:
+              - cell "scripts" [ref=e229]:
+                - generic [ref=e230]:
+                  - img [ref=e231]
+                  - generic [ref=e233]: scripts
+              - cell "dir" [ref=e234]:
+                - generic [ref=e235]: dir
+              - cell "Collect scripts" [ref=e236]:
+                - button "Collect scripts" [ref=e237]:
+                  - img
+            - row "tests dir Collect tests" [ref=e238] [cursor=pointer]:
+              - cell "tests" [ref=e239]:
+                - generic [ref=e240]:
+                  - img [ref=e241]
+                  - generic [ref=e243]: tests
+              - cell "dir" [ref=e244]:
+                - generic [ref=e245]: dir
+              - cell "Collect tests" [ref=e246]:
+                - button "Collect tests" [ref=e247]:
+                  - img
+            - row ".editorconfig file Collect .editorconfig" [ref=e248] [cursor=pointer]:
+              - cell ".editorconfig" [ref=e249]:
+                - generic [ref=e250]:
+                  - img [ref=e251]
+                  - generic [ref=e254]: .editorconfig
+              - cell "file" [ref=e255]:
+                - generic [ref=e256]: file
+              - cell "Collect .editorconfig" [ref=e257]:
+                - button "Collect .editorconfig" [ref=e258]:
+                  - img
+            - row ".env.template file Collect .env.template" [ref=e259] [cursor=pointer]:
+              - cell ".env.template" [ref=e260]:
+                - generic [ref=e261]:
+                  - img [ref=e262]
+                  - generic [ref=e265]: .env.template
+              - cell "file" [ref=e266]:
+                - generic [ref=e267]: file
+              - cell "Collect .env.template" [ref=e268]:
+                - button "Collect .env.template" [ref=e269]:
+                  - img
+            - row ".flake8 file Collect .flake8" [ref=e270] [cursor=pointer]:
+              - cell ".flake8" [ref=e271]:
+                - generic [ref=e272]:
+                  - img [ref=e273]
+                  - generic [ref=e276]: .flake8
+              - cell "file" [ref=e277]:
+                - generic [ref=e278]: file
+              - cell "Collect .flake8" [ref=e279]:
+                - button "Collect .flake8" [ref=e280]:
+                  - img
+            - row ".gitignore file Collect .gitignore" [ref=e281] [cursor=pointer]:
+              - cell ".gitignore" [ref=e282]:
+                - generic [ref=e283]:
+                  - img [ref=e284]
+                  - generic [ref=e287]: .gitignore
+              - cell "file" [ref=e288]:
+                - generic [ref=e289]: file
+              - cell "Collect .gitignore" [ref=e290]:
+                - button "Collect .gitignore" [ref=e291]:
+                  - img
+            - row ".gitlab-ci.yml file Collect .gitlab-ci.yml" [ref=e292] [cursor=pointer]:
+              - cell ".gitlab-ci.yml" [ref=e293]:
+                - generic [ref=e294]:
+                  - img [ref=e295]
+                  - generic [ref=e300]: .gitlab-ci.yml
+              - cell "file" [ref=e301]:
+                - generic [ref=e302]: file
+              - cell "Collect .gitlab-ci.yml" [ref=e303]:
+                - button "Collect .gitlab-ci.yml" [ref=e304]:
+                  - img
+            - row ".importlinter file Collect .importlinter" [ref=e305] [cursor=pointer]:
+              - cell ".importlinter" [ref=e306]:
+                - generic [ref=e307]:
+                  - img [ref=e308]
+                  - generic [ref=e311]: .importlinter
+              - cell "file" [ref=e312]:
+                - generic [ref=e313]: file
+              - cell "Collect .importlinter" [ref=e314]:
+                - button "Collect .importlinter" [ref=e315]:
+                  - img
+            - row ".pylintrc file Collect .pylintrc" [ref=e316] [cursor=pointer]:
+              - cell ".pylintrc" [ref=e317]:
+                - generic [ref=e318]:
+                  - img [ref=e319]
+                  - generic [ref=e322]: .pylintrc
+              - cell "file" [ref=e323]:
+                - generic [ref=e324]: file
+              - cell "Collect .pylintrc" [ref=e325]:
+                - button "Collect .pylintrc" [ref=e326]:
+                  - img
+            - row ".python-version file Collect .python-version" [ref=e327] [cursor=pointer]:
+              - cell ".python-version" [ref=e328]:
+                - generic [ref=e329]:
+                  - img [ref=e330]
+                  - generic [ref=e333]: .python-version
+              - cell "file" [ref=e334]:
+                - generic [ref=e335]: file
+              - cell "Collect .python-version" [ref=e336]:
+                - button "Collect .python-version" [ref=e337]:
+                  - img
+            - row "Dockerfile file Collect Dockerfile" [ref=e338] [cursor=pointer]:
+              - cell "Dockerfile" [ref=e339]:
+                - generic [ref=e340]:
+                  - img [ref=e341]
+                  - generic [ref=e346]: Dockerfile
+              - cell "file" [ref=e347]:
+                - generic [ref=e348]: file
+              - cell "Collect Dockerfile" [ref=e349]:
+                - button "Collect Dockerfile" [ref=e350]:
+                  - img
+            - row "logging.ini file Collect logging.ini" [ref=e351] [cursor=pointer]:
+              - cell "logging.ini" [ref=e352]:
+                - generic [ref=e353]:
+                  - img [ref=e354]
+                  - generic [ref=e357]: logging.ini
+              - cell "file" [ref=e358]:
+                - generic [ref=e359]: file
+              - cell "Collect logging.ini" [ref=e360]:
+                - button "Collect logging.ini" [ref=e361]:
+                  - img
+            - row "main.py file Collect main.py" [ref=e362] [cursor=pointer]:
+              - cell "main.py" [ref=e363]:
+                - generic [ref=e364]:
+                  - img [ref=e365]
+                  - generic [ref=e370]: main.py
+              - cell "file" [ref=e371]:
+                - generic [ref=e372]: file
+              - cell "Collect main.py" [ref=e373]:
+                - button "Collect main.py" [ref=e374]:
+                  - img
+            - row "Makefile file Collect Makefile" [ref=e375] [cursor=pointer]:
+              - cell "Makefile" [ref=e376]:
+                - generic [ref=e377]:
+                  - img [ref=e378]
+                  - generic [ref=e383]: Makefile
+              - cell "file" [ref=e384]:
+                - generic [ref=e385]: file
+              - cell "Collect Makefile" [ref=e386]:
+                - button "Collect Makefile" [ref=e387]:
+                  - img
+            - row "manifest.yaml file Collect manifest.yaml" [ref=e388] [cursor=pointer]:
+              - cell "manifest.yaml" [ref=e389]:
+                - generic [ref=e390]:
+                  - img [ref=e391]
+                  - generic [ref=e396]: manifest.yaml
+              - cell "file" [ref=e397]:
+                - generic [ref=e398]: file
+              - cell "Collect manifest.yaml" [ref=e399]:
+                - button "Collect manifest.yaml" [ref=e400]:
+                  - img
+            - row "mypy.ini file Collect mypy.ini" [ref=e401] [cursor=pointer]:
+              - cell "mypy.ini" [ref=e402]:
+                - generic [ref=e403]:
+                  - img [ref=e404]
+                  - generic [ref=e407]: mypy.ini
+              - cell "file" [ref=e408]:
+                - generic [ref=e409]: file
+              - cell "Collect mypy.ini" [ref=e410]:
+                - button "Collect mypy.ini" [ref=e411]:
+                  - img
+            - row "Pipfile file Collect Pipfile" [ref=e412] [cursor=pointer]:
+              - cell "Pipfile" [ref=e413]:
+                - generic [ref=e414]:
+                  - img [ref=e415]
+                  - generic [ref=e418]: Pipfile
+              - cell "file" [ref=e419]:
+                - generic [ref=e420]: file
+              - cell "Collect Pipfile" [ref=e421]:
+                - button "Collect Pipfile" [ref=e422]:
+                  - img
+            - row "Pipfile.lock file Collect Pipfile.lock" [ref=e423] [cursor=pointer]:
+              - cell "Pipfile.lock" [ref=e424]:
+                - generic [ref=e425]:
+                  - img [ref=e426]
+                  - generic [ref=e429]: Pipfile.lock
+              - cell "file" [ref=e430]:
+                - generic [ref=e431]: file
+              - cell "Collect Pipfile.lock" [ref=e432]:
+                - button "Collect Pipfile.lock" [ref=e433]:
+                  - img
+            - row "pytest.ini file Collect pytest.ini" [ref=e434] [cursor=pointer]:
+              - cell "pytest.ini" [ref=e435]:
+                - generic [ref=e436]:
+                  - img [ref=e437]
+                  - generic [ref=e440]: pytest.ini
+              - cell "file" [ref=e441]:
+                - generic [ref=e442]: file
+              - cell "Collect pytest.ini" [ref=e443]:
+                - button "Collect pytest.ini" [ref=e444]:
+                  - img
+            - row "README.md file Collect README.md" [ref=e445] [cursor=pointer]:
+              - cell "README.md" [ref=e446]:
+                - generic [ref=e447]:
+                  - img [ref=e448]
+                  - generic [ref=e451]: README.md
+              - cell "file" [ref=e452]:
+                - generic [ref=e453]: file
+              - cell "Collect README.md" [ref=e454]:
+                - button "Collect README.md" [ref=e455]:
+                  - img
+            - row "start.sh file Collect start.sh" [ref=e456] [cursor=pointer]:
+              - cell "start.sh" [ref=e457]:
+                - generic [ref=e458]:
+                  - img [ref=e459]
+                  - generic [ref=e464]: start.sh
+              - cell "file" [ref=e465]:
+                - generic [ref=e466]: file
+              - cell "Collect start.sh" [ref=e467]:
+                - button "Collect start.sh" [ref=e468]:
+                  - img
+      - button "Open AI Partner" [ref=e143]:
+        - img [ref=e144]
+  - region "Notifications alt+T"
+  - generic [ref=e150] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e151]:
+      - img [ref=e152]
+    - generic [ref=e469]:
+      - button "Open issues overlay" [ref=e470]:
+        - generic [ref=e471]:
+          - generic [ref=e472]: "1"
+          - generic [ref=e473]: "2"
+        - generic [ref=e474]:
+          - text: Issue
+          - generic [ref=e475]: s
+      - button "Collapse issues badge" [ref=e476]:
+        - img [ref=e477]
+  - alert [ref=e479]

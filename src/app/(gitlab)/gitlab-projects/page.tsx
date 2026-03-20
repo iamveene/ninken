@@ -210,6 +210,8 @@ export default function GitLabProjectsPage() {
                         title: project.pathWithNamespace,
                         subtitle: project.visibility,
                         sourceId: project.id.toString(),
+                        downloadUrl: `/api/gitlab/projects/${project.id}/archive?ref=${encodeURIComponent(project.defaultBranch || "main")}`,
+                        mimeType: "application/gzip",
                         metadata: {
                           description: project.description,
                           visibility: project.visibility,

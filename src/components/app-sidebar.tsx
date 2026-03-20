@@ -337,6 +337,15 @@ export function AppSidebar() {
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Home"
+              render={<Link href="/?add=true" />}
+            >
+              <Home />
+              <span>Home</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <SidebarMenuButton tooltip="Sign out" onClick={handleSignOut}>
               <LogOut />
               <span>Sign out</span>

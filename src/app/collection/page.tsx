@@ -63,16 +63,29 @@ export default function CollectionPage() {
       let added = 0
       for (const item of doneItems) {
         const blob = await getBlob(item.id)
+        const folder = zip.folder(item.source) ?? zip
         if (blob) {
-          // Organize by source folder
-          const folder = zip.folder(item.source) ?? zip
           folder.file(blob.filename, blob.data)
+          added++
+        } else {
+          // Metadata-only items (folders, projects, groups) — export as JSON manifest
+          const manifest = {
+            title: item.title,
+            type: item.type,
+            source: item.source,
+            subtitle: item.subtitle,
+            sourceId: item.sourceId,
+            collectedAt: new Date(item.collectedAt).toISOString(),
+            metadata: item.metadata,
+          }
+          const safeName = item.title.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100)
+          folder.file(`${safeName}.json`, JSON.stringify(manifest, null, 2))
           added++
         }
       }
 
       if (added === 0) {
-        toast.info("No blob data found for completed items")
+        toast.info("No items to export")
         return
       }
 

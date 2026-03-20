@@ -1,0 +1,13 @@
+[     139ms] [ERROR] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
+    at Button (http://localhost:4000/_next/static/chunks/src_0eycr.v._.js:205:214)
+    at GitLabProjectDetailPage (http://localhost:4000/_next/static/chunks/src_008v8d-._.js:2179:231)
+    at ClientPageRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_0z8ikg~._.js:4688:50) @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[     185ms] [ERROR] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
+    at Button (http://localhost:4000/_next/static/chunks/src_0eycr.v._.js:205:214)
+    at GitLabProjectDetailPage (http://localhost:4000/_next/static/chunks/src_008v8d-._.js:2244:254)
+    at ClientPageRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_0z8ikg~._.js:4688:50) @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272
+[   81830ms] [ERROR] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
+    at Button (http://localhost:4000/_next/static/chunks/src_0eycr.v._.js:205:214)
+    at GitLabFileViewer (http://localhost:4000/_next/static/chunks/src_008v8d-._.js:1594:246)
+    at GitLabProjectDetailPage (http://localhost:4000/_next/static/chunks/src_008v8d-._.js:2725:244)
+    at ClientPageRoot (http://localhost:4000/_next/static/chunks/node_modules_next_dist_0z8ikg~._.js:4688:50) @ http://localhost:4000/_next/static/chunks/node_modules_next_dist_115brz8._.js:3272

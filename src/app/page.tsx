@@ -278,7 +278,10 @@ const [showCapabilities, setShowCapabilities] = useState(false)
 const isAccessToken = result.credential.credentialKind === "access-token"
         setTimeout(() => router.push(provider.defaultRoute), isAccessToken ? 1500 : 500)
 
-fetchCapabilities(provider)
+// Only probe capabilities for providers with overview endpoints
+if (provider.id === "google" || provider.id === "microsoft") {
+  fetchCapabilities(provider)
+}
       } catch (e) {
         setStatus("error")
         setErrorMessage(
