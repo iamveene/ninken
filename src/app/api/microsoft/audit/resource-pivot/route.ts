@@ -3,6 +3,8 @@ import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_he
 import { getAccessToken } from "@/lib/microsoft"
 import type { MicrosoftCredential } from "@/lib/providers/types"
 
+export const dynamic = "force-dynamic"
+
 type ProbeResult = {
   accessible: boolean
   tokenObtained: boolean

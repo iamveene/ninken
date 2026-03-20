@@ -9,6 +9,8 @@ import {
 } from "@/lib/auth"
 import { cookies } from "next/headers"
 
+export const dynamic = "force-dynamic"
+
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",

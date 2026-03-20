@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getMicrosoftCredential, badRequest, unauthorized, serverError } from "@/app/api/_helpers"
 import { isFociClient, getFociClient } from "@/lib/studio/foci-clients"
 
+export const dynamic = "force-dynamic"
+
 /**
  * POST /api/studio/exchange
  * FOCI token exchange: use the active Microsoft refresh token to obtain an access token

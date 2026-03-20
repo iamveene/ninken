@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
 import { graphJson } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 type AttachmentListResponse = {
   value: {
     id: string

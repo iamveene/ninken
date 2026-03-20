@@ -1,6 +1,8 @@
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
 import { graphJson } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 type FileAttachment = {
   id: string
   name: string

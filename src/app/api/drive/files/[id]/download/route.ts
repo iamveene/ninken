@@ -1,6 +1,8 @@
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 function sanitizeFileName(name: string): string {
   // Remove characters that could cause header injection or path traversal
   return name.replace(/["\r\n\\\/]/g, "_")

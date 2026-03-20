@@ -8,6 +8,8 @@ import {
 import { graphJson } from "@/lib/microsoft"
 import { sanitizeODataValue } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 type SearchResult = {
   value?: unknown[]
   "@odata.nextLink"?: string

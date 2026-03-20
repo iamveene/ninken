@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 const TYPE_MIME_MAP: Record<string, string> = {
   document: "application/vnd.google-apps.document",
   spreadsheet: "application/vnd.google-apps.spreadsheet",

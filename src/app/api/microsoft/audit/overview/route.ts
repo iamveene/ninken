@@ -7,6 +7,8 @@ import {
   graphFetch,
 } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   const credential = await getMicrosoftCredential()
   if (!credential) return unauthorized()

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createDirectoryServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   const accessToken = await getGoogleAccessToken()
   if (!accessToken) return unauthorized()

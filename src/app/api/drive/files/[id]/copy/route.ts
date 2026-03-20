@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function POST(
   request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/copy">

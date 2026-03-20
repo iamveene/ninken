@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createPeopleServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function mapPerson(
   person: any,

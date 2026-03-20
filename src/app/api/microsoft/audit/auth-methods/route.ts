@@ -3,6 +3,8 @@ import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_he
 import { graphPaginated, graphJson } from "@/lib/microsoft"
 import type { MicrosoftCredential } from "@/lib/providers/types"
 
+export const dynamic = "force-dynamic"
+
 type GraphUser = {
   id: string
   displayName: string

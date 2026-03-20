@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: NextRequest) {
   const accessToken = await getGoogleAccessToken()
   if (!accessToken) return unauthorized()

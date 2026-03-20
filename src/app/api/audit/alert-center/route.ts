@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server"
 import { createAlertCenterServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 /**
  * GET /api/audit/alert-center?filter=&pageSize=50&pageToken=
  *

@@ -3,6 +3,8 @@ import type { driveactivity_v2 } from "googleapis"
 import { createDriveActivityServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 type ActionDetail = driveactivity_v2.Schema$ActionDetail
 
 /**

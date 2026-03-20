@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createStorageServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(
   request: Request,
   ctx: RouteContext<"/api/gcp/buckets/[name]/objects/metadata">

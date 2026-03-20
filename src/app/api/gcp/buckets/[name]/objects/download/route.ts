@@ -1,6 +1,8 @@
 import { createStorageServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, badRequest } from "../../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 function sanitizeFileName(name: string): string {
   return name.replace(/["\r\n\\\/]/g, "_")
 }

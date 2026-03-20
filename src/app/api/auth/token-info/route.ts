@@ -3,6 +3,8 @@ import { getProvider } from "@/lib/providers/registry"
 import { decodeJwtPayload, decodeScopesFromJwt } from "@/lib/microsoft"
 import type { MicrosoftCredential } from "@/lib/providers/types"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   const cred = await getCredentialFromRequest()
   if (!cred) return unauthorized()

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createDirectoryServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 /**
  * GET /api/audit/policies
  *

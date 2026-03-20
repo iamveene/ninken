@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createChatServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 /**
  * GET /api/chat/spaces/[spaceId]/messages/[messageId]
  *

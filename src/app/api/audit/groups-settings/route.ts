@@ -5,6 +5,8 @@ import {
 } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 type RiskLevel = "critical" | "high" | "medium" | "low"
 
 type GroupSettingsResult = {

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function DELETE(
   _request: Request,
   ctx: RouteContext<"/api/drive/files/[id]/permissions/[permissionId]">

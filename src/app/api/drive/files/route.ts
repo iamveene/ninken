@@ -3,6 +3,8 @@ import { Readable } from "stream"
 import { createDriveServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, badRequest, serverError } from "../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   const accessToken = await getGoogleAccessToken()
   if (!accessToken) return unauthorized()

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
 import { graphFetch } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/microsoft/drive/files/[id]/download">

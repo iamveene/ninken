@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
 import { graphPaginated } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(
   request: Request,
   ctx: RouteContext<"/api/microsoft/teams/[teamId]/channels/[channelId]/messages">

@@ -1,6 +1,8 @@
 import { createGmailServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "../../../../../_helpers"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(
   _request: Request,
   ctx: RouteContext<"/api/gmail/messages/[id]/attachments/[attachmentId]">

@@ -3,6 +3,8 @@ import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_he
 import { FOCI_CLIENTS } from "@/lib/studio/foci-clients"
 import { decodeScopesFromJwt } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 type FociPivotResult = {
   clientId: string
   clientName: string

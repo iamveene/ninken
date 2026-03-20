@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getMicrosoftCredential, unauthorized, serverError } from "@/app/api/_helpers"
 import { graphPaginated, getAccessToken } from "@/lib/microsoft"
 
+export const dynamic = "force-dynamic"
+
 export async function GET(request: Request) {
   const credential = await getMicrosoftCredential()
   if (!credential) return unauthorized()

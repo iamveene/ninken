@@ -4,6 +4,8 @@ import { identifyTokenType } from "@/lib/studio/token-types"
 import { analyzeScopes } from "@/lib/studio/scope-definitions"
 import { badRequest } from "@/app/api/_helpers"
 
+export const dynamic = "force-dynamic"
+
 /**
  * POST /api/studio/analyze
  * Server-side token analysis. Accepts a token string and returns decoded information.

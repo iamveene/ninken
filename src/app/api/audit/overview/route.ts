@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createGmailServiceFromToken, createDriveServiceFromToken, createCalendarServiceFromToken, createStorageServiceFromToken, createDirectoryServiceFromToken } from "@/lib/google"
 import { getGoogleAccessToken, unauthorized, serverError } from "@/app/api/_helpers"
 
+export const dynamic = "force-dynamic"
+
 /**
  * GET /api/audit/overview
  *
