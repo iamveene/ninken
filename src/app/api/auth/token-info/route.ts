@@ -56,7 +56,7 @@ export async function GET(request: Request) {
     } catch {
       return Response.json({
         valid: false,
-        error: "Token validation failed",
+        error: "API unreachable — check network or rate limit",
         provider: cred.provider,
       })
     }
