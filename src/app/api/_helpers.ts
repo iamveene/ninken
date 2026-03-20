@@ -11,6 +11,7 @@ import type {
   GoogleCredential,
   MicrosoftCredential,
   SlackCredential,
+  AwsCredential,
 } from "@/lib/providers/types"
 
 // Ensure providers are registered
@@ -131,6 +132,15 @@ export async function getGitLabAccessToken(): Promise<string | null> {
   const result = await getCredentialFromRequest()
   if (!result || result.provider !== "gitlab") return null
   return (result.credential as AccessTokenCredential).access_token
+}
+
+/**
+ * Convenience: get an AwsCredential from the request cookie, or null.
+ */
+export async function getAwsCredential(): Promise<AwsCredential | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "aws") return null
+  return result.credential as AwsCredential
 }
 
 export async function getProviderFromRequest(): Promise<ProviderId | null> {

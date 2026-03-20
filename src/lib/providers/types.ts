@@ -85,6 +85,18 @@ export type MicrosoftServicePrincipalCredential = BaseCredential & {
   token_uri?: string
 }
 
+// AWS credential (IAM access keys, optionally with STS session token)
+export type AwsCredential = BaseCredential & {
+  provider: "aws"
+  credentialKind: "access-token"
+  access_key_id: string
+  secret_access_key: string  // never log this field
+  session_token?: string
+  default_region?: string
+  account_id?: string
+  arn?: string
+}
+
 // Slack browser session credential (exfiltrated d cookie + bootstrapped xoxc token)
 export type SlackCredential = BaseCredential & {
   provider: "slack"

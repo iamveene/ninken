@@ -32,6 +32,13 @@ import {
   FolderDown,
   ListTree,
   FileDown,
+  Cloud,
+  Zap,
+  Server,
+  Activity,
+  Key,
+  TrendingUp,
+  Share2,
   type LucideIcon,
 } from "lucide-react"
 
@@ -69,6 +76,13 @@ const ICON_MAP: Record<string, LucideIcon> = {
   FolderDown,
   ListTree,
   FileDown,
+  Cloud,
+  Zap,
+  Server,
+  Activity,
+  Key,
+  TrendingUp,
+  Share2,
 }
 
 export function resolveIcon(name: string): LucideIcon {
