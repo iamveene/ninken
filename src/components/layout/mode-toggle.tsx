@@ -5,13 +5,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
-type Mode = "operate" | "audit" | "collection" | "studio"
+type Mode = "operate" | "audit" | "collection" | "studio" | "opsec"
 
 const STORAGE_KEYS: Record<Mode, string> = {
   operate: "ninken:last-operate-path",
   audit: "ninken:last-audit-path",
   collection: "ninken:last-collection-path",
   studio: "ninken:last-studio-path",
+  opsec: "ninken:last-opsec-path",
 }
 
 const DEFAULT_PATHS: Record<Mode, string> = {
@@ -19,10 +20,12 @@ const DEFAULT_PATHS: Record<Mode, string> = {
   audit: "/audit",
   collection: "/collection",
   studio: "/studio",
+  opsec: "/opsec",
 }
 
 function getMode(pathname: string): Mode {
   if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit")) return "audit"
+  if (pathname.startsWith("/opsec")) return "opsec"
   if (pathname.startsWith("/studio")) return "studio"
   if (pathname.startsWith("/collection")) return "collection"
   return "operate" // includes /dashboard, /m365-dashboard, and all service pages
@@ -45,6 +48,7 @@ export function ModeToggle() {
       audit: sessionStorage.getItem(STORAGE_KEYS.audit) || DEFAULT_PATHS.audit,
       collection: sessionStorage.getItem(STORAGE_KEYS.collection) || DEFAULT_PATHS.collection,
       studio: sessionStorage.getItem(STORAGE_KEYS.studio) || DEFAULT_PATHS.studio,
+      opsec: sessionStorage.getItem(STORAGE_KEYS.opsec) || DEFAULT_PATHS.opsec,
     })
   }, [mode, pathname])
 
@@ -58,6 +62,7 @@ export function ModeToggle() {
     { id: "audit", label: "Audit" },
     { id: "collection", label: "Collect" },
     { id: "studio", label: "Studio" },
+    { id: "opsec", label: "OPSEC" },
   ]
 
   return (

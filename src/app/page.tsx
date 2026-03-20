@@ -390,6 +390,9 @@ if (provider.id === "google" || provider.id === "microsoft") {
     )
   }
 
+  // Recently-added providers that should display a "New" badge
+  const newProviders = new Set(["aws"])
+
   // Coming-soon services (not yet implemented)
   const comingSoon = (
     [
@@ -474,12 +477,13 @@ if (provider.id === "google" || provider.id === "microsoft") {
             {providers.map((p) => {
               const Icon = resolveIcon(p.iconName)
               const isSelected = selectedProvider?.id === p.id
+              const isNew = newProviders.has(p.id)
               return (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => setSelectedProvider(isSelected ? null : p)}
-                  className={`flex items-center gap-2 rounded border px-4 py-2 transition-all ${
+                  className={`relative flex items-center gap-2 rounded border px-4 py-2 transition-all ${
                     isSelected
                       ? "border-red-600 bg-red-950/20 shadow-[0_0_12px_rgba(220,38,38,0.15)]"
                       : "border-neutral-800 bg-neutral-900/50 hover:border-neutral-600"
@@ -487,6 +491,11 @@ if (provider.id === "google" || provider.id === "microsoft") {
                 >
                   <Icon className="h-4 w-4 text-neutral-400" />
                   <span className="text-xs font-medium text-neutral-300">{p.name}</span>
+                  {isNew && (
+                    <span className="absolute -top-1.5 -right-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold leading-none text-black">
+                      New
+                    </span>
+                  )}
                 </button>
               )
             })}
