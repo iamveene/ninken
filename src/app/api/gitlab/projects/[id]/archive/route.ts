@@ -1,12 +1,13 @@
 import { getGitLabAccessToken, unauthorized, serverError } from "@/app/api/_helpers"
-import { gitlabFetch } from "@/lib/gitlab"
+import https from "node:https"
 
 export const dynamic = "force-dynamic"
 
 /**
  * GET /api/gitlab/projects/[id]/archive
  * Downloads the repository archive as tar.gz.
- * Query params: ref (default branch or "main")
+ * Uses node:https instead of fetch because GitLab returns 406 with
+ * Node's undici fetch for binary archive endpoints.
  */
 export async function GET(
   request: Request,
@@ -20,19 +21,29 @@ export async function GET(
   const ref = url.searchParams.get("ref") || "main"
 
   try {
-    const res = await gitlabFetch(
-      token,
-      `/projects/${encodeURIComponent(id)}/repository/archive.tar.gz`,
-      { params: { sha: ref } }
-    )
+    const data = await new Promise<Buffer>((resolve, reject) => {
+      const options = {
+        hostname: "gitlab.com",
+        path: `/api/v4/projects/${encodeURIComponent(id)}/repository/archive.tar.gz?sha=${encodeURIComponent(ref)}`,
+        headers: { "PRIVATE-TOKEN": token },
+      }
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => "")
-      return new Response(body || "Archive download failed", { status: res.status })
-    }
+      https.get(options, (res) => {
+        if (res.statusCode && res.statusCode >= 400) {
+          let body = ""
+          res.on("data", (chunk: Buffer) => { body += chunk.toString() })
+          res.on("end", () => reject(new Error(`GitLab archive: ${res.statusCode} ${body}`)))
+          return
+        }
 
-    const data = await res.arrayBuffer()
-    return new Response(data, {
+        const chunks: Buffer[] = []
+        res.on("data", (chunk: Buffer) => chunks.push(chunk))
+        res.on("end", () => resolve(Buffer.concat(chunks)))
+        res.on("error", reject)
+      }).on("error", reject)
+    })
+
+    return new Response(new Uint8Array(data), {
       headers: {
         "Content-Type": "application/gzip",
         "Content-Disposition": `attachment; filename="repo-${id}-${ref}.tar.gz"`,
