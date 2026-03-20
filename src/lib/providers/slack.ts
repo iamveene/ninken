@@ -1,6 +1,8 @@
 import type {
   BaseCredential,
   SlackCredential,
+  SlackBrowserSessionCredential,
+  SlackApiTokenCredential,
   ServiceProvider,
 } from "./types"
 import { parseSlackError } from "../slack"
@@ -11,6 +13,29 @@ const SLACK_CAPABILITIES = [
   "slack:files",
   "slack:users",
 ]
+
+/**
+ * Check if a raw string is a Slack API token (xoxb- or xoxp-).
+ */
+function isSlackApiToken(raw: unknown): raw is string {
+  if (typeof raw !== "string") return false
+  return raw.startsWith("xoxb-") || raw.startsWith("xoxp-")
+}
+
+/**
+ * Check if raw input is an already-bootstrapped API token credential.
+ */
+function isBootstrappedApiToken(
+  raw: unknown
+): raw is SlackApiTokenCredential {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false
+  const obj = raw as Record<string, unknown>
+  return (
+    obj.credentialKind === "api-token" &&
+    obj.provider === "slack" &&
+    typeof obj.access_token === "string"
+  )
+}
 
 /**
  * Extract the d cookie value from various input shapes:
@@ -65,7 +90,7 @@ function extractDCookie(raw: unknown): string | null {
 }
 
 /**
- * Check if raw input is an already-bootstrapped SlackCredential
+ * Check if raw input is an already-bootstrapped browser session SlackCredential
  * (has both d_cookie and xoxc_token).
  */
 function isBootstrappedSlackCredential(
@@ -87,7 +112,13 @@ export const slackProvider: ServiceProvider = {
   iconName: "MessageSquare",
 
   detectCredential(raw: unknown): boolean {
-    // Already bootstrapped credential
+    // API token (xoxb-/xoxp-) — check first
+    if (isSlackApiToken(raw)) return true
+
+    // Already-bootstrapped API token credential object
+    if (isBootstrappedApiToken(raw)) return true
+
+    // Already bootstrapped browser session credential
     if (isBootstrappedSlackCredential(raw)) return true
 
     // Raw d cookie in any supported format
@@ -96,11 +127,34 @@ export const slackProvider: ServiceProvider = {
 
   /**
    * Bootstrap: called client-side before validateCredential.
-   * Sends the raw credential to /api/slack/bootstrap which extracts
-   * the xoxc- token server-side and returns a complete SlackCredential.
+   * - API tokens: call /api/slack/validate-token for enrichment
+   * - Browser sessions: call /api/slack/bootstrap for xoxc- extraction
    */
   async bootstrapCredential(raw: unknown): Promise<unknown> {
-    // Already bootstrapped — skip
+    // Already-bootstrapped API token — skip
+    if (isBootstrappedApiToken(raw)) return raw
+
+    // Raw API token string — validate and enrich
+    if (isSlackApiToken(raw)) {
+      const res = await fetch("/api/slack/validate-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: raw }),
+      })
+
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as {
+          error?: string
+        }
+        throw new Error(
+          err.error || `Token validation failed: HTTP ${res.status}`
+        )
+      }
+
+      return res.json()
+    }
+
+    // Already bootstrapped browser session — skip
     if (isBootstrappedSlackCredential(raw)) return raw
 
     const dCookie = extractDCookie(raw)
@@ -137,7 +191,33 @@ export const slackProvider: ServiceProvider = {
 
     const obj = raw as Record<string, unknown>
 
-    // Must be a bootstrapped credential by this point
+    // API token credential
+    if (obj.credentialKind === "api-token") {
+      if (typeof obj.access_token !== "string" || !obj.access_token) {
+        return { valid: false, error: "Missing access_token for API token credential" }
+      }
+
+      const tokenType = obj.token_type as "bot" | "user" | undefined
+      if (tokenType !== "bot" && tokenType !== "user") {
+        return { valid: false, error: "Invalid token_type — must be 'bot' or 'user'" }
+      }
+
+      const credential: SlackApiTokenCredential = {
+        provider: "slack",
+        credentialKind: "api-token",
+        token_type: tokenType,
+        access_token: obj.access_token as string,
+        team_id: typeof obj.team_id === "string" ? obj.team_id : undefined,
+        team_domain: typeof obj.team_domain === "string" ? obj.team_domain : undefined,
+        user_id: typeof obj.user_id === "string" ? obj.user_id : undefined,
+        bot_id: typeof obj.bot_id === "string" ? obj.bot_id : undefined,
+        scopes: Array.isArray(obj.scopes) ? (obj.scopes as string[]) : undefined,
+      }
+
+      return { valid: true, credential }
+    }
+
+    // Browser session credential — must be bootstrapped by this point
     if (typeof obj.d_cookie !== "string" || !obj.d_cookie) {
       return { valid: false, error: "Missing d_cookie" }
     }
@@ -154,7 +234,7 @@ export const slackProvider: ServiceProvider = {
       return { valid: false, error: "Missing team_id" }
     }
 
-    const credential: SlackCredential = {
+    const credential: SlackBrowserSessionCredential = {
       provider: "slack",
       credentialKind: "browser-session",
       d_cookie: obj.d_cookie as string,
@@ -169,10 +249,18 @@ export const slackProvider: ServiceProvider = {
   },
 
   async getAccessToken(credential: BaseCredential): Promise<string> {
-    return (credential as SlackCredential).xoxc_token
+    const c = credential as SlackCredential
+    if (c.credentialKind === "api-token") {
+      return c.access_token
+    }
+    return c.xoxc_token
   },
 
-  async fetchScopes(): Promise<string[]> {
+  async fetchScopes(credential: BaseCredential): Promise<string[]> {
+    const c = credential as SlackCredential
+    if (c.credentialKind === "api-token" && c.scopes && c.scopes.length > 0) {
+      return c.scopes
+    }
     // Session tokens have full user access — return synthetic capabilities
     return SLACK_CAPABILITIES
   },
@@ -247,9 +335,9 @@ export const slackProvider: ServiceProvider = {
   },
 
   scopeAppMap: {
-    channels: ["slack:conversations"],
-    files: ["slack:files"],
-    users: ["slack:users"],
+    channels: ["slack:conversations", "channels:read", "groups:read", "im:read"],
+    files: ["slack:files", "files:read"],
+    users: ["slack:users", "users:read"],
   },
 
   parseApiError: parseSlackError,
@@ -260,6 +348,19 @@ export const slackProvider: ServiceProvider = {
 
   minimalCredential(credential: BaseCredential): BaseCredential {
     const c = credential as SlackCredential
+    if (c.credentialKind === "api-token") {
+      return {
+        provider: "slack",
+        credentialKind: "api-token",
+        token_type: c.token_type,
+        access_token: c.access_token,
+        team_id: c.team_id,
+        team_domain: c.team_domain,
+        user_id: c.user_id,
+        bot_id: c.bot_id,
+        scopes: c.scopes,
+      } as SlackApiTokenCredential
+    }
     return {
       provider: "slack",
       credentialKind: "browser-session",
@@ -268,6 +369,6 @@ export const slackProvider: ServiceProvider = {
       team_id: c.team_id,
       team_domain: c.team_domain,
       user_id: c.user_id,
-    } as SlackCredential
+    } as SlackBrowserSessionCredential
   },
 }

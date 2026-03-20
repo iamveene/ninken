@@ -2,6 +2,7 @@
 
 import { useCallback } from "react"
 import { useCachedQuery } from "@/hooks/use-cached"
+import { useProvider } from "@/components/providers/provider-context"
 import { CACHE_TTL_LIST } from "@/lib/cache"
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -72,6 +73,7 @@ export type GitHubGist = {
 // ── Hooks ────────────────────────────────────────────────────────────
 
 export function useGitHubUser() {
+  const { loading: providerLoading } = useProvider()
   const cacheKey = "github:me"
 
   const fetcher = useCallback(async () => {
@@ -82,12 +84,14 @@ export function useGitHubUser() {
 
   const { data, loading, error, refetch } = useCachedQuery(cacheKey, fetcher, {
     ttlMs: CACHE_TTL_LIST,
+    enabled: !providerLoading,
   })
 
-  return { user: data, loading, error, refetch }
+  return { user: data, loading: loading || providerLoading, error, refetch }
 }
 
 export function useGitHubRepos(visibility?: string) {
+  const { loading: providerLoading } = useProvider()
   const cacheKey = `github:repos:${visibility || "all"}`
 
   const fetcher = useCallback(async () => {
@@ -104,18 +108,20 @@ export function useGitHubRepos(visibility?: string) {
 
   const { data, loading, error, refetch } = useCachedQuery(cacheKey, fetcher, {
     ttlMs: CACHE_TTL_LIST,
+    enabled: !providerLoading,
   })
 
   return {
     repos: data?.repos ?? [],
     totalCount: data?.totalCount ?? 0,
-    loading,
+    loading: loading || providerLoading,
     error,
     refetch,
   }
 }
 
 export function useGitHubOrgs() {
+  const { loading: providerLoading } = useProvider()
   const cacheKey = "github:orgs"
 
   const fetcher = useCallback(async () => {
@@ -130,18 +136,20 @@ export function useGitHubOrgs() {
 
   const { data, loading, error, refetch } = useCachedQuery(cacheKey, fetcher, {
     ttlMs: CACHE_TTL_LIST,
+    enabled: !providerLoading,
   })
 
   return {
     orgs: data?.orgs ?? [],
     totalCount: data?.totalCount ?? 0,
-    loading,
+    loading: loading || providerLoading,
     error,
     refetch,
   }
 }
 
 export function useGitHubGists() {
+  const { loading: providerLoading } = useProvider()
   const cacheKey = "github:gists"
 
   const fetcher = useCallback(async () => {
@@ -156,12 +164,13 @@ export function useGitHubGists() {
 
   const { data, loading, error, refetch } = useCachedQuery(cacheKey, fetcher, {
     ttlMs: CACHE_TTL_LIST,
+    enabled: !providerLoading,
   })
 
   return {
     gists: data?.gists ?? [],
     totalCount: data?.totalCount ?? 0,
-    loading,
+    loading: loading || providerLoading,
     error,
     refetch,
   }

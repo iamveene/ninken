@@ -13,14 +13,14 @@ async function fetchScopes(): Promise<string[]> {
 }
 
 export function useScopes() {
-  const { provider } = useProvider()
+  const { provider, loading: providerLoading } = useProvider()
   const providerConfig = getProvider(provider)
   const scopeAppMap = providerConfig?.scopeAppMap ?? {}
 
   const { data: scopes, loading, error } = useCachedQuery<string[]>(
     "auth:scopes",
     fetchScopes,
-    { ttlMs: 5 * 60 * 1000 }
+    { ttlMs: 5 * 60 * 1000, enabled: !providerLoading }
   )
 
   function hasApp(appId: string): boolean {

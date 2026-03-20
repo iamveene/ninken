@@ -8,6 +8,7 @@ out/
 # Environment & secrets
 .env
 .env.*
+!.env.example
 
 # Credentials & tokens — NEVER commit these
 /secrets/
@@ -30,3 +31,18 @@ Thumbs.db
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# NinLoader output
+/ninloader/tokens/
+
+# Docker
+docker-compose.override.yml
+install.log
