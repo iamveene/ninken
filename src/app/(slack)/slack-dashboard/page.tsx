@@ -14,8 +14,11 @@ import {
   XCircle,
   LayoutDashboard,
   MessageSquare,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react"
 import "@/lib/providers"
+import type { SlackCredential } from "@/lib/providers/types"
 
 function ScopeStatusBadge({ accessible }: { accessible: boolean }) {
   return accessible ? (
@@ -42,6 +45,19 @@ export default function SlackDashboardPage() {
   const accessibleCount = operateNavItems.filter((item) => hasApp(item.id)).length
   const totalServices = operateNavItems.length
 
+  // Derive token type label and OpSec level from credential
+  const credential = profile?.credential as SlackCredential | undefined
+  const isApiToken = credential?.credentialKind === "api-token"
+  const tokenTypeLabel = isApiToken
+    ? credential.token_type === "bot"
+      ? "Bot Token (xoxb-)"
+      : "User Token (xoxp-)"
+    : "Browser Session"
+  const tokenTypeShort = isApiToken
+    ? credential.token_type === "bot" ? "Bot" : "User"
+    : "Session"
+  const isHighOpsec = isApiToken
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -51,9 +67,22 @@ export default function SlackDashboardPage() {
         </div>
         <div>
           <h1 className="text-lg font-semibold">Slack Workspace</h1>
-          <p className="text-xs text-muted-foreground">
-            {profile?.email ?? "Unknown user"} — Browser session token
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">
+              {profile?.email ?? "Unknown user"} — {tokenTypeLabel}
+            </p>
+            {isHighOpsec ? (
+              <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[10px]">
+                <ShieldCheck className="h-3 w-3 mr-1" />
+                High OpSec
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-red-500/30 bg-red-500/10 text-red-400 text-[10px]">
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                Low OpSec
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
@@ -81,7 +110,7 @@ export default function SlackDashboardPage() {
           <CardContent className="flex items-center gap-3 p-4">
             <LayoutDashboard className="h-5 w-5 text-amber-500" />
             <div>
-              <p className="text-2xl font-bold">Session</p>
+              <p className="text-2xl font-bold">{tokenTypeShort}</p>
               <p className="text-[10px] text-muted-foreground">Token Type</p>
             </div>
           </CardContent>

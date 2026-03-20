@@ -1,4 +1,4 @@
-import type { SlackCredential } from "./providers/types"
+import type { SlackCredential, SlackApiTokenCredential } from "./providers/types"
 
 const SLACK_API_BASE = "https://slack.com/api"
 
@@ -134,7 +134,8 @@ const SLACK_MAX_RETRIES = 3
 
 /**
  * Authenticated fetch to Slack Web API.
- * Sends both Authorization (xoxc-) and Cookie (d) headers.
+ * For browser-session credentials: sends both Authorization (xoxc-) and Cookie (d) headers.
+ * For api-token credentials: sends only Authorization (Bearer) header.
  * Handles 429 rate limiting with bounded retry.
  */
 export async function slackFetch(
@@ -144,7 +145,6 @@ export async function slackFetch(
   options?: RequestInit,
   _retryCount = 0
 ): Promise<Response> {
-  const decodedCookie = decodeURIComponent(credential.d_cookie)
   const url = `${SLACK_API_BASE}/${apiMethod}`
 
   const body = new URLSearchParams()
@@ -154,12 +154,27 @@ export async function slackFetch(
     }
   }
 
+  // Build auth headers based on credential kind
+  let authHeaders: Record<string, string>
+  if (credential.credentialKind === "api-token") {
+    // API token (xoxb-/xoxp-): Bearer-only, no cookie needed
+    authHeaders = {
+      Authorization: `Bearer ${credential.access_token}`,
+    }
+  } else {
+    // Browser session (xoxc-): requires both Bearer and d cookie
+    const decodedCookie = decodeURIComponent(credential.d_cookie)
+    authHeaders = {
+      Authorization: `Bearer ${credential.xoxc_token}`,
+      Cookie: `d=${encodeURIComponent(decodedCookie)}`,
+    }
+  }
+
   const res = await fetch(url, {
     method: "POST",
     ...options,
     headers: {
-      Authorization: `Bearer ${credential.xoxc_token}`,
-      Cookie: `d=${encodeURIComponent(decodedCookie)}`,
+      ...authHeaders,
       "Content-Type": "application/x-www-form-urlencoded",
       ...(options?.headers as Record<string, string> | undefined),
     },
@@ -238,6 +253,80 @@ export async function slackPaginated<T>(
   const nextCursor = metadata?.next_cursor || null
 
   return { items, nextCursor: nextCursor === "" ? null : nextCursor }
+}
+
+/**
+ * Validate a Slack API token (xoxb- or xoxp-) by calling auth.test.
+ * Returns enriched metadata including team, user, bot info, and scopes.
+ */
+export async function validateSlackApiToken(token: string): Promise<{
+  ok: boolean
+  token_type: "bot" | "user"
+  team_id: string
+  team_domain: string
+  user_id: string
+  bot_id?: string
+  scopes: string[]
+  error?: string
+}> {
+  const res = await fetch(`${SLACK_API_BASE}/auth.test`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`Slack auth.test HTTP error: ${res.status}`)
+  }
+
+  // Parse scopes from X-OAuth-Scopes header
+  const scopeHeader = res.headers.get("X-OAuth-Scopes") || ""
+  const scopes = scopeHeader
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const data = (await res.json()) as {
+    ok: boolean
+    user_id?: string
+    user?: string
+    team_id?: string
+    team?: string
+    url?: string
+    bot_id?: string
+    error?: string
+    is_enterprise_install?: boolean
+  }
+
+  if (!data.ok) {
+    return {
+      ok: false,
+      token_type: token.startsWith("xoxb-") ? "bot" : "user",
+      team_id: "",
+      team_domain: "",
+      user_id: "",
+      scopes: [],
+      error: data.error || "auth.test failed",
+    }
+  }
+
+  const teamDomain =
+    data.url
+      ?.replace("https://", "")
+      .replace(".slack.com/", "")
+      .replace(".slack.com", "") || ""
+
+  return {
+    ok: true,
+    token_type: token.startsWith("xoxb-") ? "bot" : "user",
+    team_id: data.team_id || "",
+    team_domain: teamDomain,
+    user_id: data.user_id || "",
+    bot_id: data.bot_id,
+    scopes,
+  }
 }
 
 /**
