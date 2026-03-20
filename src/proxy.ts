@@ -60,6 +60,8 @@ export function proxy(request: NextRequest) {
     "/gmail", "/drive", "/buckets", "/calendar", "/directory", "/audit", "/chat",
     // Microsoft
     "/outlook", "/onedrive", "/teams", "/entra", "/m365-audit",
+    // AWS
+    "/aws-dashboard", "/aws-s3", "/aws-iam", "/aws-lambda", "/aws-ec2", "/aws-cloudtrail", "/aws-secrets", "/aws-audit",
     // Cross-service (Studio is intentionally NOT here — accessible without auth)
     "/collection", "/alerts",
   ]
