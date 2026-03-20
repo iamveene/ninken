@@ -1,10 +1,12 @@
 "use client"
 
-import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { useEffect } from "react"
 
-export function ThemeProvider({
-  children,
-  ...props
-}: React.ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    document.documentElement.classList.add("dark")
+    document.documentElement.style.colorScheme = "dark"
+  }, [])
+
+  return <>{children}</>
 }
