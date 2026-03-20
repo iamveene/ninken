@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Loader2,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Select,
@@ -162,9 +161,9 @@ export default function GitLabProjectDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Button variant="ghost" size="icon-xs" render={<Link href="/gitlab-projects" title="Back to projects" />}>
+          <Link href="/gitlab-projects" title="Back to projects" className="inline-flex items-center justify-center rounded-md h-7 w-7 hover:bg-accent transition-colors">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </Link>
           <div className="min-w-0">
             <h1 className="text-lg font-semibold truncate flex items-center gap-2">
               <Folder className="h-5 w-5 shrink-0" />
@@ -179,10 +178,10 @@ export default function GitLabProjectDetailPage() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {projectWebUrl && (
-            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" render={<a href={projectWebUrl} target="_blank" rel="noopener noreferrer" />}>
+            <a href={projectWebUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md border border-input px-3 h-8 text-xs font-medium hover:bg-accent transition-colors">
               <ExternalLink className="h-3.5 w-3.5" />
               GitLab
-            </Button>
+            </a>
           )}
         </div>
       </div>
