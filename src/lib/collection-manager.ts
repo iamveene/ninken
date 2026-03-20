@@ -184,6 +184,10 @@ class CollectionManager {
         return `${base}.eml`
       case "chat-message":
         return `${base}.txt`
+      case "project":
+        // Repo archives are tar.gz
+        if (item.mimeType === "application/gzip") return `${base}.tar.gz`
+        return `${base}.tar.gz`
       case "file":
       case "object":
         // Try to extract extension from the original title
