@@ -47,7 +47,7 @@ export function proxy(request: NextRequest) {
   }
 
   // API routes (except /api/auth) require auth
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth")) {
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !pathname.startsWith("/api/health") && !pathname.startsWith("/api/slack/validate-token")) {
     if (!hasToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
