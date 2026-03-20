@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Environment & secrets
+.env
+.env.local
+.env.*
+.secrets/
+
+# Internal project docs (gitignored)
+CLAUDE.md
+AGENTS.md
+DESIGN.md
+PLAYBOOK.md
+
+# Git
+.git/
+
+# Claude Code
+.claude/
+
+# Playwright MCP
+.playwright-mcp/
+
+# Docker Compose dev override
+docker-compose.override.yml
+
+# Tests
+tests/
+e2e/
+playwright-report/
+test-results/
+blob-report/
+playwright.config.ts
+
+# Screenshots (from .gitignore patterns)
+*.png
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tsbuildinfo
+install.log

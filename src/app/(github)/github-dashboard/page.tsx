@@ -38,7 +38,7 @@ function ScopeStatusBadge({ accessible }: { accessible: boolean }) {
 export default function GitHubDashboardPage() {
   const { hasApp, scopes, loading: scopesLoading } = useScopes()
   const { user, loading: userLoading, error: userError } = useGitHubUser()
-  const { profile } = useProvider()
+  const { profile, loading: providerLoading } = useProvider()
   const providerConfig = getProvider("github")
 
   const operateNavItems = providerConfig?.operateNavItems ?? []
@@ -52,7 +52,7 @@ export default function GitHubDashboardPage() {
     ? new Date(user.rateLimit.reset * 1000).toLocaleTimeString()
     : "N/A"
 
-  if (userError) {
+  if (userError && !providerLoading) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-lg font-semibold">GitHub</h1>

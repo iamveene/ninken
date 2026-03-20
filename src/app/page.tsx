@@ -714,7 +714,7 @@ if (provider.id === "google" || provider.id === "microsoft") {
                 <textarea
                   value={pasteValue}
                   onChange={(e) => setPasteValue(e.target.value)}
-                  placeholder='{"refresh_token": "..."} or ya29.xxx... or eyJhbG...'
+                  placeholder='{"refresh_token": "..."} or ya29.xxx... or eyJhbG... or xoxb-... / xoxp-...'
                   spellCheck={false}
                   className="w-full h-24 rounded border border-neutral-700 bg-neutral-900/50 p-2.5 font-mono text-xs text-neutral-300 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-red-900/50 resize-none"
                 />

@@ -8,6 +8,7 @@ out/
 # Environment & secrets
 .env
 .env.*
+!.env.example
 
 # Credentials & tokens — NEVER commit these
 /secrets/
@@ -41,3 +42,7 @@ build/
 
 # NinLoader output
 /ninloader/tokens/
+
+# Docker
+docker-compose.override.yml
+install.log

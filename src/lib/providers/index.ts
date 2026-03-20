@@ -22,6 +22,8 @@ export type {
   MicrosoftCredential,
   MicrosoftServicePrincipalCredential,
   SlackCredential,
+  SlackBrowserSessionCredential,
+  SlackApiTokenCredential,
   StoredProfile,
   ActiveTokenCookie,
   ProviderNavItem,
