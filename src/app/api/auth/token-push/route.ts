@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { decodeJwtPayload } from "@/lib/microsoft"
-import type { ProviderId, ActiveTokenCookie } from "@/lib/providers/types"
+import { storeSession, storeResourceTokens } from "@/lib/session-store"
+import type { ProviderId, ActiveTokenCookie, ResourceTokenPayload } from "@/lib/providers/types"
 
 // Must import providers/index to trigger auto-registration
 import "@/lib/providers"
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     access_token?: string
     expires_in?: number
     account?: string
+    resource_tokens?: Record<string, ResourceTokenPayload>
   }
   try {
     body = await request.json()
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { provider: providerId, access_token, expires_in, account } = body
+  const { provider: providerId, access_token, expires_in, account, resource_tokens } = body
 
   if (!providerId || typeof providerId !== "string") {
     return NextResponse.json({ error: "Missing provider" }, { status: 400 })
@@ -69,10 +71,34 @@ export async function POST(request: Request) {
     email: (payload.preferred_username as string) || (payload.upn as string) || account || "",
   }
 
-  const cookiePayload = JSON.stringify({
-    provider: providerId as ProviderId,
-    credential,
-  } satisfies ActiveTokenCookie)
+  // resource_tokens are too large for cookies — store server-side
+  let sessionId: string | undefined
+  if (resource_tokens && Object.keys(resource_tokens).length > 0) {
+    sessionId = storeSession(providerId as ProviderId, credential)
+    const parsed: Record<string, { access_token: string; expires_at: number; scope: string[] }> = {}
+    for (const [resource, rt] of Object.entries(resource_tokens)) {
+      if (!rt.access_token) continue
+      const rtPayload = decodeJwtPayload(rt.access_token)
+      const rtExp = (rtPayload?.exp as number) ||
+        (rt.expires_in ? now + rt.expires_in : now + 3600)
+      parsed[resource] = {
+        access_token: rt.access_token,
+        expires_at: rtExp,
+        scope: rt.scope || [],
+      }
+    }
+    storeResourceTokens(sessionId, parsed)
+  }
+
+  const cookiePayload = sessionId
+    ? JSON.stringify({
+        provider: providerId as ProviderId,
+        sessionId,
+      } satisfies ActiveTokenCookie)
+    : JSON.stringify({
+        provider: providerId as ProviderId,
+        credential,
+      } satisfies ActiveTokenCookie)
 
   const cookieStore = await cookies()
   cookieStore.set("ninken_token", cookiePayload, COOKIE_OPTS)
@@ -85,6 +111,7 @@ export async function POST(request: Request) {
     pushed: true,
     provider: providerId,
     expiresIn: exp ? exp - now : expires_in || 3600,
+    resourceTokenCount: resource_tokens ? Object.keys(resource_tokens).length : 0,
     // Signal to the client whether a matching IndexedDB profile should exist.
     // token-push is cookie-only — if no SPA profile exists in IndexedDB,
     // the next syncActiveProfile() call will overwrite this cookie with a

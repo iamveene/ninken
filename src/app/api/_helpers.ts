@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { getTokenFromCookies, type TokenData } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import { getProvider } from "@/lib/providers/registry"
-import { getSession } from "@/lib/session-store"
+import { getSession, getResourceToken } from "@/lib/session-store"
 import type {
   ProviderId,
   ActiveTokenCookie,
@@ -104,6 +104,27 @@ export async function getMicrosoftCredential(): Promise<MicrosoftCredential | nu
   const result = await getCredentialFromRequest()
   if (!result || result.provider !== "microsoft") return null
   return result.credential as MicrosoftCredential
+}
+
+/**
+ * Convenience: get an access token for a specific Microsoft resource
+ * from the session store's resource_tokens. Returns null if not available.
+ * Only works when the cookie uses session mode (resource_tokens are too large for cookies).
+ */
+export async function getMicrosoftResourceToken(
+  resource: string,
+): Promise<string | null> {
+  const cookieStore = await cookies()
+  const raw = cookieStore.get("ninken_token")?.value
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as ActiveTokenCookie
+    if (parsed.provider !== "microsoft") return null
+    if ("sessionId" in parsed && parsed.sessionId) {
+      return getResourceToken(parsed.sessionId, resource)
+    }
+  } catch { /* malformed cookie */ }
+  return null
 }
 
 /**

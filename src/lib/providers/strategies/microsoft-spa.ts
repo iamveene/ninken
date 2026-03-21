@@ -1,20 +1,13 @@
 import type { ClientRefreshableStrategy } from "../client-refreshable-strategy"
-import type { MicrosoftSpaCredential } from "../types"
+import type { MicrosoftSpaCredential, ResourceToken } from "../types"
+import { resolveResourceToken } from "../types"
 import { normalizeRaw } from "./microsoft-oauth"
 import { decodeJwtPayload } from "../../microsoft"
+import { isSpaClientId, getSpaClient } from "../spa-client-registry"
 
 const LOGIN_BASE = "https://login.microsoftonline.com"
 
-/** Known Microsoft SPA-registered client IDs */
-const SPA_CLIENT_IDS = new Set([
-  "9199bf20-a13f-4107-85dc-02114787ef48", // One Outlook Web
-  "5e3ce6c0-2b1f-4285-8d4b-75ee78787346", // Microsoft Teams Web Client
-])
-
-/** Check whether a client_id is a known SPA client */
-export function isSpaClientId(clientId: string): boolean {
-  return SPA_CLIENT_IDS.has(clientId)
-}
+export { isSpaClientId }
 
 export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredential> =
   {
@@ -96,6 +89,36 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
         }
       }
 
+      if (obj.resource_tokens && typeof obj.resource_tokens === "object") {
+        const rawRts = obj.resource_tokens as Record<
+          string,
+          { access_token?: string; expires_at?: number; expires_in?: number; scope?: string[] }
+        >
+        const parsed: Record<string, ResourceToken> = {}
+        for (const [resource, rt] of Object.entries(rawRts)) {
+          if (!rt || typeof rt.access_token !== "string") continue
+          let expiresAt = typeof rt.expires_at === "number" ? rt.expires_at : 0
+          if (!expiresAt) {
+            // Decode from JWT if not provided
+            const rtPayload = decodeJwtPayload(rt.access_token)
+            expiresAt = rtPayload?.exp
+              ? (rtPayload.exp as number)
+              : typeof rt.expires_in === "number"
+                ? Math.floor(Date.now() / 1000) + rt.expires_in
+                : Math.floor(Date.now() / 1000) + 3600
+          }
+          parsed[resource] = {
+            access_token: rt.access_token,
+            expires_at: expiresAt,
+            scope: Array.isArray(rt.scope) ? rt.scope : [],
+            resource,
+          }
+        }
+        if (Object.keys(parsed).length > 0) {
+          credential.resource_tokens = parsed
+        }
+      }
+
       const email =
         typeof obj.email === "string"
           ? obj.email
@@ -106,14 +129,27 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
       return { valid: true, credential, email }
     },
 
-    getAccessToken(credential: MicrosoftSpaCredential): Promise<string> {
-      // Server-side: return cached access token if available and not expired
+    getAccessToken(
+      credential: MicrosoftSpaCredential,
+      resource?: string,
+    ): Promise<string> {
+      const now = Math.floor(Date.now() / 1000)
+
+      // If a specific resource is requested, check resource_tokens first
+      if (resource && credential.resource_tokens) {
+        const rt = resolveResourceToken(credential.resource_tokens, resource)
+        if (rt && rt.expires_at > now + 300) {
+          return Promise.resolve(rt.access_token)
+        }
+      }
+
+      // Fall back to primary access token
       if (credential.access_token) {
-        const now = Math.floor(Date.now() / 1000)
         if (!credential.expires_at || credential.expires_at > now + 300) {
           return Promise.resolve(credential.access_token)
         }
       }
+
       // Server-side cannot refresh SPA tokens — throw a clear error
       return Promise.reject(
         new Error(
@@ -130,8 +166,13 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
     needsRefresh(credential: MicrosoftSpaCredential): boolean {
       if (!credential.access_token || !credential.expires_at) return true
       const now = Math.floor(Date.now() / 1000)
-      // Refresh when within 10 minutes of expiry
-      return credential.expires_at - now < 600
+      if (credential.expires_at - now < 600) return true
+      if (credential.resource_tokens) {
+        for (const rt of Object.values(credential.resource_tokens)) {
+          if (rt.expires_at - now < 600) return true
+        }
+      }
+      return false
     },
 
     async clientRefresh(
@@ -145,6 +186,11 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
         credential.token_uri ||
         `${LOGIN_BASE}/${credential.tenant_id}/oauth2/v2.0/token`
 
+      // Use the registry's defaultResource for the scope, falling back to Graph
+      const clientEntry = getSpaClient(credential.client_id)
+      const defaultResource =
+        clientEntry?.defaultResource || "https://graph.microsoft.com/.default"
+
       const res = await fetch(tokenUri, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -152,12 +198,27 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
           grant_type: "refresh_token",
           refresh_token: credential.refresh_token,
           client_id: credential.client_id,
-          scope: "https://graph.microsoft.com/.default offline_access",
+          scope: `${defaultResource} offline_access`,
         }),
       })
 
       if (!res.ok) {
         const text = await res.text().catch(() => "SPA token refresh failed")
+
+        // Detect origin-bound errors: AADSTS9002313 (cross-origin) or
+        // AADSTS9002327 (SPA-only redemption). These mean the RT can only
+        // be used from the original SPA origin.
+        if (
+          text.includes("AADSTS9002313") ||
+          text.includes("AADSTS9002327")
+        ) {
+          const err = new Error(`SPA token refresh failed: ${text}`) as Error & {
+            originBound: boolean
+          }
+          err.originBound = true
+          throw err
+        }
+
         throw new Error(`SPA token refresh failed: ${text}`)
       }
 
@@ -179,6 +240,7 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
       // CRITICAL: refresh_token is deliberately EXCLUDED from minimal.
       // It stays only in IndexedDB, never goes into the cookie.
       // The cookie gets the access_token so API routes can use it directly.
+      // resource_tokens are also excluded — they're too large for the cookie.
       return {
         provider: "microsoft",
         credentialKind: "spa",
