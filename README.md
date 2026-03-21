@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-dc2626?style=flat-square&labelColor=1a1a1a" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.5.0-dc2626?style=flat-square&labelColor=1a1a1a" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-dc2626?style=flat-square&labelColor=1a1a1a" alt="License">
   <img src="https://img.shields.io/badge/Next.js-16-e6e6e6?style=flat-square&labelColor=1a1a1a" alt="Next.js">
   <img src="https://img.shields.io/badge/TypeScript-5-e6e6e6?style=flat-square&labelColor=1a1a1a" alt="TypeScript">
