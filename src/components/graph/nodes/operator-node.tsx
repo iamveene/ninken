@@ -34,14 +34,11 @@ export function OperatorNode() {
           <path d="M8 18h8" />
           <path d="M9 20h6" />
         </svg>
-        <Handle type="source" position={Position.Bottom} className="!bg-red-500 !border-red-400 !w-2 !h-2" />
-        <Handle type="source" position={Position.Right} id="right" className="!bg-red-500 !border-red-400 !w-2 !h-2" />
-        <Handle type="source" position={Position.Left} id="left" className="!bg-red-500 !border-red-400 !w-2 !h-2" />
-        <Handle type="source" position={Position.Top} id="top" className="!bg-red-500 !border-red-400 !w-2 !h-2" />
       </div>
       <span className="text-[11px] font-bold text-red-400 tracking-wide uppercase">
         Operator
       </span>
+      <Handle type="source" position={Position.Bottom} className="!bg-red-500 !border-red-400 !w-2 !h-2" />
     </div>
   )
 }

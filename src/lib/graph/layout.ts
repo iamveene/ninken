@@ -8,21 +8,20 @@ type BuildInput = {
   scopeData: ProfileScopeInfo[]
 }
 
+// Node size constants for proper spacing
+const ACCOUNT_NODE_WIDTH = 200
+const ACCOUNT_GAP = 60
+const SERVICE_NODE_WIDTH = 140
+const SERVICE_GAP = 16
+const ROW_GAP_OP_TO_ACCOUNT = 180
+const ROW_GAP_ACCOUNT_TO_SERVICE = 150
+
 export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
   nodes: Node[]
   edges: Edge[]
 } {
   const nodes: Node[] = []
   const edges: Edge[] = []
-
-  // Operator node at center
-  nodes.push({
-    id: "operator",
-    type: "operator",
-    position: { x: 0, y: 0 },
-    data: { label: "Operator" } satisfies OperatorNodeData,
-    draggable: true,
-  })
 
   // Group scope data by profile
   const scopeByProfile = new Map<string, ProfileScopeInfo[]>()
@@ -32,18 +31,62 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
     scopeByProfile.set(info.profileId, arr)
   }
 
-  // Place account nodes in a ring around operator
-  const accountRadius = 350
-  const accountCount = profiles.length
-  const accountAngleStep = (2 * Math.PI) / Math.max(accountCount, 1)
+  // Pre-compute services per account so we know total widths
+  type AccountBlock = {
+    profile: StoredProfile
+    services: (ProfileScopeInfo["services"][number] & { provider: string })[]
+    accountWidth: number
+    servicesWidth: number
+    blockWidth: number
+  }
 
-  profiles.forEach((profile, idx) => {
+  const blocks: AccountBlock[] = profiles.map((profile) => {
+    const profileScopes = scopeByProfile.get(profile.id) ?? []
+    const services: AccountBlock["services"] = []
+    for (const ps of profileScopes) {
+      for (const svc of ps.services) {
+        services.push({ ...svc, provider: ps.provider })
+      }
+    }
+
+    const servicesWidth = services.length > 0
+      ? services.length * SERVICE_NODE_WIDTH + (services.length - 1) * SERVICE_GAP
+      : 0
+
+    // Block width = max of account node width and services spread
+    const blockWidth = Math.max(ACCOUNT_NODE_WIDTH, servicesWidth)
+
+    return { profile, services, accountWidth: ACCOUNT_NODE_WIDTH, servicesWidth, blockWidth }
+  })
+
+  // Total width of all blocks with gaps
+  const totalWidth = blocks.reduce((sum, b) => sum + b.blockWidth, 0)
+    + (blocks.length - 1) * ACCOUNT_GAP
+
+  // Operator node centered at top
+  const operatorX = 0
+  const operatorY = 0
+
+  nodes.push({
+    id: "operator",
+    type: "operator",
+    position: { x: operatorX - 36, y: operatorY }, // center the 72px node
+    data: { label: "Operator" } satisfies OperatorNodeData,
+    draggable: true,
+  })
+
+  // Account row starts below operator, centered
+  const accountY = operatorY + ROW_GAP_OP_TO_ACCOUNT
+  let cursorX = -(totalWidth / 2)
+
+  blocks.forEach((block) => {
+    const { profile, services, blockWidth, servicesWidth } = block
     const providers = getProfileProviders(profile)
-    const angle = accountAngleStep * idx - Math.PI / 2
-    const ax = Math.cos(angle) * accountRadius
-    const ay = Math.sin(angle) * accountRadius
-
     const accountId = `account-${profile.id}`
+
+    // Center account node within its block
+    const accountX = cursorX + (blockWidth - ACCOUNT_NODE_WIDTH) / 2
+
     const accountData: AccountNodeData = {
       profileId: profile.id,
       email: profile.email ?? profile.label ?? "Unknown",
@@ -55,7 +98,7 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
     nodes.push({
       id: accountId,
       type: "account",
-      position: { x: ax, y: ay },
+      position: { x: accountX, y: accountY },
       data: accountData,
       draggable: true,
     })
@@ -68,61 +111,47 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
       data: { variant: "operator" },
     })
 
-    // Place service nodes for each provider linked to this profile
-    const profileScopes = scopeByProfile.get(profile.id) ?? []
+    // Service row below account, centered within the block
+    if (services.length > 0) {
+      const serviceY = accountY + ROW_GAP_ACCOUNT_TO_SERVICE
+      const servicesStartX = cursorX + (blockWidth - servicesWidth) / 2
 
-    // Collect all services across all providers for this profile
-    const allServices: (ProfileScopeInfo["services"][number] & { provider: string })[] = []
-    for (const ps of profileScopes) {
-      for (const svc of ps.services) {
-        allServices.push({ ...svc, provider: ps.provider })
-      }
+      services.forEach((svc, sIdx) => {
+        const serviceX = servicesStartX + sIdx * (SERVICE_NODE_WIDTH + SERVICE_GAP)
+        const serviceNodeId = `service-${profile.id}-${svc.provider}-${svc.serviceId}`
+
+        const serviceData: ServiceNodeData = {
+          serviceId: svc.serviceId,
+          serviceName: svc.serviceName,
+          iconName: svc.iconName,
+          href: svc.href,
+          provider: svc.provider as any,
+          profileId: profile.id,
+          active: svc.active,
+          scopeCount: svc.scopeCount,
+          grantedScopes: svc.grantedScopes,
+          allScopes: svc.allScopes,
+        }
+
+        nodes.push({
+          id: serviceNodeId,
+          type: "service",
+          position: { x: serviceX, y: serviceY },
+          data: serviceData,
+          draggable: true,
+        })
+
+        edges.push({
+          id: `${accountId}-${serviceNodeId}`,
+          source: accountId,
+          target: serviceNodeId,
+          type: "glowing",
+          data: { variant: svc.active ? "service" : "inactive" },
+        })
+      })
     }
 
-    const serviceCount = allServices.length
-    if (serviceCount === 0) return
-
-    // Fan services outward from account node
-    const serviceRadius = 220
-    const maxArc = Math.PI * 0.8
-    const arcStep = serviceCount > 1 ? maxArc / (serviceCount - 1) : 0
-    const startAngle = angle - maxArc / 2
-
-    allServices.forEach((svc, sIdx) => {
-      const sAngle = serviceCount > 1 ? startAngle + arcStep * sIdx : angle
-      const sx = ax + Math.cos(sAngle) * serviceRadius
-      const sy = ay + Math.sin(sAngle) * serviceRadius
-
-      const serviceNodeId = `service-${profile.id}-${svc.provider}-${svc.serviceId}`
-      const serviceData: ServiceNodeData = {
-        serviceId: svc.serviceId,
-        serviceName: svc.serviceName,
-        iconName: svc.iconName,
-        href: svc.href,
-        provider: svc.provider as any,
-        profileId: profile.id,
-        active: svc.active,
-        scopeCount: svc.scopeCount,
-        grantedScopes: svc.grantedScopes,
-        allScopes: svc.allScopes,
-      }
-
-      nodes.push({
-        id: serviceNodeId,
-        type: "service",
-        position: { x: sx, y: sy },
-        data: serviceData,
-        draggable: true,
-      })
-
-      edges.push({
-        id: `${accountId}-${serviceNodeId}`,
-        source: accountId,
-        target: serviceNodeId,
-        type: "glowing",
-        data: { variant: svc.active ? "service" : "inactive" },
-      })
-    })
+    cursorX += blockWidth + ACCOUNT_GAP
   })
 
   return { nodes, edges }

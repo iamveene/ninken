@@ -26,7 +26,6 @@ export function AccountNode({ data }: { data: AccountNodeData }) {
   const color = PROVIDER_COLORS[data.provider] ?? "#6B7280"
   const providerLabel = PROVIDER_LABELS[data.provider] ?? data.provider
 
-  // Pick icon based on primary provider
   const iconMap: Record<string, string> = {
     google: "Globe",
     microsoft: "Monitor",
@@ -39,13 +38,13 @@ export function AccountNode({ data }: { data: AccountNodeData }) {
 
   return (
     <div
-      className="relative flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2 shadow-md min-w-[160px]"
-      style={{ borderColor: color }}
+      className="relative flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2 shadow-md"
+      style={{ borderColor: color, width: 200 }}
     >
-      <Handle type="target" position={Position.Left} className="!bg-neutral-500 !border-neutral-400 !w-2 !h-2" />
+      <Handle type="target" position={Position.Top} className="!bg-neutral-500 !border-neutral-400 !w-2 !h-2" />
 
       <div
-        className="flex items-center justify-center rounded-md"
+        className="flex items-center justify-center rounded-md shrink-0"
         style={{
           width: 32,
           height: 32,
@@ -56,7 +55,7 @@ export function AccountNode({ data }: { data: AccountNodeData }) {
       </div>
 
       <div className="flex flex-col min-w-0">
-        <span className="text-xs font-semibold text-foreground truncate max-w-[140px]">
+        <span className="text-xs font-semibold text-foreground truncate max-w-[130px]">
           {data.email}
         </span>
         <span className="text-[10px] text-muted-foreground">
@@ -76,8 +75,7 @@ export function AccountNode({ data }: { data: AccountNodeData }) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Right} className="!bg-neutral-500 !border-neutral-400 !w-2 !h-2" />
-      <Handle type="source" position={Position.Bottom} id="bottom" className="!bg-neutral-500 !border-neutral-400 !w-2 !h-2" />
+      <Handle type="source" position={Position.Bottom} className="!bg-neutral-500 !border-neutral-400 !w-2 !h-2" />
     </div>
   )
 }
