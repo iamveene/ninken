@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
 import { CapabilitiesCard, type ServiceProbe } from "@/components/capabilities-card"
 import { getAllProviders, detectProvider, getProvider, extractAllCredentials } from "@/lib/providers"
+import { getCredentialLabel } from "@/lib/providers/credential-labels"
 import type { ExtractedMicrosoftAccount } from "@/lib/providers"
 import { resolveIcon } from "@/lib/icon-resolver"
 import type { AccessTokenCredential, ProviderId, ServiceProvider } from "@/lib/providers/types"
@@ -66,6 +67,7 @@ function AuthPageInner() {
   const [selectedAccountIndices, setSelectedAccountIndices] = useState<Set<number>>(new Set())
   const [importingMulti, setImportingMulti] = useState(false)
 const [accessTokenInfo, setAccessTokenInfo] = useState<{ expiresAt?: number; provider: string } | null>(null)
+const [detectedCredType, setDetectedCredType] = useState("")
 
 const [showCapabilities, setShowCapabilities] = useState(false)
   const [capabilityServices, setCapabilityServices] = useState<ServiceProbe[]>([])
@@ -317,6 +319,7 @@ const [showCapabilities, setShowCapabilities] = useState(false)
           }
         }
 
+        setDetectedCredType(getCredentialLabel(provider.id, result.credential.credentialKind))
         setStatus("success")
 const isAccessToken = result.credential.credentialKind === "access-token"
         setTimeout(() => router.push(provider.defaultRoute), isAccessToken ? 1500 : 500)
@@ -741,6 +744,11 @@ if (provider.id === "google" || provider.id === "microsoft") {
                   <CheckCircle className="h-6 w-6 text-emerald-400" />
 <div>
                     <p className="text-sm text-emerald-400">Authenticated. Redirecting...</p>
+                    {detectedCredType && (
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        Detected: {detectedCredType}
+                      </p>
+                    )}
                     {accessTokenInfo && (
                       <div className="flex items-center gap-1.5 mt-1">
                         <Clock className="h-3 w-3 text-amber-400" />

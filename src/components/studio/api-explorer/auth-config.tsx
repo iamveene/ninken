@@ -4,8 +4,9 @@ import { useState, useCallback, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { KeyRound, ChevronDown, ChevronRight } from "lucide-react"
+import { ActiveTokenResolver } from "./active-token-resolver"
 
-export type AuthType = "none" | "bearer" | "apikey" | "basic"
+export type AuthType = "none" | "active-token" | "bearer" | "apikey" | "basic"
 
 export interface AuthState {
   type: AuthType
@@ -14,6 +15,9 @@ export interface AuthState {
   apiKeyValue: string
   basicUsername: string
   basicPassword: string
+  activeToken: string
+  activeTokenProvider: string
+  activeTokenError: string
 }
 
 const DEFAULT_AUTH: AuthState = {
@@ -23,6 +27,9 @@ const DEFAULT_AUTH: AuthState = {
   apiKeyValue: "",
   basicUsername: "",
   basicPassword: "",
+  activeToken: "",
+  activeTokenProvider: "",
+  activeTokenError: "",
 }
 
 interface AuthConfigProps {
@@ -35,6 +42,9 @@ interface AuthConfigProps {
  */
 export function resolveAuthHeaders(auth: AuthState): Record<string, string> {
   switch (auth.type) {
+    case "active-token":
+      if (auth.activeToken) return { Authorization: `Bearer ${auth.activeToken}` }
+      return {}
     case "bearer":
       if (auth.bearerToken) return { Authorization: `Bearer ${auth.bearerToken}` }
       return {}
@@ -59,6 +69,7 @@ export function createDefaultAuth(): AuthState {
 
 const AUTH_TYPES: { value: AuthType; label: string }[] = [
   { value: "none", label: "None" },
+  { value: "active-token", label: "Active Token" },
   { value: "bearer", label: "Bearer Token" },
   { value: "apikey", label: "API Key" },
   { value: "basic", label: "Basic Auth" },
@@ -115,6 +126,22 @@ export function AuthConfig({ value, onChange }: AuthConfigProps) {
               </button>
             ))}
           </div>
+
+          {/* Active Token */}
+          {value.type === "active-token" && (
+            <ActiveTokenResolver
+              onResolve={(token, provider) =>
+                update({
+                  activeToken: token,
+                  activeTokenProvider: provider,
+                  activeTokenError: "",
+                })
+              }
+              resolvedToken={value.activeToken}
+              resolvedProvider={value.activeTokenProvider}
+              error={value.activeTokenError}
+            />
+          )}
 
           {/* Bearer Token */}
           {value.type === "bearer" && (

@@ -5,6 +5,7 @@ export type ProviderId =
   | "gitlab"
   | "slack"
   | "aws"
+  | "gcp"
 
 export type CredentialKind =
   | "oauth"
@@ -16,6 +17,7 @@ export type CredentialKind =
   | "api-token"
   | "prt"
   | "prt-cookie"
+  | "api-key"
 
 // Base credential shape — every provider extends this
 export type BaseCredential = {
@@ -126,6 +128,14 @@ export type AwsCredential = BaseCredential & {
   default_region?: string
   account_id?: string
   arn?: string
+}
+
+// GCP API Key credential (project-scoped, no user context)
+export type GcpApiKeyCredential = BaseCredential & {
+  provider: "gcp"
+  credentialKind: "api-key"
+  api_key: string         // AIza... key — never log
+  project_id?: string     // Discovered via probing or user input
 }
 
 // Slack browser session credential (exfiltrated d cookie + bootstrapped xoxc token)

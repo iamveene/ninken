@@ -109,7 +109,7 @@ export function ChatPanel() {
           <div className="flex-1">
             <p className="text-sm font-medium">Ninken AI</p>
             <p className="text-xs text-muted-foreground">
-              {{ google: "Google Workspace", microsoft: "Microsoft 365", github: "GitHub", gitlab: "GitLab", slack: "Slack", aws: "AWS" }[provider] ?? provider} assistant
+              {{ google: "Google Workspace", microsoft: "Microsoft 365", github: "GitHub", gitlab: "GitLab", slack: "Slack", aws: "AWS", gcp: "GCP" }[provider] ?? provider} assistant
             </p>
           </div>
           {messages.length > 0 && (
