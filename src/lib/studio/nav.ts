@@ -13,4 +13,5 @@ export const studioNavItems: ProviderNavItem[] = [
   { id: "studio-offline-db", title: "Offline DB", href: "/studio/offline-db", iconName: "Database" },
   { id: "studio-msal", title: "MSAL Extractor", href: "/studio/msal-extractor", iconName: "Key" },
   { id: "studio-foci-paper", title: "FOCI Paper", href: "/studio/foci-paper", iconName: "FileText" },
+  { id: "studio-token-docs", title: "Token Docs", href: "/studio/token-docs", iconName: "BookOpen" },
 ]
