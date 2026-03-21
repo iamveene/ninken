@@ -54,18 +54,37 @@ export async function gcpKeyFetch<T>({
 
 /**
  * Probe a GCP API to check if it's enabled for the key.
- * Returns true if the API responds (even with empty data or 400).
- * Returns false if 403 (not enabled) or 401 (bad key).
+ * Returns true if the API responds with any data or a parseable error.
+ * Returns false if the key is rejected outright (403/401 with "API key not valid").
  */
 export async function probeGcpApi(url: string, apiKey: string): Promise<boolean> {
   try {
     const u = new URL(url)
     u.searchParams.set("key", apiKey)
     const res = await fetch(u.toString(), { method: "GET" })
-    // 200 or 400 (bad request but key accepted) = API is enabled
-    // 403 = API not enabled or key restricted
-    // 401 = key invalid
-    return res.status < 400 || res.status === 400
+
+    // 200 = works
+    if (res.ok) return true
+
+    // Parse the error body to distinguish "API not enabled" from "bad project"
+    const body = await res.json().catch(() => null)
+    const message = body?.error?.message ?? ""
+    const status = body?.error?.status ?? ""
+
+    // Key is valid but project/resource not found — API is enabled
+    if (res.status === 404) return true
+    // Bad request but key accepted — API is enabled
+    if (res.status === 400 && !message.includes("API key not valid")) return true
+    // Permission denied with specific API disabled message — API not enabled
+    if (status === "PERMISSION_DENIED" && message.includes("has not been used")) return false
+    if (status === "PERMISSION_DENIED" && message.includes("is not enabled")) return false
+    // Generic 403 — could be key restriction, treat as not available
+    if (res.status === 403) return false
+    // 401 — key invalid
+    if (res.status === 401) return false
+
+    // Unknown error — treat as not available
+    return false
   } catch {
     return false
   }
