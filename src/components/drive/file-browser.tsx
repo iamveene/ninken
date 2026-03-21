@@ -46,7 +46,7 @@ import {
 import { toast } from "sonner"
 
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
-import { FileCard, getFileConfig, formatFileSize, collectParamsForFile } from "@/components/drive/file-card"
+import { FileCard, getFileConfig, formatFileSize } from "@/components/drive/file-card"
 import { FileContextMenu } from "@/components/drive/context-menu"
 import { DriveBreadcrumbs, type BreadcrumbSegment } from "@/components/drive/breadcrumbs"
 import { DriveSearchBar } from "@/components/drive/search-bar"
@@ -70,7 +70,6 @@ import {
 import { Users, HardDrive } from "lucide-react"
 import { ServiceError } from "@/components/ui/service-error"
 import { CollectButton } from "@/components/collection/collect-button"
-import { useCollectAction } from "@/hooks/use-collect-action"
 
 export function FileBrowser() {
   const [view, setView] = useState<"grid" | "list">("list")
@@ -119,7 +118,6 @@ export function FileBrowser() {
   const { copy } = useCopyFile()
   const { trash } = useTrashFile()
   const { deleteFile: permanentDelete } = useDeleteFile()
-  const { collect } = useCollectAction()
 
   const displayFiles = isSearching ? searchResults : files
 
@@ -230,10 +228,6 @@ export function FileBrowser() {
     } catch {
       toast.error("Failed to delete")
     }
-  }
-
-  const handleCollect = (file: DriveFile) => {
-    collect(collectParamsForFile(file))
   }
 
   const handleInfoToggle = () => {
@@ -448,7 +442,6 @@ export function FileBrowser() {
                 onDownload={file.mimeType !== "application/vnd.google-apps.folder" ? () => handleDownload(file) : undefined}
                 onRename={() => setRenameFile(file)}
                 onCopy={() => handleCopy(file)}
-                onCollect={() => handleCollect(file)}
                 onShare={() => setShareFile(file)}
                 onTrash={() => handleTrash(file)}
                 onDelete={() => setDeleteFile(file)}
@@ -522,7 +515,6 @@ export function FileBrowser() {
                     onDownload={file.mimeType !== "application/vnd.google-apps.folder" ? () => handleDownload(file) : undefined}
                     onRename={() => setRenameFile(file)}
                     onCopy={() => handleCopy(file)}
-                    onCollect={() => handleCollect(file)}
                     onShare={() => setShareFile(file)}
                     onTrash={() => handleTrash(file)}
                     onDelete={() => setDeleteFile(file)}
@@ -555,10 +547,26 @@ export function FileBrowser() {
                         {formatFileSize(file.size) || "-"}
                       </TableCell>
                       <TableCell>
-                        <CollectButton
-                          variant="icon-xs"
-                          params={collectParamsForFile(file)}
-                        />
+                        {file.mimeType !== "application/vnd.google-apps.folder" && (
+                          <CollectButton
+                            variant="icon-xs"
+                            params={{
+                              type: "file",
+                              source: "drive",
+                              title: file.name,
+                              subtitle: file.owners?.[0]?.emailAddress,
+                              sourceId: file.id,
+                              downloadUrl: `/api/drive/files/${file.id}/download`,
+                              mimeType: file.mimeType,
+                              sizeBytes: file.size ? parseInt(file.size, 10) : undefined,
+                              metadata: {
+                                mimeType: file.mimeType,
+                                modifiedTime: file.modifiedTime,
+                                shared: file.shared,
+                              },
+                            }}
+                          />
+                        )}
                       </TableCell>
                   </FileContextMenu>
                 )

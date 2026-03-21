@@ -173,8 +173,8 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
 
       // Auto-trigger FOCI pivot probe for Microsoft FOCI credentials
       if (
-        result.credential.provider === "microsoft" &&
-        result.credential.credentialKind === "foci"
+        resolved.credential.provider === "microsoft" &&
+        resolved.credential.credentialKind === "foci"
       ) {
         triggerFociAutoPivot()
       }
