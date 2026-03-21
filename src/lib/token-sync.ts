@@ -10,6 +10,7 @@ import {
 } from "./token-store"
 import { detectProvider } from "./providers"
 import type { StoredProfile } from "./providers/types"
+import { getActiveCredential } from "./providers/types"
 
 /**
  * Activate a profile: read from IndexedDB, POST credential to server
@@ -19,12 +20,15 @@ export async function activateProfile(profileId: string): Promise<void> {
   const profile = await getProfile(profileId)
   if (!profile) throw new Error("Profile not found")
 
+  const activeProvider = profile.activeProvider ?? profile.provider
+  const activeCredential = getActiveCredential(profile)
+
   const res = await fetch("/api/auth/activate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      provider: profile.provider,
-      credential: profile.credential,
+      provider: activeProvider,
+      credential: activeCredential,
     }),
   })
 
