@@ -40,6 +40,7 @@ import {
   TrendingUp,
   Share2,
   ScanSearch,
+  Terminal,
   type LucideIcon,
 } from "lucide-react"
 
@@ -85,6 +86,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   TrendingUp,
   Share2,
   ScanSearch,
+  Terminal,
 }
 
 export function resolveIcon(name: string): LucideIcon {
