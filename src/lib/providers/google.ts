@@ -124,6 +124,7 @@ export const googleProvider: ServiceProvider = {
     { id: "audit-roles", title: "Roles", href: "/audit/roles", iconName: "ShieldCheck" },
     { id: "audit-apps", title: "Apps", href: "/audit/apps", iconName: "AppWindow" },
     { id: "audit-delegation", title: "Delegation", href: "/audit/delegation", iconName: "KeyRound" },
+    { id: "audit-attack-paths", title: "Attack Paths", href: "/audit/attack-paths", iconName: "Route" },
     { id: "audit-devices", title: "Devices", href: "/audit/devices", iconName: "Smartphone" },
     { id: "audit-policies", title: "Policies", href: "/audit/policies", iconName: "Settings" },
     { id: "audit-marketplace", title: "Marketplace", href: "/audit/marketplace", iconName: "Store" },

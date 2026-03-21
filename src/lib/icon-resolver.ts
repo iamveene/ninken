@@ -42,6 +42,7 @@ import {
   ScanSearch,
   Terminal,
   BookOpen,
+  Route,
   type LucideIcon,
 } from "lucide-react"
 
@@ -89,6 +90,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ScanSearch,
   Terminal,
   BookOpen,
+  Route,
 }
 
 export function resolveIcon(name: string): LucideIcon {

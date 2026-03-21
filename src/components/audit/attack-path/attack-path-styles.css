@@ -1,0 +1,57 @@
+/* Attack path node shape overrides */
+.attack-node-user {
+  border-radius: 9999px;
+}
+
+.attack-node-group {
+  border-radius: 12px;
+}
+
+.attack-node-sa {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.attack-node-domain {
+  border-radius: 9999px;
+}
+
+/* Highlighted path animation */
+@keyframes attack-path-flow {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.attack-edge-highlighted path {
+  stroke-dasharray: 5 5;
+  animation: attack-path-flow 1s linear infinite;
+}
+
+/* Node hover lift */
+.attack-node-wrapper:hover {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.15));
+}
+
+/* ReactFlow dark mode overrides for attack path graph */
+.attack-path-graph .react-flow__background {
+  background-color: transparent !important;
+}
+
+.attack-path-graph .react-flow__controls button {
+  background-color: hsl(var(--color-muted));
+  border-color: hsl(var(--color-border));
+  color: hsl(var(--color-foreground));
+}
+
+.attack-path-graph .react-flow__controls button:hover {
+  background-color: hsl(var(--color-accent));
+}
+
+.attack-path-graph .react-flow__minimap {
+  background-color: hsl(var(--color-card)) !important;
+  border: 1px solid hsl(var(--color-border));
+  border-radius: 6px;
+}
