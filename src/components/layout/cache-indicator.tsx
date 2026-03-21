@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Database } from "lucide-react"
-import { getCacheSize, cacheClear } from "@/lib/cache"
+import { getCacheSize, cacheClear, emitGlobalRefresh } from "@/lib/cache"
 import { Button } from "@/components/ui/button"
 
 function formatBytes(bytes: number): string {
@@ -29,6 +29,7 @@ export function CacheIndicator() {
 
   const handleClear = async () => {
     await cacheClear()
+    emitGlobalRefresh()
     setSize(0)
   }
 

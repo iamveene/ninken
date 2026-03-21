@@ -1,6 +1,21 @@
 "use client"
 
 export const CACHE_TTL_LIST = 5 * 60 * 1000
+
+// Global refresh signal — all useCachedQuery hooks subscribe to this
+type RefreshListener = () => void
+const refreshListeners = new Set<RefreshListener>()
+
+export function onGlobalRefresh(listener: RefreshListener): () => void {
+  refreshListeners.add(listener)
+  return () => refreshListeners.delete(listener)
+}
+
+export function emitGlobalRefresh(): void {
+  for (const listener of refreshListeners) {
+    try { listener() } catch { /* ignore */ }
+  }
+}
 export const CACHE_TTL_BODY = 30 * 60 * 1000
 export const CACHE_TTL_DOWNLOAD = 60 * 60 * 1000
 export const CACHE_TTL_PROFILE = 60 * 60 * 1000
