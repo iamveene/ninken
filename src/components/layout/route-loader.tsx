@@ -1,8 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, useTransition, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react"
 import { usePathname, useRouter as useNextRouter } from "next/navigation"
-import Image from "next/image"
 
 type RouteLoaderContextValue = {
   isLoading: boolean
@@ -40,18 +39,22 @@ export function useRouter() {
   }
 }
 
+/**
+ * Full-screen branded loading overlay — matches the graph/loading.tsx style.
+ * Uses a plain <img> (not next/image) so the badge loads instantly from browser cache.
+ */
 function LoaderOverlay() {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background animate-in fade-in duration-100">
       <div className="flex flex-col items-center gap-6">
         <div className="relative">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/ninken-badge.png"
             alt="Ninken"
             width={64}
             height={64}
             className="animate-pulse"
-            priority
           />
         </div>
         <div className="flex flex-col items-center gap-1.5">
@@ -72,11 +75,18 @@ function LoaderOverlay() {
 export function RouteLoaderProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const pathname = usePathname()
-  const [, startTransition] = useTransition()
+  const prevPathRef = useRef(pathname)
 
-  // Stop loading when pathname changes (navigation completed)
+  // When pathname actually changes, wait a tick for the new page to mount before hiding loader
   useEffect(() => {
-    setIsLoading(false)
+    if (pathname !== prevPathRef.current) {
+      prevPathRef.current = pathname
+      // Small delay so the new page renders before we remove the overlay
+      const raf = requestAnimationFrame(() => {
+        setIsLoading(false)
+      })
+      return () => cancelAnimationFrame(raf)
+    }
   }, [pathname])
 
   // Safety timeout — never show loader for more than 8 seconds
@@ -92,7 +102,9 @@ export function RouteLoaderProvider({ children }: { children: ReactNode }) {
       const anchor = (e.target as HTMLElement).closest("a")
       if (!anchor) return
       const href = anchor.getAttribute("href")
-      if (!href || href.startsWith("http") || href.startsWith("#") || href === pathname) return
+      if (!href || href.startsWith("http") || href.startsWith("#")) return
+      // Don't show loader if navigating to current page
+      if (href === pathname || href === pathname + "/") return
       // Internal navigation — show loader
       setIsLoading(true)
     }
@@ -101,9 +113,7 @@ export function RouteLoaderProvider({ children }: { children: ReactNode }) {
   }, [pathname])
 
   const startLoading = useCallback(() => {
-    startTransition(() => {
-      setIsLoading(true)
-    })
+    setIsLoading(true)
   }, [])
 
   const stopLoading = useCallback(() => {

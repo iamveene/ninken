@@ -1,16 +1,19 @@
-import Image from "next/image"
-
+/**
+ * Branded loading screen — Ninken badge + animated dots.
+ * Used by loading.tsx files (Suspense fallback) and the route transition overlay.
+ * Uses plain <img> instead of next/image for instant rendering from browser cache.
+ */
 export function BrandedLoader() {
   return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
       <div className="relative">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/ninken-badge.png"
           alt="Ninken"
           width={64}
           height={64}
           className="animate-pulse"
-          priority
         />
       </div>
       <div className="flex flex-col items-center gap-1.5">
