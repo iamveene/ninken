@@ -66,6 +66,44 @@ MS_SCOPES = [
 TOKEN_ENDPOINT = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 AUTHORIZE_ENDPOINT = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 
+# Domains that must bypass the dead proxy during the OAuth consent flow.
+# Missing any of these causes chrome-error://chromewebdata/ navigation failures.
+# Keep sorted by category for easy auditing.
+MS_AUTH_BYPASS_DOMAINS: tuple[str, ...] = (
+    # --- Primary login endpoints ---
+    "login.microsoftonline.com",
+    "login.microsoft.com",
+    "login.live.com",
+    "login.windows.net",                       # legacy login endpoint
+    "sts.windows.net",                         # STS endpoint
+    "device.login.microsoftonline.com",        # device auth flow
+    "stamp2.login.microsoftonline.com",        # stamp-specific login
+    "autologon.microsoftazuread-sso.com",      # seamless SSO
+    "content.microsoftonline.com",             # content delivery
+    # --- Auth CDN / static assets ---
+    "aadcdn.msftauth.net",
+    "aadcdn.msauth.net",
+    "logincdn.msftauth.net",
+    "lgincdn.msauth.net",
+    "msftauth.net",
+    "msauth.net",
+    "aadcdn.msftauthimages.net",               # CDN for auth page assets
+    "aadcdn.msauthimages.net",
+    "ajax.aspnetcdn.com",                      # Microsoft CDN for JS
+    # --- Wildcard patterns ---
+    "*.microsoft.com",
+    "*.live.com",
+    "*.microsoftonline.com",
+    "*.microsoftonline-p.com",                 # alternate login endpoint
+    "*.msftauth.net",
+    "*.msauth.net",
+    "*.msftauthimages.net",                    # auth page images
+    "*.msauthimages.net",                      # auth page images
+    # --- Localhost (redirect capture) ---
+    "localhost",
+    "127.0.0.1",
+)
+
 # Files to copy from Chrome profile — enough for session cookies + login state
 PROFILE_FILES = [
     "Local State",
@@ -365,25 +403,7 @@ class MicrosoftBrowserHijackCollector(BaseCollector):
                 # Microsoft OAuth redirects through many domains during the
                 # consent flow — missing any causes chrome-error://chromewebdata/
                 "--proxy-server=socks5://127.0.0.1:1",
-                "--proxy-bypass-list="
-                "login.microsoftonline.com,"
-                "login.microsoft.com,"
-                "login.live.com,"
-                "aadcdn.msftauth.net,"
-                "aadcdn.msauth.net,"
-                "logincdn.msftauth.net,"
-                "lgincdn.msauth.net,"
-                "msftauth.net,"
-                "msauth.net,"
-                "aadcdn.msftauthimages.net,"
-                "aadcdn.msauthimages.net,"
-                "*.microsoft.com,"
-                "*.live.com,"
-                "*.microsoftonline.com,"
-                "*.msftauth.net,"
-                "*.msauth.net,"
-                "localhost,"
-                "127.0.0.1",
+                f"--proxy-bypass-list={','.join(MS_AUTH_BYPASS_DOMAINS)}",
                 "--window-size=1280,800",
                 oauth_url,
             ]
@@ -417,11 +437,18 @@ class MicrosoftBrowserHijackCollector(BaseCollector):
 
                     # Chrome navigation error — dead proxy blocked a required domain
                     if url.startswith("chrome-error://"):
-                        self._warn(
-                            "Chrome hit a navigation error (chrome-error://chromewebdata/). "
-                            "A required Microsoft auth domain is likely missing from the "
-                            "proxy bypass list."
-                        )
+                        blocked = self._detect_blocked_domain(cdp)
+                        if blocked:
+                            self._warn(
+                                f"Dead proxy blocked domain: {blocked} — "
+                                f"add it to MS_AUTH_BYPASS_DOMAINS"
+                            )
+                        else:
+                            self._warn(
+                                "Chrome hit a navigation error (chrome-error://chromewebdata/). "
+                                "A required Microsoft auth domain is likely missing from the "
+                                "proxy bypass list."
+                            )
                         break
 
                     page_text = cdp.evaluate("document.body.innerText") or ""
@@ -639,6 +666,42 @@ class MicrosoftBrowserHijackCollector(BaseCollector):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
         return results
+
+    @staticmethod
+    def _detect_blocked_domain(cdp: "CDPClient") -> Optional[str]:
+        """Use performance.getEntries() via CDP to find which domain the proxy blocked.
+
+        When Chrome hits a dead proxy for a non-bypassed domain, the failed
+        navigation URL appears in the performance timeline.  We extract it so
+        operators know exactly which domain to add to MS_AUTH_BYPASS_DOMAINS.
+        """
+        try:
+            # performance.getEntries() returns all resource timing entries
+            # including the failed navigation.  We look for the last
+            # 'navigation' entry whose name is a URL (not chrome-error://).
+            entries = cdp.evaluate(
+                "(function() {"
+                "  var entries = performance.getEntries();"
+                "  var urls = [];"
+                "  for (var i = 0; i < entries.length; i++) {"
+                "    var e = entries[i];"
+                "    if (e.name && e.name.startsWith('http')) {"
+                "      urls.push(e.name);"
+                "    }"
+                "  }"
+                "  return urls;"
+                "})()"
+            )
+            if entries:
+                # The last http(s) entry is typically the blocked navigation
+                last_url = entries[-1] if isinstance(entries, list) else None
+                if last_url and isinstance(last_url, str):
+                    # Extract the hostname
+                    parsed = urllib.parse.urlparse(last_url)
+                    return parsed.hostname or last_url
+        except Exception:
+            pass
+        return None
 
     def _exchange_code(self, code: str, redirect_uri: str) -> Optional[dict]:
         """Exchange authorization code for access + refresh tokens.
