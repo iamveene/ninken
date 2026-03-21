@@ -12,6 +12,11 @@ export type AccountNodeData = {
   label: string
 }
 
+export type ServiceStat = {
+  label: string
+  value: number | string | null
+}
+
 export type ServiceNodeData = {
   serviceId: string
   serviceName: string
@@ -23,12 +28,14 @@ export type ServiceNodeData = {
   scopeCount: number
   grantedScopes: string[]
   allScopes: string[]
+  stat: ServiceStat | null
 }
 
 export type ProfileScopeInfo = {
   profileId: string
   provider: ProviderId
   scopes: string[]
+  stats: Record<string, ServiceStat>
   services: {
     serviceId: string
     serviceName: string

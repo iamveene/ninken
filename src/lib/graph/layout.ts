@@ -1,5 +1,5 @@
 import type { Node, Edge } from "@xyflow/react"
-import type { ProfileScopeInfo, OperatorNodeData, AccountNodeData, ServiceNodeData } from "./types"
+import type { ProfileScopeInfo, OperatorNodeData, AccountNodeData, ServiceNodeData, ServiceStat } from "./types"
 import type { StoredProfile } from "@/lib/providers/types"
 import { getProfileProviders } from "@/lib/providers/types"
 
@@ -32,9 +32,14 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
   }
 
   // Pre-compute services per account so we know total widths
+  type ServiceWithMeta = ProfileScopeInfo["services"][number] & {
+    provider: string
+    stat: ServiceStat | null
+  }
+
   type AccountBlock = {
     profile: StoredProfile
-    services: (ProfileScopeInfo["services"][number] & { provider: string })[]
+    services: ServiceWithMeta[]
     accountWidth: number
     servicesWidth: number
     blockWidth: number
@@ -42,10 +47,14 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
 
   const blocks: AccountBlock[] = profiles.map((profile) => {
     const profileScopes = scopeByProfile.get(profile.id) ?? []
-    const services: AccountBlock["services"] = []
+    const services: ServiceWithMeta[] = []
     for (const ps of profileScopes) {
       for (const svc of ps.services) {
-        services.push({ ...svc, provider: ps.provider })
+        services.push({
+          ...svc,
+          provider: ps.provider,
+          stat: ps.stats?.[svc.serviceId] ?? null,
+        })
       }
     }
 
@@ -131,6 +140,7 @@ export function buildGraphLayout({ profiles, scopeData }: BuildInput): {
           scopeCount: svc.scopeCount,
           grantedScopes: svc.grantedScopes,
           allScopes: svc.allScopes,
+          stat: svc.stat,
         }
 
         nodes.push({

@@ -27,6 +27,14 @@ export function ServiceNode({ id, data }: { id: string; data: ServiceNodeData })
     )
   }, [id, setNodes])
 
+  // Determine what badge to show: stat (if available) or scope count
+  const hasStat = data.stat && data.stat.value !== null
+  const badgeText = hasStat
+    ? `${data.stat!.value} ${data.stat!.label}`
+    : data.active && data.scopeCount > 0
+      ? `${data.scopeCount} scope${data.scopeCount !== 1 ? "s" : ""}`
+      : null
+
   return (
     <div
       className={`relative ${data.active ? "service-node-active" : "service-node-inactive"}`}
@@ -47,9 +55,9 @@ export function ServiceNode({ id, data }: { id: string; data: ServiceNodeData })
 
         <div className="flex flex-col min-w-0">
           <span className="text-[11px] font-medium truncate">{data.serviceName}</span>
-          {data.active && data.scopeCount > 0 && (
-            <span className="text-[9px] text-amber-400/70">
-              {data.scopeCount} scope{data.scopeCount !== 1 ? "s" : ""}
+          {badgeText && (
+            <span className={`text-[9px] ${hasStat ? "text-cyan-400/80" : "text-amber-400/70"}`}>
+              {badgeText}
             </span>
           )}
           {!data.active && (
@@ -61,7 +69,7 @@ export function ServiceNode({ id, data }: { id: string; data: ServiceNodeData })
       {/* Hover detail panel */}
       {hovered && data.active && (
         <div
-          className="absolute left-full ml-2 top-0 w-56 rounded-md border border-border/80 p-3"
+          className="absolute left-full ml-2 top-0 w-60 rounded-md border border-border/80 p-3"
           style={{
             backgroundColor: "#111114",
             boxShadow: "0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06)",
@@ -83,11 +91,20 @@ export function ServiceNode({ id, data }: { id: string; data: ServiceNodeData })
             </button>
           </div>
 
+          {/* Operational stat (if available) */}
+          {hasStat && (
+            <div className="flex items-baseline gap-1.5 mb-2 pb-2 border-b border-border/40">
+              <span className="text-lg font-bold text-cyan-400">{data.stat!.value}</span>
+              <span className="text-[10px] text-cyan-400/60">{data.stat!.label}</span>
+            </div>
+          )}
+
+          {/* Scopes section */}
           <div className="text-[10px] text-muted-foreground mb-1.5">
-            Granted scopes ({data.scopeCount}/{data.allScopes.length})
+            Scopes ({data.scopeCount}/{data.allScopes.length})
           </div>
 
-          <div className="flex flex-col gap-0.5 max-h-32 overflow-y-auto">
+          <div className="flex flex-col gap-0.5 max-h-28 overflow-y-auto">
             {data.allScopes.map((scope) => {
               const granted = data.grantedScopes.includes(scope)
               const shortName = scope.includes("/")
