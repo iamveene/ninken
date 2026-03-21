@@ -445,10 +445,12 @@ function OutlookPage() {
 
               {/* Body — Graph API returns HTML directly */}
               {selectedMessage.body?.contentType === "html" ? (
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none break-words [&_img]:max-w-full [&_table]:text-sm"
-                  dangerouslySetInnerHTML={{ __html: selectedMessage.body.content }}
-                />
+                <div className="bg-white text-black rounded-lg p-4 shadow-sm border border-border/40">
+                  <div
+                    className="prose prose-sm max-w-none break-words [&_img]:max-w-full [&_table]:text-sm"
+                    dangerouslySetInnerHTML={{ __html: selectedMessage.body.content }}
+                  />
+                </div>
               ) : (
                 <div className="text-sm whitespace-pre-wrap text-foreground/90">
                   {selectedMessage.body?.content || selectedMessage.bodyPreview}

@@ -4,6 +4,12 @@ import { graphJson } from "@/lib/microsoft"
 
 export const dynamic = "force-dynamic"
 
+// BUG-13: Scope gap — Teams Web Graph tokens include ChatMember.Read and
+// ChatMessage.Send but NOT Chat.Read, which is required by the /me/chats
+// endpoint. This means this route will return 403 for browser-extracted tokens.
+// The fix requires multi-resource token extraction (roadmap item) to obtain a
+// Graph token with the Chat.Read scope. No code change can resolve this today.
+
 type ChatsResponse = {
   value?: Array<{
     id: string
