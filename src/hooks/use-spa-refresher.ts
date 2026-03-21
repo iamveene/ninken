@@ -39,6 +39,8 @@ export function useSpaRefresher(profileCount = 0) {
   )
   const refreshingRef = useRef(new Set<string>())
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  // Profiles that failed with origin-bound errors — skip until next manual import
+  const originBoundRef = useRef(new Set<string>())
 
   const pushTokenToServer = useCallback(
     async (
@@ -71,6 +73,9 @@ export function useSpaRefresher(profileCount = 0) {
 
       const credential = getActiveCredential(profile)
       if (credential.credentialKind !== "spa") return
+
+      // Already failed with origin-bound CORS — skip until re-import
+      if (originBoundRef.current.has(profile.id)) return
 
       // BUG-1 guard: re-verify the profile still exists in IndexedDB before
       // starting the refresh. The scan may have found this profile, but it
@@ -207,6 +212,7 @@ export function useSpaRefresher(profileCount = 0) {
           errorMsg.includes("AADSTS9002327")
 
         if (isOriginBound) {
+          originBoundRef.current.add(profile.id)
           const clientEntry = getSpaClient(spaCred.client_id)
           setStatuses((prev) => {
             const next = new Map(prev)
@@ -275,10 +281,12 @@ export function useSpaRefresher(profileCount = 0) {
   }, [refreshProfile])
 
   // Re-scan when profile count changes (BUG-11: pick up newly added SPA profiles)
+  // Also reset origin-bound back-off so re-imported tokens get a fresh attempt
   const lastScannedCountRef = useRef(profileCount)
   useEffect(() => {
     if (profileCount !== lastScannedCountRef.current) {
       lastScannedCountRef.current = profileCount
+      originBoundRef.current.clear()
       scan()
     }
   }, [profileCount, scan])

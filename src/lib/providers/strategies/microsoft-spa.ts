@@ -7,6 +7,13 @@ import { isSpaClientId, getSpaClient } from "../spa-client-registry"
 
 const LOGIN_BASE = "https://login.microsoftonline.com"
 
+/** Create an Error tagged as origin-bound so callers can back off without retry */
+function originBoundError(message: string): Error & { originBound: true } {
+  const err = new Error(message) as Error & { originBound: true }
+  err.originBound = true
+  return err
+}
+
 export { isSpaClientId }
 
 export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredential> =
@@ -191,16 +198,27 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
       const defaultResource =
         clientEntry?.defaultResource || "https://graph.microsoft.com/.default"
 
-      const res = await fetch(tokenUri, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "refresh_token",
-          refresh_token: credential.refresh_token,
-          client_id: credential.client_id,
-          scope: `${defaultResource} offline_access`,
-        }),
-      })
+      let res: Response
+      try {
+        res = await fetch(tokenUri, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: "refresh_token",
+            refresh_token: credential.refresh_token,
+            client_id: credential.client_id,
+            scope: `${defaultResource} offline_access`,
+          }),
+        })
+      } catch {
+        // CORS-blocked requests throw a TypeError ("Failed to fetch") before
+        // we can read the response body. Treat any network-level failure on
+        // the Microsoft token endpoint as origin-bound — this is the expected
+        // behaviour for SPA tokens used outside their original origin.
+        throw originBoundError(
+          "SPA token refresh blocked (CORS/network error on token endpoint)"
+        )
+      }
 
       if (!res.ok) {
         const text = await res.text().catch(() => "SPA token refresh failed")
@@ -212,11 +230,7 @@ export const microsoftSpaStrategy: ClientRefreshableStrategy<MicrosoftSpaCredent
           text.includes("AADSTS9002313") ||
           text.includes("AADSTS9002327")
         ) {
-          const err = new Error(`SPA token refresh failed: ${text}`) as Error & {
-            originBound: boolean
-          }
-          err.originBound = true
-          throw err
+          throw originBoundError(`SPA token refresh failed: ${text}`)
         }
 
         throw new Error(`SPA token refresh failed: ${text}`)
