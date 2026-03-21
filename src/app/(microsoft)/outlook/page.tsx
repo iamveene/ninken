@@ -89,7 +89,7 @@ function OutlookPage() {
 
   const { folders, loading: foldersLoading } = useOutlookFolders()
   const { messages, loading: messagesLoading, error: messagesError, refetch } = useOutlookMessages(activeFolderId || undefined)
-  const { message: selectedMessage, loading: messageLoading } = useOutlookMessage(selectedMessageId)
+  const { message: selectedMessage, loading: messageLoading, error: messageError } = useOutlookMessage(selectedMessageId)
   const { send, loading: sendLoading } = useSendOutlookMessage()
   const { trash } = useTrashOutlookMessage()
   const { modify } = useModifyOutlookMessage()
@@ -333,7 +333,7 @@ function OutlookPage() {
   // Detail panel
   const detailContent = (
     <div className="flex flex-1 flex-col min-w-0 h-full">
-      {messageLoading ? (
+      {messageLoading || (selectedMessageId && !selectedMessage && !messageError) ? (
         <div className="p-6 space-y-4">
           <Skeleton className="h-6 w-2/3" />
           <div className="flex items-center gap-3">
@@ -344,6 +344,11 @@ function OutlookPage() {
             </div>
           </div>
           <Skeleton className="h-40 w-full" />
+        </div>
+      ) : messageError ? (
+        <div className="flex flex-col items-center justify-center h-full gap-3">
+          <Mail className="h-8 w-8 text-destructive/50" />
+          <p className="text-sm text-destructive">{messageError}</p>
         </div>
       ) : !selectedMessage ? (
         <div className="flex flex-col items-center justify-center h-full gap-3">
