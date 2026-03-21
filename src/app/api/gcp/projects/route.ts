@@ -23,15 +23,24 @@ export async function GET() {
           const buckets = bucketsRes.data.items ?? []
           const bucketCount = buckets.length
 
-          // Probe how many buckets have visible objects
+          // Probe how many buckets have downloadable objects (readable + downloadable + has content)
           let withObjectsCount = 0
           const probes = await Promise.allSettled(
             buckets.map(async (b) => {
               try {
                 const objRes = await storage.objects.list({ bucket: b.name!, maxResults: 1, delimiter: "/" })
-                const hasItems = (objRes.data.items?.length ?? 0) > 0
-                const hasPrefixes = (objRes.data.prefixes?.length ?? 0) > 0
-                return hasItems || hasPrefixes
+                const items = objRes.data.items ?? []
+                const prefixes = objRes.data.prefixes ?? []
+                if (items.length === 0 && prefixes.length === 0) return false
+                // Check download access on first object if available
+                if (items.length > 0) {
+                  try {
+                    await storage.objects.get({ bucket: b.name!, object: items[0].name! })
+                  } catch {
+                    return false // Can list but not download — not truly accessible
+                  }
+                }
+                return true
               } catch {
                 return false
               }
