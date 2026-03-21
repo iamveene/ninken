@@ -13,6 +13,7 @@ import {
   Check,
   Users,
   Clock,
+  Link2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NinkenLogo } from "@/components/logo"
@@ -20,9 +21,10 @@ import { CapabilitiesCard, type ServiceProbe } from "@/components/capabilities-c
 import { getAllProviders, detectProvider, getProvider, extractAllCredentials } from "@/lib/providers"
 import type { ExtractedMicrosoftAccount } from "@/lib/providers"
 import { resolveIcon } from "@/lib/icon-resolver"
-import type { AccessTokenCredential, ServiceProvider } from "@/lib/providers/types"
+import type { AccessTokenCredential, ProviderId, ServiceProvider } from "@/lib/providers/types"
 import {
   addProfile,
+  addTokenToProfile,
   getAllProfiles,
   removeProfile,
 } from "@/lib/token-store"
@@ -58,7 +60,7 @@ function AuthPageInner() {
   const [migrating, setMigrating] = useState(true)
   const [hasExistingProfiles, setHasExistingProfiles] = useState(false)
   const [existingProfiles, setExistingProfiles] = useState<
-    { id: string; provider: string; email?: string }[]
+    { id: string; provider: ProviderId; email?: string }[]
   >([])
   const [multiAccounts, setMultiAccounts] = useState<ExtractedMicrosoftAccount[]>([])
   const [selectedAccountIndices, setSelectedAccountIndices] = useState<Set<number>>(new Set())
@@ -70,6 +72,7 @@ const [showCapabilities, setShowCapabilities] = useState(false)
   const [capabilityLoading, setCapabilityLoading] = useState(false)
   const [capabilityError, setCapabilityError] = useState<string | undefined>()
   const [importedProvider, setImportedProvider] = useState<ServiceProvider | null>(null)
+  const [linkToProfileId, setLinkToProfileId] = useState<string | null>(null)
 
   const providers = getAllProviders()
 
@@ -280,12 +283,23 @@ const [showCapabilities, setShowCapabilities] = useState(false)
           })
         }
 
-        const profile = await addProfile(
-          provider.id,
-          result.credential,
-          result.email
-        )
-        await activateProfile(profile.id)
+        // Link to existing profile or create new
+        let targetProfileId: string
+        if (linkToProfileId) {
+          // Link credential to existing profile as an additional provider
+          await addTokenToProfile(linkToProfileId, provider.id, result.credential)
+          targetProfileId = linkToProfileId
+          await activateProfile(linkToProfileId)
+          setLinkToProfileId(null)
+        } else {
+          const profile = await addProfile(
+            provider.id,
+            result.credential,
+            result.email
+          )
+          targetProfileId = profile.id
+          await activateProfile(profile.id)
+        }
 
         if (!result.email && provider.emailEndpoint) {
           try {
@@ -295,7 +309,7 @@ const [showCapabilities, setShowCapabilities] = useState(false)
               const resolvedEmail = profileData.emailAddress || profileData.email || profileData.login
               if (resolvedEmail) {
                 const { updateProfileEmail } = await import("@/lib/token-store")
-                await updateProfileEmail(profile.id, resolvedEmail)
+                await updateProfileEmail(targetProfileId, resolvedEmail)
               }
             }
           } catch {
@@ -320,7 +334,7 @@ if (provider.id === "google" || provider.id === "microsoft") {
         )
       }
     },
-    [selectedProvider, fetchCapabilities]
+    [selectedProvider, fetchCapabilities, linkToProfileId]
   )
 
   const importAccounts = useCallback(async (indices: Set<number>) => {
@@ -448,7 +462,7 @@ if (provider.id === "google" || provider.id === "microsoft") {
             <div className="mx-auto max-w-sm rounded border border-neutral-800 bg-neutral-900/40 overflow-hidden">
               <div className="max-h-[120px] overflow-y-auto">
                 {existingProfiles.map((p, i) => {
-                  const providerConfig = getProvider(p.provider as "google" | "microsoft")
+                  const providerConfig = getProvider(p.provider)
                   if (!providerConfig) return null
                   const PIcon = resolveIcon(providerConfig.iconName)
                   return (
@@ -542,6 +556,57 @@ if (provider.id === "google" || provider.id === "microsoft") {
             })}
           </div>
         </div>
+
+        {/* Link to existing profile toggle */}
+        {hasExistingProfiles && existingProfiles.length > 0 && !showCapabilities && multiAccounts.length === 0 && (
+          <div className="space-y-1.5">
+            {linkToProfileId ? (
+              <div className="mx-auto max-w-sm space-y-1.5">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] text-amber-400 uppercase tracking-wider">
+                  <Link2 className="h-3 w-3" />
+                  <span>Linking to profile</span>
+                </div>
+                <div className="flex items-center gap-2 rounded border border-amber-800/50 bg-amber-950/20 px-3 py-2">
+                  <span className="flex-1 truncate text-xs text-neutral-300">
+                    {existingProfiles.find((p) => p.id === linkToProfileId)?.email || "Selected profile"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setLinkToProfileId(null)}
+                    className="text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-[10px] text-neutral-500 uppercase tracking-wider mb-1">
+                  Or link to existing profile
+                </p>
+                <div className="mx-auto max-w-sm flex flex-wrap justify-center gap-1.5">
+                  {existingProfiles.map((p) => {
+                    const providerConfig = getProvider(p.provider)
+                    if (!providerConfig) return null
+                    const PIcon = resolveIcon(providerConfig.iconName)
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setLinkToProfileId(p.id)}
+                        className="flex items-center gap-1.5 rounded border border-neutral-800 bg-neutral-900/50 px-2.5 py-1.5 text-[11px] text-neutral-400 hover:border-amber-800/50 hover:text-neutral-300 transition-colors"
+                      >
+                        <PIcon className="h-3 w-3" />
+                        <span className="truncate max-w-[120px]">{p.email || providerConfig.name}</span>
+                        <Link2 className="h-3 w-3 text-neutral-600" />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Capability probing results */}
         {showCapabilities && importedProvider ? (

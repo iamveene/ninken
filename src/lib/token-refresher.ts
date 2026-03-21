@@ -2,6 +2,7 @@ import { getAllProfiles, getActiveProfileId } from "./token-store"
 import { getProvider } from "./providers/registry"
 import { activateProfile } from "./token-sync"
 import type { StoredProfile } from "./providers/types"
+import { getActiveCredential } from "./providers/types"
 
 const DEFAULT_INTERVAL = 45 * 60 * 1000 // 45 minutes
 const PREFS_KEY = "ninken_refresh_prefs"
@@ -49,11 +50,14 @@ function emit(event: RefreshEvent) {
 }
 
 async function refreshProfile(profile: StoredProfile): Promise<void> {
-  const provider = getProvider(profile.provider)
+  const activeProviderId = profile.activeProvider ?? profile.provider
+  const provider = getProvider(activeProviderId)
   if (!provider) return
 
+  const credential = getActiveCredential(profile)
+
   // Skip non-refreshable credentials (raw access tokens, etc.)
-  if (provider.canRefresh && !provider.canRefresh(profile.credential)) {
+  if (provider.canRefresh && !provider.canRefresh(credential)) {
     return
   }
 
@@ -63,7 +67,7 @@ async function refreshProfile(profile: StoredProfile): Promise<void> {
   emit({ type: "started", profileId: profile.id })
 
   try {
-    await provider.getAccessToken(profile.credential)
+    await provider.getAccessToken(credential)
 
     // If this is the active profile, re-activate to update the server cookie
     const activeId = getActiveProfileId()

@@ -127,6 +127,9 @@ type EncryptedProfile = {
   email?: string
   label?: string
   addedAt: number
+  // Multi-token: encrypted JSON blob of Record<ProviderId, BaseCredential>
+  encryptedTokens?: ArrayBuffer
+  activeProvider?: ProviderId
 }
 
 async function decryptProfile(
@@ -134,13 +137,24 @@ async function decryptProfile(
   ep: EncryptedProfile
 ): Promise<StoredProfile> {
   const credentialJson = await decrypt(key, ep.encryptedCredential)
+  const credential = JSON.parse(credentialJson) as BaseCredential
+
+  // Decrypt multi-token map if present
+  let tokens: Partial<Record<ProviderId, BaseCredential>> | undefined
+  if (ep.encryptedTokens) {
+    const tokensJson = await decrypt(key, ep.encryptedTokens)
+    tokens = JSON.parse(tokensJson) as Partial<Record<ProviderId, BaseCredential>>
+  }
+
   return {
     id: ep.id,
     provider: ep.provider,
-    credential: JSON.parse(credentialJson) as BaseCredential,
+    credential,
     email: ep.email,
     label: ep.label,
     addedAt: ep.addedAt,
+    tokens,
+    activeProvider: ep.activeProvider,
   }
 }
 
@@ -172,17 +186,25 @@ export async function addProfile(
   const db = await openDB()
   const key = await getOrCreateKey(db)
 
+  const tokens: Partial<Record<ProviderId, BaseCredential>> = { [provider]: credential }
+
   const profile: StoredProfile = {
     id: crypto.randomUUID(),
     provider,
     credential,
     email,
     addedAt: Date.now(),
+    tokens,
+    activeProvider: provider,
   }
 
   const encryptedCredential = await encrypt(
     key,
     JSON.stringify(credential)
+  )
+  const encryptedTokens = await encrypt(
+    key,
+    JSON.stringify(tokens)
   )
 
   const ep: EncryptedProfile = {
@@ -192,6 +214,8 @@ export async function addProfile(
     email: profile.email,
     label: profile.label,
     addedAt: profile.addedAt,
+    encryptedTokens,
+    activeProvider: provider,
   }
 
   await idbPut(db, PROFILES_STORE, ep)
@@ -239,6 +263,102 @@ export async function clearAllProfiles(): Promise<void> {
   const db = await openDB()
   await idbClear(db, PROFILES_STORE)
   localStorage.removeItem(ACTIVE_PROFILE_KEY)
+}
+
+// ---------- Multi-token operations ----------
+
+/**
+ * Link an additional provider credential to an existing profile.
+ * Creates the tokens map if it doesn't exist yet.
+ */
+export async function addTokenToProfile(
+  profileId: string,
+  provider: ProviderId,
+  credential: BaseCredential
+): Promise<void> {
+  const db = await openDB()
+  const key = await getOrCreateKey(db)
+  const ep = await idbGet<EncryptedProfile>(db, PROFILES_STORE, profileId)
+  if (!ep) throw new Error("Profile not found")
+
+  // Decrypt existing tokens map (or build from primary credential)
+  let tokens: Partial<Record<ProviderId, BaseCredential>>
+  if (ep.encryptedTokens) {
+    const tokensJson = await decrypt(key, ep.encryptedTokens)
+    tokens = JSON.parse(tokensJson)
+  } else {
+    // Bootstrap from legacy single-credential profile
+    const primaryJson = await decrypt(key, ep.encryptedCredential)
+    const primaryCred = JSON.parse(primaryJson) as BaseCredential
+    tokens = { [ep.provider]: primaryCred }
+  }
+
+  // Add the new provider's credential
+  tokens[provider] = credential
+
+  // Encrypt and save
+  ep.encryptedTokens = await encrypt(key, JSON.stringify(tokens))
+  await idbPut(db, PROFILES_STORE, ep)
+}
+
+/**
+ * Remove a linked provider credential from a profile.
+ * Cannot remove the primary provider (profile.provider).
+ */
+export async function removeTokenFromProfile(
+  profileId: string,
+  provider: ProviderId
+): Promise<void> {
+  const db = await openDB()
+  const key = await getOrCreateKey(db)
+  const ep = await idbGet<EncryptedProfile>(db, PROFILES_STORE, profileId)
+  if (!ep) throw new Error("Profile not found")
+  if (provider === ep.provider) {
+    throw new Error("Cannot remove the primary provider from a profile")
+  }
+
+  if (!ep.encryptedTokens) return // Nothing to remove
+
+  const tokensJson = await decrypt(key, ep.encryptedTokens)
+  const tokens = JSON.parse(tokensJson) as Partial<Record<ProviderId, BaseCredential>>
+  delete tokens[provider]
+
+  ep.encryptedTokens = await encrypt(key, JSON.stringify(tokens))
+
+  // If the removed provider was active, fall back to primary
+  if (ep.activeProvider === provider) {
+    ep.activeProvider = ep.provider
+  }
+
+  await idbPut(db, PROFILES_STORE, ep)
+}
+
+/**
+ * Switch the active provider within a multi-token profile.
+ * The provider must already be linked to the profile.
+ */
+export async function setActiveProvider(
+  profileId: string,
+  provider: ProviderId
+): Promise<void> {
+  const db = await openDB()
+  const key = await getOrCreateKey(db)
+  const ep = await idbGet<EncryptedProfile>(db, PROFILES_STORE, profileId)
+  if (!ep) throw new Error("Profile not found")
+
+  // Verify the provider is linked
+  if (ep.encryptedTokens) {
+    const tokensJson = await decrypt(key, ep.encryptedTokens)
+    const tokens = JSON.parse(tokensJson) as Partial<Record<ProviderId, BaseCredential>>
+    if (!tokens[provider]) {
+      throw new Error(`Provider ${provider} is not linked to this profile`)
+    }
+  } else if (provider !== ep.provider) {
+    throw new Error(`Provider ${provider} is not linked to this profile`)
+  }
+
+  ep.activeProvider = provider
+  await idbPut(db, PROFILES_STORE, ep)
 }
 
 export function getActiveProfileId(): string | null {
