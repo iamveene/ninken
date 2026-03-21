@@ -11,6 +11,8 @@ import { AIContextProvider } from "@/components/ai/ai-context";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { ProviderContextProvider } from "@/components/providers/provider-context";
 import { SidebarSlotProvider } from "@/components/sidebar-slot";
+import { Suspense } from "react";
+import { BrandedLoader } from "@/components/layout/branded-loader";
 
 export default function MicrosoftLayout({
   children,
@@ -36,7 +38,9 @@ export default function MicrosoftLayout({
             </header>
             <OfflineBanner />
             <div className="flex-1 p-4 min-w-0">
+              <Suspense fallback={<BrandedLoader />}>
               {children}
+              </Suspense>
             </div>
             <AITrigger />
           </SidebarInset>

@@ -142,8 +142,10 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
                 type: "folder",
                 source: "gcs",
                 title: bucket,
-                sourceId: bucket,
-                metadata: { bucket },
+                sourceId: prefix ? `${bucket}/${prefix}` : bucket,
+                downloadUrl: `/api/gcp/buckets/${encodeURIComponent(bucket)}/download${prefix ? `?prefix=${encodeURIComponent(prefix)}` : ""}`,
+                mimeType: "application/zip",
+                metadata: { bucket, prefix: prefix || undefined },
               }}
             />
 
@@ -280,6 +282,8 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
                               source: "gcs",
                               title: folderName,
                               sourceId: `${bucket}/${p}`,
+                              downloadUrl: `/api/gcp/buckets/${encodeURIComponent(bucket)}/download?prefix=${encodeURIComponent(p)}`,
+                              mimeType: "application/zip",
                               metadata: { bucket, prefix: p },
                             }}
                           />
