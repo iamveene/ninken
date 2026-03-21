@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Credentials & tokens — NEVER commit these
+/secrets/
+
+# Internal project docs — not for the repo
+CLAUDE.md
+AGENTS.md
+DESIGN.md
+PLAYBOOK.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright & test screenshots
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+*.png
+!images/*.png
+!public/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# NinLoader output
+/ninloader/tokens/
+
+# Tests & E2E
+/e2e/
+/tests/
+
+# Internal docs & tooling
+REGRESSION_BUGS.md
+ROADMAP.md
+DESIGN.md
+PLAYBOOK.md
+GOOGLE-TOKEN-RESEARCH.md
+/docs/research/
+/.claude/
+
+# Internal credential scripts — contain secrets
+reauth.py
+reauth_microsoft.py
+workspace_cli.py
+scripts/reauth-google.sh
+
+# Docker
+docker-compose.override.yml
+install.log
+!images/screenshots/*.png
+/.playwright-mcp/
+/images/screenshots/

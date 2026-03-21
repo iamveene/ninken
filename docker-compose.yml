@@ -1,0 +1,39 @@
+name: ninken
+
+services:
+  ninken:
+    image: ninken:latest
+    container_name: ninken
+    build:
+      context: .
+      args:
+        PORT: ${NINKEN_PORT:-4000}
+    ports:
+      - "${NINKEN_PORT:-4000}:${NINKEN_PORT:-4000}"
+    environment:
+      - PORT=${NINKEN_PORT:-4000}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:4000}
+      - NINKEN_COOKIE_SECRET=${NINKEN_COOKIE_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - NINKEN_AI_MODEL=${NINKEN_AI_MODEL:-claude-sonnet-4-20250514}
+    env_file:
+      - path: .env
+        required: false
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${NINKEN_PORT:-4000}/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 45s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ninken-net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ninken-net:
+    driver: bridge
