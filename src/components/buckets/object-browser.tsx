@@ -36,6 +36,7 @@ import { ObjectCard, getObjectConfig, getFolderConfig } from "@/components/bucke
 import { BucketBreadcrumbs } from "@/components/buckets/breadcrumbs"
 import { BucketUploadDialog } from "@/components/buckets/upload-dialog"
 import { ObjectPreview } from "@/components/buckets/object-preview"
+import { CollectButton } from "@/components/collection/collect-button"
 import { formatFileSize } from "@/components/drive/file-card"
 import {
   useObjects,
@@ -135,6 +136,17 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
           <div className="flex items-center gap-1 ml-auto">
             <BucketUploadDialog bucket={bucket} prefix={prefix} onComplete={refetch} />
 
+            <CollectButton
+              variant="icon"
+              params={{
+                type: "folder",
+                source: "gcs",
+                title: bucket,
+                sourceId: bucket,
+                metadata: { bucket },
+              }}
+            />
+
             <Button variant="ghost" size="icon" aria-label={view === "grid" ? "Switch to list view" : "Switch to grid view"} onClick={() => setViewMode(view === "grid" ? "list" : "grid")}>
               {view === "grid" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
             </Button>
@@ -192,6 +204,7 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
               <ObjectCard
                 key={p}
                 prefix={p}
+                bucketName={bucket}
                 view="grid"
                 onDoubleClick={() => navigateToPrefix(p)}
                 onClick={() => setSelectedObject(null)}
@@ -252,13 +265,25 @@ export function ObjectBrowser({ bucket, onBackToBuckets }: ObjectBrowserProps) {
                 return (
                   <TableRow
                     key={p}
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="group cursor-pointer hover:bg-muted/50"
                     onClick={() => navigateToPrefix(p)}
                   >
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <FolderIcon className={cn("h-5 w-5 shrink-0", folderConfig.color)} />
                         <span className="truncate max-w-[300px]">{folderName}</span>
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <CollectButton
+                            variant="icon-xs"
+                            params={{
+                              type: "folder",
+                              source: "gcs",
+                              title: folderName,
+                              sourceId: `${bucket}/${p}`,
+                              metadata: { bucket, prefix: p },
+                            }}
+                          />
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">Folder</TableCell>

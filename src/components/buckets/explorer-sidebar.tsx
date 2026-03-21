@@ -50,12 +50,19 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
     accessible: true,
   }))
 
-  // Combine: API projects (already sorted by server) + manual projects
+  // Combine: API projects + manual projects
   const allProjects = [...projects, ...manualProjectObjects]
 
-  // Split into accessible and inaccessible
-  const accessibleProjects = allProjects.filter((p) => p.accessible !== false)
+  // Split into accessible (with buckets), accessible (no buckets), and inaccessible
+  const accessibleWithBuckets = allProjects
+    .filter((p) => p.accessible !== false && (p.bucketCount ?? 0) > 0)
+    .sort((a, b) => (b.bucketCount ?? 0) - (a.bucketCount ?? 0))
+  const accessibleNoBuckets = allProjects
+    .filter((p) => p.accessible !== false && (p.bucketCount ?? 0) === 0)
   const inaccessibleProjects = allProjects.filter((p) => p.accessible === false)
+
+  // Accessible = with buckets first, then no buckets (grayed)
+  const accessibleProjects = [...accessibleWithBuckets, ...accessibleNoBuckets]
 
   // Filter projects by search query
   const query = filterQuery.toLowerCase().trim()
@@ -107,16 +114,20 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
           </div>
         ) : (
           <>
-            {filteredAccessible.map((project) => (
-              <ProjectNode
-                key={project.projectId}
-                project={project}
-                selectedBucket={selectedBucket}
-                onSelectBucket={onSelectBucket}
-                defaultExpanded={(project.bucketCount ?? 0) > 0}
-                autoSelect={project.projectId === autoSelectProjectId}
-              />
-            ))}
+            {filteredAccessible.map((project) => {
+              const hasBuckets = (project.bucketCount ?? 0) > 0
+              return (
+                <ProjectNode
+                  key={project.projectId}
+                  project={project}
+                  selectedBucket={selectedBucket}
+                  onSelectBucket={onSelectBucket}
+                  defaultExpanded={hasBuckets}
+                  autoSelect={project.projectId === autoSelectProjectId}
+                  dimmed={!hasBuckets}
+                />
+              )
+            })}
 
             {filteredInaccessible.length > 0 && (
               <>
@@ -167,6 +178,7 @@ function ProjectNode({
   defaultExpanded = false,
   disabled = false,
   autoSelect = false,
+  dimmed = false,
 }: {
   project: GcpProject
   selectedBucket: Bucket | null
@@ -174,6 +186,7 @@ function ProjectNode({
   defaultExpanded?: boolean
   disabled?: boolean
   autoSelect?: boolean
+  dimmed?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const { buckets, loading, error } = useBuckets(expanded ? project.projectId : "")
@@ -213,7 +226,9 @@ function ProjectNode({
           "flex w-full items-center gap-1.5 px-2 py-1.5 text-sm transition-colors rounded-sm mx-1",
           disabled
             ? "opacity-40 cursor-not-allowed"
-            : "hover:bg-muted/50 cursor-pointer"
+            : dimmed
+              ? "opacity-40 hover:bg-muted/50 cursor-pointer"
+              : "hover:bg-muted/50 cursor-pointer"
         )}
         onClick={toggle}
         disabled={disabled}
@@ -225,7 +240,7 @@ function ProjectNode({
         ) : (
           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
-        <Database className={cn("h-3.5 w-3.5 shrink-0", disabled ? "text-muted-foreground" : "text-blue-500")} />
+        <Database className={cn("h-3.5 w-3.5 shrink-0", disabled || dimmed ? "text-muted-foreground" : "text-blue-500")} />
         <span className="truncate font-medium">{displayName}</span>
         {bucketCountLabel && (
           <span className="text-xs text-muted-foreground shrink-0">{bucketCountLabel}</span>
