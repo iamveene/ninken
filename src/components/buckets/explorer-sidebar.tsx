@@ -266,7 +266,14 @@ function ProjectNode({
           ) : (
             (() => {
               // Downloadable buckets at top, then browse-only, then no-access at bottom
-              const downloadable = buckets.filter((b) => b.readable !== false && b.downloadable !== false)
+              const downloadable = buckets
+                .filter((b) => b.readable !== false && b.downloadable !== false)
+                .sort((a, b) => {
+                  // Buckets with objects first, empty buckets after
+                  if (a.hasObjects && !b.hasObjects) return -1
+                  if (!a.hasObjects && b.hasObjects) return 1
+                  return a.name.localeCompare(b.name)
+                })
               const browseOnly = buckets.filter((b) => b.readable !== false && b.downloadable === false)
               const unreadable = buckets.filter((b) => b.readable === false)
               const denied = [...browseOnly, ...unreadable]
