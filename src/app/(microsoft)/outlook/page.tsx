@@ -194,7 +194,7 @@ function OutlookPage() {
 
   // Message list panel
   const messageListContent = (
-    <div className="flex flex-col h-full min-w-0 overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 min-w-0 overflow-hidden">
       <div className="flex items-center gap-2 p-3 border-b border-border/60">
         <Button size="sm" onClick={handleCompose} className="shrink-0">
           <PenLine className="h-3.5 w-3.5 mr-1.5" />
@@ -237,7 +237,7 @@ function OutlookPage() {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {messagesLoading ? (
           <div className="space-y-1 p-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -317,7 +317,7 @@ function OutlookPage() {
             })}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {isMobile && (
         <button
@@ -492,7 +492,7 @@ function OutlookPage() {
           </ResizablePanel>
         </PanelGroup>
       ) : (
-        <div className="flex-1 h-full overflow-hidden">{messageListContent}</div>
+        <div className="flex-1 min-h-0 h-full overflow-hidden">{messageListContent}</div>
       )}
 
       {/* Compose Dialog */}
