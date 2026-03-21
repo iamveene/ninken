@@ -30,12 +30,13 @@ export type SpaRefreshStatus = {
  * 3. After refresh: writes rotated RT to IndexedDB, pushes fresh AT to server
  * 4. Schedules next refresh based on expires_in
  */
-export function useSpaRefresher() {
+export function useSpaRefresher(profileCount = 0) {
   const [statuses, setStatuses] = useState<Map<string, SpaRefreshStatus>>(
     new Map()
   )
   const refreshingRef = useRef(new Set<string>())
   const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const lastScannedCountRef = useRef(profileCount)
 
   const pushTokenToServer = useCallback(
     async (
@@ -177,10 +178,8 @@ export function useSpaRefresher() {
   const scan = useCallback(async () => {
     try {
       const profiles = await getAllProfiles()
-      console.log("[SPA Refresher] Scanning", profiles.length, "profiles")
       for (const profile of profiles) {
         const credential = getActiveCredential(profile)
-        console.log("[SPA Refresher] Profile", profile.id.slice(0, 8), "kind:", credential.credentialKind)
         if (credential.credentialKind !== "spa") continue
 
         const spaCred = credential as MicrosoftSpaCredential
@@ -222,6 +221,14 @@ export function useSpaRefresher() {
       timersRef.current.clear()
     }
   }, [scan])
+
+  // Re-scan when profile count changes (e.g., new profile added)
+  useEffect(() => {
+    if (profileCount !== lastScannedCountRef.current) {
+      lastScannedCountRef.current = profileCount
+      scan()
+    }
+  }, [profileCount, scan])
 
   return {
     spaStatuses: statuses,

@@ -104,7 +104,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
   const provider: ProviderId = profile?.activeProvider ?? profile?.provider ?? "google"
 
   // SPA token proxy: client-side refresh for browser-bound tokens (OWA, Teams Web, etc.)
-  useSpaRefresher()
+  useSpaRefresher(profiles.length)
 
   const refreshProfiles = useCallback(async () => {
     const all = await getAllProfiles()
