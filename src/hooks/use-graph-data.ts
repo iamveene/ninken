@@ -76,16 +76,19 @@ export function useGraphData() {
                 profileId: task.profileId,
                 provider: task.provider,
                 scopes: [],
-                services: (providerConfig?.operateNavItems ?? []).map((item) => ({
-                  serviceId: item.id,
-                  serviceName: item.title,
-                  iconName: item.iconName,
-                  href: item.href,
-                  active: false,
-                  scopeCount: 0,
-                  grantedScopes: [],
-                  allScopes: providerConfig?.scopeAppMap[item.id] ?? [],
-                })),
+                stats: {},
+                services: (providerConfig?.operateNavItems ?? [])
+                  .filter((item) => !item.id.endsWith("-dashboard") && item.id !== "dashboard")
+                  .map((item) => ({
+                    serviceId: item.id,
+                    serviceName: item.title,
+                    iconName: item.iconName,
+                    href: item.href,
+                    active: false,
+                    scopeCount: 0,
+                    grantedScopes: [],
+                    allScopes: providerConfig?.scopeAppMap[item.id] ?? [],
+                  })),
               } as ProfileScopeInfo
             }
 
@@ -94,6 +97,7 @@ export function useGraphData() {
               profileId: task.profileId,
               provider: task.provider,
               scopes: data.scopes,
+              stats: data.stats ?? {},
               services: data.services,
             } as ProfileScopeInfo
           })
