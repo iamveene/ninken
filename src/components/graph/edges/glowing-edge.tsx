@@ -15,6 +15,7 @@ export function GlowingEdge({
   sourcePosition,
   targetPosition,
   data,
+  animated: _animated,
   ...rest
 }: EdgeProps) {
   const [edgePath] = getSmoothStepPath({
