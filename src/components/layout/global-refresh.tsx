@@ -1,21 +1,19 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { RefreshCw } from "lucide-react"
-import { cacheClear } from "@/lib/cache"
+import { cacheClear, emitGlobalRefresh } from "@/lib/cache"
 import { Button } from "@/components/ui/button"
 
 export function GlobalRefreshButton() {
-  const router = useRouter()
   const [spinning, setSpinning] = useState(false)
 
   const handleRefresh = useCallback(async () => {
     setSpinning(true)
     await cacheClear()
-    router.refresh()
+    emitGlobalRefresh()
     setTimeout(() => setSpinning(false), 1000)
-  }, [router])
+  }, [])
 
   return (
     <Button

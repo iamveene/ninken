@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { cacheGet, cacheSet, CACHE_TTL_LIST } from "@/lib/cache"
+import { cacheGet, cacheSet, CACHE_TTL_LIST, onGlobalRefresh } from "@/lib/cache"
 
 type UseCachedOptions = {
   ttlMs?: number
@@ -86,6 +86,13 @@ export function useCachedQuery<T>(
   const refetch = useCallback(async () => {
     setLoading(true)
     await doFetch(true)
+  }, [doFetch])
+
+  // Subscribe to global refresh signal — refetch when triggered
+  useEffect(() => {
+    return onGlobalRefresh(() => {
+      doFetch(true)
+    })
   }, [doFetch])
 
   return { data, loading, error, stale, refetch }
