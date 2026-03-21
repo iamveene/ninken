@@ -151,6 +151,7 @@ export const microsoftProvider: ServiceProvider = {
     { id: "onedrive", title: "OneDrive", href: "/onedrive", iconName: "HardDrive" },
     { id: "teams", title: "Teams", href: "/teams", iconName: "MessageSquare" },
     { id: "entra", title: "Entra ID", href: "/entra", iconName: "Users" },
+    { id: "sharepoint", title: "SharePoint", href: "/sharepoint", iconName: "Globe" },
     { id: "secret-search", title: "Secret Search", href: "/m365-secret-search", iconName: "ScanSearch" },
   ],
 
@@ -172,6 +173,9 @@ export const microsoftProvider: ServiceProvider = {
       { id: "entra-users", title: "Users", href: "/entra", iconName: "Users" },
       { id: "entra-groups", title: "Groups", href: "/entra?tab=groups", iconName: "UsersRound" },
       { id: "entra-roles", title: "Roles", href: "/entra?tab=roles", iconName: "ShieldCheck" },
+    ],
+    sharepoint: [
+      { id: "sharepoint-sites", title: "Sites", href: "/sharepoint", iconName: "Globe" },
     ],
   },
 
@@ -196,6 +200,7 @@ export const microsoftProvider: ServiceProvider = {
     onedrive: ["Files.Read", "Files.Read.All", "Files.ReadWrite", "Files.ReadWrite.All"],
     teams: ["Team.ReadBasic.All", "Channel.ReadBasic.All", "ChannelMessage.Read.All"],
     entra: ["User.ReadBasic.All", "User.Read.All", "Directory.Read.All", "GroupMember.Read.All"],
+    sharepoint: ["Sites.Read.All", "Sites.ReadWrite.All", "Sites.Manage.All"],
     "secret-search": ["Mail.Read", "Mail.ReadWrite", "Files.Read", "Files.Read.All", "Files.ReadWrite"],
   },
 
