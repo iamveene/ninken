@@ -28,6 +28,7 @@ import {
 import { startTokenRefresher, stopTokenRefresher } from "@/lib/token-refresher"
 import { triggerFociAutoPivot } from "@/components/providers/foci-pivot-toast"
 import { cacheClear } from "@/lib/cache"
+import { useSpaRefresher } from "@/hooks/use-spa-refresher"
 
 type ProviderContextValue = {
   provider: ProviderId
@@ -101,6 +102,9 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const provider: ProviderId = profile?.activeProvider ?? profile?.provider ?? "google"
+
+  // SPA token proxy: client-side refresh for browser-bound tokens (OWA, Teams Web, etc.)
+  useSpaRefresher()
 
   const refreshProfiles = useCallback(async () => {
     const all = await getAllProfiles()
