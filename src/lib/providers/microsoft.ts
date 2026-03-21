@@ -20,12 +20,14 @@ import {
 import { microsoftPrtStrategy } from "./strategies/microsoft-prt"
 import { microsoftPrtCookieStrategy } from "./strategies/microsoft-prt-cookie"
 import { microsoftBrowserSessionStrategy } from "./strategies/microsoft-browser-session"
+import { microsoftSpaStrategy } from "./strategies/microsoft-spa"
 
 const strategies: CredentialStrategy[] = [
   microsoftServicePrincipalStrategy,
   microsoftPrtStrategy,
   microsoftPrtCookieStrategy,
   microsoftBrowserSessionStrategy,
+  microsoftSpaStrategy,       // SPA before OAuth — wins on known SPA client_ids
   microsoftOAuthStrategy,
 ]
 
