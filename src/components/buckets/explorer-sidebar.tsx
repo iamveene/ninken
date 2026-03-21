@@ -56,7 +56,15 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
   // Split into accessible (with buckets), accessible (no buckets), and inaccessible
   const accessibleWithBuckets = allProjects
     .filter((p) => p.accessible !== false && (p.bucketCount ?? 0) > 0)
-    .sort((a, b) => (a.displayName || a.projectId).localeCompare(b.displayName || b.projectId))
+    .sort((a, b) => {
+      // Projects with visible data (withObjectsCount > 0) come first
+      const aData = a.withObjectsCount ?? 0
+      const bData = b.withObjectsCount ?? 0
+      if (aData > 0 && bData === 0) return -1
+      if (aData === 0 && bData > 0) return 1
+      if (aData !== bData) return bData - aData
+      return (a.displayName || a.projectId).localeCompare(b.displayName || b.projectId)
+    })
   const accessibleNoBuckets = allProjects
     .filter((p) => p.accessible !== false && (p.bucketCount ?? 0) === 0)
   const inaccessibleProjects = allProjects.filter((p) => p.accessible === false)
