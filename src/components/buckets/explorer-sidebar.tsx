@@ -202,8 +202,10 @@ function ProjectNode({
   // Auto-select the first downloadable bucket when autoSelect is enabled
   useEffect(() => {
     if (!autoSelect || didAutoSelect.current || loading || buckets.length === 0) return
+    // Prefer buckets with objects, then any downloadable, then first
+    const withObjects = buckets.find((b) => b.readable !== false && b.downloadable !== false && b.hasObjects)
     const firstDownloadable = buckets.find((b) => b.readable !== false && b.downloadable !== false)
-    const target = firstDownloadable ?? buckets[0]
+    const target = withObjects ?? firstDownloadable ?? buckets[0]
     if (target) {
       didAutoSelect.current = true
       onSelectBucket(target, project.projectId)
