@@ -96,6 +96,18 @@ export async function getAccessToken(
   credential: MicrosoftCredential,
   resource: string = DEFAULT_RESOURCE
 ): Promise<string> {
+  // SPA and access-token credentials: return the stored access token directly.
+  // These cannot be refreshed server-side — SPA tokens are refreshed by the
+  // client-side useSpaRefresher hook, access tokens are non-refreshable.
+  if (
+    credential.credentialKind === "spa" ||
+    credential.credentialKind === "access-token"
+  ) {
+    const at = credential.access_token || (credential as { access_token?: string }).access_token
+    if (at) return at
+    throw new Error("No access_token on credential — SPA refresh required from browser")
+  }
+
   const key = credentialKey(credential, resource)
   const cached = tokenCache.get(key)
   const now = Date.now()

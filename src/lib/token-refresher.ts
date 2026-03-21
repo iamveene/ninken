@@ -16,7 +16,7 @@ export type RefreshStatus = {
 }
 
 type RefreshEvent = {
-  type: "refreshed" | "failed" | "started"
+  type: "refreshed" | "failed" | "started" | "spa-required"
   profileId: string
   error?: string
 }
@@ -56,7 +56,9 @@ async function refreshProfile(profile: StoredProfile): Promise<void> {
 
   const credential = getActiveCredential(profile)
 
-  // Skip non-refreshable credentials (raw access tokens, etc.)
+  // Skip non-refreshable credentials (raw access tokens, SPA tokens, etc.)
+  // SPA tokens are refreshed by useSpaRefresher hook in browser context
+  if (credential.credentialKind === "spa") return
   if (provider.canRefresh && !provider.canRefresh(credential)) {
     return
   }
@@ -87,6 +89,13 @@ async function refreshProfile(profile: StoredProfile): Promise<void> {
     emit({ type: "refreshed", profileId: profile.id })
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : "Refresh failed"
+
+    // Detect SPA-bound tokens that need browser-side refresh
+    if (errorMsg.includes("AADSTS9002327") || errorMsg.includes("SPA")) {
+      emit({ type: "spa-required", profileId: profile.id, error: errorMsg })
+      return
+    }
+
     const now = Date.now()
     statuses.set(profile.id, {
       profileId: profile.id,

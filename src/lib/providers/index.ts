@@ -25,6 +25,7 @@ export type {
   GoogleServiceAccountCredential,
   MicrosoftCredential,
   MicrosoftServicePrincipalCredential,
+  MicrosoftSpaCredential,
   SlackCredential,
   AwsCredential,
   GcpApiKeyCredential,
@@ -37,6 +38,8 @@ export type {
 } from "./types"
 export { getActiveCredential, getProfileProviders } from "./types"
 export type { CredentialStrategy } from "./credential-strategy"
+export type { ClientRefreshableStrategy } from "./client-refreshable-strategy"
+export { isClientRefreshable } from "./client-refreshable-strategy"
 
 export { minimalAccessToken } from "./types"
 export { registerProvider, getProvider, getAllProviders, detectProvider } from "./registry"

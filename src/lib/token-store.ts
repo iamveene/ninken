@@ -259,6 +259,35 @@ export async function updateProfileLabel(
   await idbPut(db, PROFILES_STORE, ep)
 }
 
+/**
+ * Update the primary credential for a profile (e.g., after SPA token rotation).
+ * Re-encrypts and writes back to IndexedDB. Also updates the tokens map if present.
+ */
+export async function updateProfileCredential(
+  id: string,
+  credential: BaseCredential
+): Promise<void> {
+  const db = await openDB()
+  const key = await getOrCreateKey(db)
+  const ep = await idbGet<EncryptedProfile>(db, PROFILES_STORE, id)
+  if (!ep) return
+
+  // Re-encrypt the primary credential
+  ep.encryptedCredential = await encrypt(key, JSON.stringify(credential))
+
+  // Also update the matching entry in the tokens map if it exists
+  if (ep.encryptedTokens) {
+    const tokensJson = await decrypt(key, ep.encryptedTokens)
+    const tokens = JSON.parse(tokensJson) as Partial<Record<ProviderId, BaseCredential>>
+    if (tokens[credential.provider as ProviderId]) {
+      tokens[credential.provider as ProviderId] = credential
+      ep.encryptedTokens = await encrypt(key, JSON.stringify(tokens))
+    }
+  }
+
+  await idbPut(db, PROFILES_STORE, ep)
+}
+
 export async function clearAllProfiles(): Promise<void> {
   const db = await openDB()
   await idbClear(db, PROFILES_STORE)

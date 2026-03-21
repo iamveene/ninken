@@ -18,6 +18,7 @@ export type CredentialKind =
   | "prt"
   | "prt-cookie"
   | "api-key"
+  | "spa"
 
 // Base credential shape — every provider extends this
 export type BaseCredential = {
@@ -107,6 +108,21 @@ export type MicrosoftPrtCookieCredential = BaseCredential & {
   prt_cookie: string  // The x-ms-RefreshTokenCredential value
   tenant_id: string
   client_id?: string
+}
+
+// Microsoft SPA credential (browser-only refresh — OWA, Teams Web, etc.)
+// The refresh_token can only be redeemed via browser JS context (AADSTS9002327)
+export type MicrosoftSpaCredential = BaseCredential & {
+  provider: "microsoft"
+  credentialKind: "spa"
+  refresh_token: string    // SPA-bound refresh token — stays in IndexedDB only, never in cookie
+  client_id: string        // e.g., 9199bf20 (One Outlook Web)
+  tenant_id: string
+  access_token?: string    // Populated after first browser-side refresh
+  expires_at?: number      // Unix seconds — client-side refresh triggers before this
+  scope?: string[]
+  token_uri?: string
+  account?: string
 }
 
 // Microsoft Browser Session credential (ESTSAUTHPERSISTENT cookie)
