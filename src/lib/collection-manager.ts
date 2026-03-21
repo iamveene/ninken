@@ -19,6 +19,7 @@ type Listener = (event: CollectionManagerEvent) => void
 const MAX_RETRIES = 3
 const DELAY_MS = 2000
 const CONCURRENT = 1
+const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 class CollectionManager {
   private static instance: CollectionManager | null = null
@@ -62,10 +63,26 @@ class CollectionManager {
     this.emit({ type: "queue-changed" })
 
     try {
+      // Recover items stuck in "downloading" from a previous session/crash
+      await this.recoverStaleDownloads()
       await this.processLoop()
     } finally {
       this.processing = false
       this.emit({ type: "queue-empty" })
+    }
+  }
+
+  /** Reset items stuck in "downloading" (from crash/tab close) back to pending */
+  private async recoverStaleDownloads(): Promise<void> {
+    const stale = await getAllItems({ status: "downloading" })
+    for (const item of stale) {
+      await updateItem(item.id, {
+        status: "pending",
+        error: "Recovered from stale download",
+      })
+    }
+    if (stale.length > 0) {
+      this.emit({ type: "queue-changed" })
     }
   }
 
@@ -162,18 +179,28 @@ class CollectionManager {
       throw new Error("No download URL available")
     }
 
-    const res = await fetch(item.downloadUrl)
-    if (!res.ok) {
-      throw new Error(`Download failed: ${res.status} ${res.statusText}`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), DOWNLOAD_TIMEOUT_MS)
+
+    try {
+      const res = await fetch(item.downloadUrl, { signal: controller.signal })
+      if (!res.ok) {
+        throw new Error(`Download failed: ${res.status} ${res.statusText}`)
+      }
+
+      const data = await res.arrayBuffer()
+      const contentType = res.headers.get("content-type") || item.mimeType || "application/octet-stream"
+      const filename = this.deriveFilename(item)
+
+      return { data, mimeType: contentType, filename }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new Error("Download timed out after 5 minutes")
+      }
+      throw err
+    } finally {
+      clearTimeout(timeout)
     }
-
-    const data = await res.arrayBuffer()
-    const contentType = res.headers.get("content-type") || item.mimeType || "application/octet-stream"
-
-    // Derive filename from item title + mime
-    const filename = this.deriveFilename(item)
-
-    return { data, mimeType: contentType, filename }
   }
 
   private deriveFilename(item: CollectionItem): string {

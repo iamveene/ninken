@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ExplorerSidebar } from "@/components/buckets/explorer-sidebar"
 import { ObjectBrowser } from "@/components/buckets/object-browser"
@@ -12,10 +12,10 @@ export default function BucketsPage() {
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null)
   const [selectedProject, setSelectedProject] = useState<string>("")
 
-  const handleSelectBucket = (bucket: Bucket, projectId: string) => {
+  const handleSelectBucket = useCallback((bucket: Bucket, projectId: string) => {
     setSelectedBucket(bucket)
     setSelectedProject(projectId)
-  }
+  }, [])
 
   return (
     <TooltipProvider>

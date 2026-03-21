@@ -199,6 +199,10 @@ function ProjectNode({
   const [expanded, setExpanded] = useState(false)
   const { buckets, loading, error } = useBuckets(expanded ? project.projectId : "")
   const didAutoSelect = useRef(false)
+  // Keep a stable ref for the callback so the auto-select effect doesn't re-fire
+  // when the parent re-renders and creates a new function identity
+  const onSelectBucketRef = useRef(onSelectBucket)
+  onSelectBucketRef.current = onSelectBucket
 
   // Auto-expand projects that have buckets
   useEffect(() => {
@@ -207,17 +211,14 @@ function ProjectNode({
     }
   }, [defaultExpanded, disabled])
 
-  // Auto-select the first downloadable bucket when autoSelect is enabled
+  // Auto-select the first downloadable bucket when autoSelect is enabled (once only)
   useEffect(() => {
     if (!autoSelect || didAutoSelect.current || loading || buckets.length === 0) return
-    // Only auto-select a bucket that has objects — don't land on an empty bucket
     const target = buckets.find((b) => b.readable !== false && b.downloadable !== false && b.hasObjects)
-    if (!target) return // No bucket with objects in this project — don't auto-select
-    if (target) {
-      didAutoSelect.current = true
-      onSelectBucket(target, project.projectId)
-    }
-  }, [autoSelect, loading, buckets, onSelectBucket, project.projectId])
+    if (!target) return
+    didAutoSelect.current = true
+    onSelectBucketRef.current(target, project.projectId)
+  }, [autoSelect, loading, buckets, project.projectId])
 
   const toggle = useCallback(() => {
     if (!disabled) setExpanded((prev) => !prev)
