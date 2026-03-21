@@ -24,6 +24,20 @@ export type ChannelMessage = {
   createdDateTime: string
 }
 
+export type Chat = {
+  id: string
+  topic: string | null
+  chatType: string
+  lastUpdatedDateTime: string | null
+}
+
+export type ChatMessage = {
+  id: string
+  body: { contentType: string; content: string }
+  from?: { user?: { displayName: string; id: string } }
+  createdDateTime: string
+}
+
 export function useJoinedTeams() {
   const fetcher = useCallback(async (): Promise<Team[]> => {
     const res = await fetch("/api/microsoft/teams/joined")
@@ -71,6 +85,45 @@ export function useChannelMessages(teamId: string | null, channelId: string | nu
   }, [teamId, channelId])
 
   const { data, loading, error, refetch } = useCachedQuery<ChannelMessage[]>(
+    cacheKey,
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST }
+  )
+
+  return { messages: data ?? [], loading, error, refetch }
+}
+
+export function useChats() {
+  const fetcher = useCallback(async (): Promise<Chat[]> => {
+    const res = await fetch("/api/microsoft/teams/chats")
+    if (!res.ok) {
+      const json = await res.json().catch(() => null)
+      throw new Error(json?.error || `Failed to fetch chats (${res.status})`)
+    }
+    const json = await res.json()
+    return json.chats ?? []
+  }, [])
+
+  const { data, loading, error, refetch } = useCachedQuery<Chat[]>(
+    "teams:chats",
+    fetcher,
+    { ttlMs: CACHE_TTL_LIST }
+  )
+
+  return { chats: data ?? [], loading, error, refetch }
+}
+
+export function useChatMessages(chatId: string | null) {
+  const cacheKey = chatId ? `teams:chatMessages:${chatId}` : null
+
+  const fetcher = useCallback(async (): Promise<ChatMessage[]> => {
+    const res = await fetch(`/api/microsoft/teams/chats/${chatId}/messages`)
+    if (!res.ok) throw new Error("Failed to fetch chat messages")
+    const json = await res.json()
+    return json.messages ?? []
+  }, [chatId])
+
+  const { data, loading, error, refetch } = useCachedQuery<ChatMessage[]>(
     cacheKey,
     fetcher,
     { ttlMs: CACHE_TTL_LIST }
