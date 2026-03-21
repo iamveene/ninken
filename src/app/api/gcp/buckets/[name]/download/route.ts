@@ -51,26 +51,32 @@ export async function GET(
 
     // Download each object and add to ZIP
     const zip = new JSZip()
-    const downloadResults = await Promise.allSettled(
-      allObjects.map(async (obj) => {
-        try {
+    let added = 0
+    // Process in batches of 10 to avoid overwhelming the API
+    for (let i = 0; i < allObjects.length; i += 10) {
+      const batch = allObjects.slice(i, i + 10)
+      const results = await Promise.allSettled(
+        batch.map(async (obj) => {
+          // Skip "folder" markers (names ending with /)
+          if (obj.name.endsWith("/")) return false
           const res = await storage.objects.get(
             { bucket, object: obj.name, alt: "media" },
             { responseType: "arraybuffer" }
           )
           const data = res.data as ArrayBuffer
-          // Use path relative to prefix for folder structure
           const relativePath = prefix ? obj.name.replace(prefix, "") : obj.name
-          if (relativePath) {
+          if (relativePath && data.byteLength > 0) {
             zip.file(relativePath, new Uint8Array(data))
+            return true
           }
-        } catch {
-          // Skip objects we can't download
-        }
-      })
-    )
+          return false
+        })
+      )
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value === true) added++
+      }
+    }
 
-    const added = downloadResults.filter((r) => r.status === "fulfilled").length
     if (added === 0) {
       return NextResponse.json({ error: "No downloadable objects" }, { status: 403 })
     }
