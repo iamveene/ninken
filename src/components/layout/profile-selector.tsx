@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button"
 import { useProvider } from "@/components/providers/provider-context"
 import { resolveIcon } from "@/lib/icon-resolver"
 import { getProvider } from "@/lib/providers/registry"
+import { getProfileProviders } from "@/lib/providers/types"
 import "@/lib/providers"
 
 const AVATAR_COLORS = [
@@ -111,9 +112,10 @@ export function ProfileSelector() {
           <DropdownMenuGroup>
             <DropdownMenuLabel>Accounts</DropdownMenuLabel>
             {profiles.map((p, i) => {
-              const providerConfig = getProvider(p.provider)
-              const ProviderIcon = providerConfig
-                ? resolveIcon(providerConfig.iconName)
+              const linkedProviders = getProfileProviders(p)
+              const primaryConfig = getProvider(p.activeProvider ?? p.provider)
+              const PrimaryIcon = primaryConfig
+                ? resolveIcon(primaryConfig.iconName)
                 : null
               return (
                 <DropdownMenuItem
@@ -122,7 +124,7 @@ export function ProfileSelector() {
                   onClick={async () => {
                     if (p.id !== activeProfile?.id) {
                       await switchProfile(p.id)
-                      const targetProvider = getProvider(p.provider)
+                      const targetProvider = getProvider(p.activeProvider ?? p.provider)
                       router.push(targetProvider?.defaultRoute ?? "/gmail")
                     }
                   }}
@@ -137,9 +139,23 @@ export function ProfileSelector() {
                   <span className="flex-1 truncate text-xs">
                     {p.email || p.label || `Account ${i + 1}`}
                   </span>
-                  {ProviderIcon && (
-                    <ProviderIcon className="h-3 w-3 text-muted-foreground" />
-                  )}
+                  {linkedProviders.length > 1 ? (
+                    <span className="flex items-center gap-0.5">
+                      {linkedProviders.map((pid) => {
+                        const cfg = getProvider(pid)
+                        if (!cfg) return null
+                        const Icon = resolveIcon(cfg.iconName)
+                        return (
+                          <Icon
+                            key={pid}
+                            className={`h-3 w-3 ${pid === (p.activeProvider ?? p.provider) ? "text-primary" : "text-muted-foreground"}`}
+                          />
+                        )
+                      })}
+                    </span>
+                  ) : PrimaryIcon ? (
+                    <PrimaryIcon className="h-3 w-3 text-muted-foreground" />
+                  ) : null}
                   {p.id === activeProfile?.id && (
                     <Check className="h-3.5 w-3.5 text-primary" />
                   )}
