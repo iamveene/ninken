@@ -17,9 +17,15 @@ import {
   detectMicrosoftAccessToken,
   validateMicrosoftAccessToken,
 } from "./strategies/microsoft-access-token"
+import { microsoftPrtStrategy } from "./strategies/microsoft-prt"
+import { microsoftPrtCookieStrategy } from "./strategies/microsoft-prt-cookie"
+import { microsoftBrowserSessionStrategy } from "./strategies/microsoft-browser-session"
 
 const strategies: CredentialStrategy[] = [
   microsoftServicePrincipalStrategy,
+  microsoftPrtStrategy,
+  microsoftPrtCookieStrategy,
+  microsoftBrowserSessionStrategy,
   microsoftOAuthStrategy,
 ]
 
