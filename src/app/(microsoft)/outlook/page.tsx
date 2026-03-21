@@ -332,7 +332,7 @@ function OutlookPage() {
 
   // Detail panel
   const detailContent = (
-    <div className="flex flex-1 flex-col min-w-0 h-full">
+    <div className="flex flex-1 flex-col min-w-0 h-full overflow-y-auto">
       {messageLoading || (selectedMessageId && !selectedMessage && !messageError) ? (
         <div className="p-6 space-y-4">
           <Skeleton className="h-6 w-2/3" />
