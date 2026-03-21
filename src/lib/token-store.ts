@@ -399,32 +399,4 @@ export function setActiveProfileId(id: string): void {
   localStorage.setItem(ACTIVE_PROFILE_KEY, id)
 }
 
-/**
- * Update the primary credential (and tokens map entry) for an existing profile.
- * Used when re-importing a credential that matches an existing profile's email+provider.
- */
-export async function updateProfileCredential(
-  profileId: string,
-  credential: BaseCredential
-): Promise<void> {
-  const db = await openDB()
-  const key = await getOrCreateKey(db)
-  const ep = await idbGet<EncryptedProfile>(db, PROFILES_STORE, profileId)
-  if (!ep) throw new Error("Profile not found")
-
-  // Re-encrypt the primary credential
-  ep.encryptedCredential = await encrypt(key, JSON.stringify(credential))
-
-  // Update the tokens map entry for the primary provider
-  let tokens: Partial<Record<ProviderId, BaseCredential>>
-  if (ep.encryptedTokens) {
-    const tokensJson = await decrypt(key, ep.encryptedTokens)
-    tokens = JSON.parse(tokensJson)
-  } else {
-    tokens = {}
-  }
-  tokens[ep.provider] = credential
-  ep.encryptedTokens = await encrypt(key, JSON.stringify(tokens))
-
-  await idbPut(db, PROFILES_STORE, ep)
-}
+// Note: updateProfileCredential is defined earlier in this file (line ~266)
