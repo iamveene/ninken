@@ -12,4 +12,5 @@ export const studioNavItems: ProviderNavItem[] = [
   { id: "studio-attack-graph", title: "Attack Graph", href: "/studio/attack-graph", iconName: "Share2" },
   { id: "studio-offline-db", title: "Offline DB", href: "/studio/offline-db", iconName: "Database" },
   { id: "studio-msal", title: "MSAL Extractor", href: "/studio/msal-extractor", iconName: "Key" },
+  { id: "studio-foci-paper", title: "FOCI Paper", href: "/studio/foci-paper", iconName: "FileText" },
 ]
