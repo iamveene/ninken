@@ -200,6 +200,8 @@ export default function ReposPage() {
                         title: repo.fullName,
                         subtitle: repo.visibility,
                         sourceId: repo.id.toString(),
+                        downloadUrl: `/api/github/repos/${encodeURIComponent(repo.owner)}/${encodeURIComponent(repo.name)}/archive?ref=${encodeURIComponent(repo.defaultBranch || "main")}`,
+                        mimeType: "application/zip",
                         metadata: {
                           description: repo.description,
                           language: repo.language,
