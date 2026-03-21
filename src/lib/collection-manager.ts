@@ -192,6 +192,10 @@ class CollectionManager {
         // GitLab project archives are tar.gz
         if (item.mimeType === "application/gzip") return `${base}.tar.gz`
         return `${base}.tar.gz`
+      case "folder":
+        // Bucket/folder archives are zip
+        if (item.mimeType === "application/zip") return `${base}.zip`
+        return `${base}.zip`
       case "file":
       case "object":
         // Try to extract extension from the original title
