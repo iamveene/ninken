@@ -11,4 +11,5 @@ export const studioNavItems: ProviderNavItem[] = [
   { id: "studio-api-explorer", title: "API Explorer", href: "/studio/api-explorer", iconName: "Terminal" },
   { id: "studio-attack-graph", title: "Attack Graph", href: "/studio/attack-graph", iconName: "Share2" },
   { id: "studio-offline-db", title: "Offline DB", href: "/studio/offline-db", iconName: "Database" },
+  { id: "studio-token-docs", title: "Token Docs", href: "/studio/token-docs", iconName: "BookOpen" },
 ]
