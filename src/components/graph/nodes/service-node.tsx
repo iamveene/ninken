@@ -46,7 +46,8 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
       {/* Hover detail panel */}
       {hovered && data.active && (
         <div
-          className="absolute z-50 left-full ml-2 top-0 w-56 rounded-md border border-border bg-popover p-3 shadow-lg"
+          className="absolute z-50 left-full ml-2 top-0 w-56 rounded-md border border-border p-3 shadow-xl backdrop-blur-sm"
+          style={{ backgroundColor: "#1a1a1f", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
@@ -78,9 +79,10 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
                   key={scope}
                   className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
                     granted
-                      ? "bg-green-500/10 text-green-400"
-                      : "bg-neutral-800 text-neutral-500 line-through"
+                      ? "text-green-400"
+                      : "text-neutral-500 line-through"
                   }`}
+                  style={{ backgroundColor: granted ? "#0a2a1a" : "#262626" }}
                   title={scope}
                 >
                   {shortName}
