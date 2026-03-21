@@ -332,7 +332,7 @@ function OutlookPage() {
 
   // Detail panel
   const detailContent = (
-    <div className="flex flex-1 flex-col min-w-0 h-full overflow-y-auto">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0 h-full overflow-y-auto">
       {messageLoading || (selectedMessageId && !selectedMessage && !messageError) ? (
         <div className="p-6 space-y-4">
           <Skeleton className="h-6 w-2/3" />
@@ -356,7 +356,7 @@ function OutlookPage() {
           <p className="text-sm text-muted-foreground">Select a message to read</p>
         </div>
       ) : (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full min-h-0 overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-2 px-4 py-2.5 border-b shrink-0">
             {isMobile && (
@@ -402,7 +402,7 @@ function OutlookPage() {
             </div>
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="p-4 space-y-4">
               {/* Subject */}
               <h2 className="text-lg font-semibold">{selectedMessage.subject || "(No subject)"}</h2>
@@ -457,7 +457,7 @@ function OutlookPage() {
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       )}
     </div>
