@@ -59,15 +59,44 @@ GOOGLE-TOKEN-RESEARCH.md
 /docs/research/
 /.claude/
 
+# Scripts — dev utilities, never commit
+/scripts/
+
 # Internal credential scripts — contain secrets
 reauth.py
 reauth_microsoft.py
 workspace_cli.py
-scripts/reauth-google.sh
+
+# Next.js auto-generated
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+*.lcov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Certificates & keys
+*.pem
+*.key
+*.cert
+
+# Build & cache
+.turbo/
+.vercel/
+.cache/
 
 # Docker
 docker-compose.override.yml
-install.log
 !images/screenshots/*.png
 /.playwright-mcp/
 /images/screenshots/

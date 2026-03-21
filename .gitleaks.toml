@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "False positives — secret detection patterns and truncated README examples"
+paths = [
+  '''src/lib/tools/secret-patterns\.ts''',
+  '''README\.md''',
+]
