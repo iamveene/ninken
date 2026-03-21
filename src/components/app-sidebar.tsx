@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
+import { useRouter } from "@/components/layout/route-loader"
 import { LogOut, Home, ChevronDown, LayoutDashboard } from "lucide-react"
 import { cacheClear } from "@/lib/cache"
 import { CacheIndicator } from "@/components/layout/cache-indicator"
