@@ -1,22 +1,37 @@
 "use client"
 
-import { useState } from "react"
-import { Handle, Position } from "@xyflow/react"
+import { useState, useCallback } from "react"
+import { Handle, Position, useReactFlow } from "@xyflow/react"
 import { useRouter } from "next/navigation"
 import type { ServiceNodeData } from "@/lib/graph/types"
 import { resolveIcon } from "@/lib/icon-resolver"
 import { ExternalLink } from "lucide-react"
 
-export function ServiceNode({ data }: { data: ServiceNodeData }) {
+export function ServiceNode({ id, data }: { id: string; data: ServiceNodeData }) {
   const [hovered, setHovered] = useState(false)
   const router = useRouter()
+  const { setNodes } = useReactFlow()
   const Icon = resolveIcon(data.iconName)
+
+  const liftNode = useCallback(() => {
+    setHovered(true)
+    setNodes((nodes) =>
+      nodes.map((n) => n.id === id ? { ...n, zIndex: 1000 } : n)
+    )
+  }, [id, setNodes])
+
+  const dropNode = useCallback(() => {
+    setHovered(false)
+    setNodes((nodes) =>
+      nodes.map((n) => n.id === id ? { ...n, zIndex: 0 } : n)
+    )
+  }, [id, setNodes])
 
   return (
     <div
       className={`relative ${data.active ? "service-node-active" : "service-node-inactive"}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={liftNode}
+      onMouseLeave={dropNode}
     >
       <div
         className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 shadow-sm transition-all ${
@@ -46,10 +61,14 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
       {/* Hover detail panel */}
       {hovered && data.active && (
         <div
-          className="absolute z-50 left-full ml-2 top-0 w-56 rounded-md border border-border p-3 shadow-xl backdrop-blur-sm"
-          style={{ backgroundColor: "#1a1a1f", boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          className="absolute left-full ml-2 top-0 w-56 rounded-md border border-border/80 p-3"
+          style={{
+            backgroundColor: "#111114",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06)",
+            zIndex: 10,
+          }}
+          onMouseEnter={liftNode}
+          onMouseLeave={dropNode}
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-foreground">{data.serviceName}</span>
@@ -82,7 +101,7 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
                       ? "text-green-400"
                       : "text-neutral-500 line-through"
                   }`}
-                  style={{ backgroundColor: granted ? "#0a2a1a" : "#262626" }}
+                  style={{ backgroundColor: granted ? "#0a2a1a" : "#1e1e1e" }}
                   title={scope}
                 >
                   {shortName}
