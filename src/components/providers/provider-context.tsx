@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react"
-import type { ProviderId, StoredProfile } from "@/lib/providers/types"
+import type { ProviderId, StoredProfile, BaseCredential, ServiceProvider } from "@/lib/providers/types"
 import { detectProvider, getProvider } from "@/lib/providers/registry"
 import "@/lib/providers" // ensure providers are registered
 import {
@@ -16,6 +16,8 @@ import {
   addProfile as storeAddProfile,
   removeProfile as storeRemoveProfile,
   updateProfileEmail as storeUpdateEmail,
+  addTokenToProfile as storeAddToken,
+  setActiveProvider as storeSetActiveProvider,
   getActiveProfileId,
 } from "@/lib/token-store"
 import {
@@ -35,6 +37,8 @@ type ProviderContextValue = {
   removeCurrentProfile: () => Promise<void>
   updateEmail: (profileId: string, email: string) => Promise<void>
   refreshProfiles: () => Promise<void>
+  linkToken: (profileId: string, raw: unknown) => Promise<{ success: boolean; error?: string }>
+  switchProviderInProfile: (providerId: ProviderId) => Promise<void>
 }
 
 const ProviderContext = createContext<ProviderContextValue>({
@@ -47,10 +51,46 @@ const ProviderContext = createContext<ProviderContextValue>({
   removeCurrentProfile: async () => {},
   updateEmail: async () => {},
   refreshProfiles: async () => {},
+  linkToken: async () => ({ success: false, error: "Not initialized" }),
+  switchProviderInProfile: async () => {},
 })
 
 export function useProvider() {
   return useContext(ProviderContext)
+}
+
+/**
+ * Detect, bootstrap, and validate a raw credential.
+ * Shared by addCredential and linkToken to avoid duplication.
+ */
+async function resolveCredential(raw: unknown): Promise<
+  | { success: true; provider: ServiceProvider; credential: BaseCredential; email?: string }
+  | { success: false; error: string }
+> {
+  const detected = detectProvider(raw)
+  if (!detected) {
+    return { success: false, error: "Unrecognized credential format" }
+  }
+
+  // Async bootstrap step (e.g., Slack extracts xoxc- token from d cookie)
+  let processedRaw = raw
+  if (detected.bootstrapCredential) {
+    try {
+      processedRaw = await detected.bootstrapCredential(raw)
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Credential bootstrap failed",
+      }
+    }
+  }
+
+  const result = detected.validateCredential(processedRaw)
+  if (!result.valid) {
+    return { success: false, error: result.error }
+  }
+
+  return { success: true, provider: detected, credential: result.credential, email: result.email }
 }
 
 export function ProviderContextProvider({ children }: { children: ReactNode }) {
@@ -58,7 +98,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<StoredProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const provider: ProviderId = profile?.provider ?? "google"
+  const provider: ProviderId = profile?.activeProvider ?? profile?.provider ?? "google"
 
   const refreshProfiles = useCallback(async () => {
     const all = await getAllProfiles()
@@ -118,34 +158,13 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
     async (
       raw: unknown
     ): Promise<{ success: boolean; error?: string }> => {
-      const detected = detectProvider(raw)
-      if (!detected) {
-        return { success: false, error: "Unrecognized credential format" }
-      }
-
-      // Async bootstrap step (e.g., Slack extracts xoxc- token from d cookie)
-      let processedRaw = raw
-      if (detected.bootstrapCredential) {
-        try {
-          processedRaw = await detected.bootstrapCredential(raw)
-        } catch (err) {
-          return {
-            success: false,
-            error:
-              err instanceof Error ? err.message : "Credential bootstrap failed",
-          }
-        }
-      }
-
-      const result = detected.validateCredential(processedRaw)
-      if (!result.valid) {
-        return { success: false, error: result.error }
-      }
+      const resolved = await resolveCredential(raw)
+      if (!resolved.success) return resolved
 
       const newProfile = await storeAddProfile(
-        detected.id,
-        result.credential,
-        result.email
+        resolved.provider.id,
+        resolved.credential,
+        resolved.email
       )
 
       await activateProfile(newProfile.id)
@@ -180,6 +199,35 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
     [refreshProfiles]
   )
 
+  const linkToken = useCallback(
+    async (
+      profileId: string,
+      raw: unknown
+    ): Promise<{ success: boolean; error?: string }> => {
+      const resolved = await resolveCredential(raw)
+      if (!resolved.success) return resolved
+
+      await storeAddToken(profileId, resolved.provider.id, resolved.credential)
+
+      // Re-activate profile so the newly linked token map is reflected
+      await activateProfile(profileId)
+      await refreshProfiles()
+
+      return { success: true }
+    },
+    [refreshProfiles]
+  )
+
+  const switchProviderInProfile = useCallback(
+    async (providerId: ProviderId) => {
+      if (!profile) return
+      await storeSetActiveProvider(profile.id, providerId)
+      await activateProfile(profile.id)
+      await refreshProfiles()
+    },
+    [profile, refreshProfiles]
+  )
+
   return (
     <ProviderContext
       value={{
@@ -192,6 +240,8 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
         removeCurrentProfile,
         updateEmail,
         refreshProfiles,
+        linkToken,
+        switchProviderInProfile,
       }}
     >
       {children}

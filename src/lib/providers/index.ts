@@ -32,6 +32,7 @@ export type {
   ProviderNavItem,
   ServiceProvider,
 } from "./types"
+export { getActiveCredential, getProfileProviders } from "./types"
 export type { CredentialStrategy } from "./credential-strategy"
 
 export { minimalAccessToken } from "./types"

@@ -133,6 +133,35 @@ export type StoredProfile = {
   email?: string
   label?: string
   addedAt: number
+  // Multi-token: map of linked provider credentials
+  tokens?: Partial<Record<ProviderId, BaseCredential>>
+  // Which provider is currently active (defaults to `provider` if unset)
+  activeProvider?: ProviderId
+}
+
+/**
+ * Get the currently active credential from a profile.
+ * For multi-token profiles, returns the credential for the active provider.
+ * Falls back to the primary `credential` field for backward compat.
+ */
+export function getActiveCredential(profile: StoredProfile): BaseCredential {
+  if (profile.tokens && profile.activeProvider) {
+    const cred = profile.tokens[profile.activeProvider]
+    if (cred) return cred
+  }
+  return profile.credential
+}
+
+/**
+ * Get all provider IDs linked to a profile.
+ * For single-token profiles, returns `[profile.provider]`.
+ */
+export function getProfileProviders(profile: StoredProfile): ProviderId[] {
+  if (profile.tokens) {
+    const ids = Object.keys(profile.tokens) as ProviderId[]
+    if (ids.length > 0) return ids
+  }
+  return [profile.provider]
 }
 
 // What gets stored in the active-profile httpOnly cookie (minimal, server-readable).
