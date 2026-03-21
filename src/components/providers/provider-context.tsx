@@ -27,6 +27,7 @@ import {
 } from "@/lib/token-sync"
 import { startTokenRefresher, stopTokenRefresher } from "@/lib/token-refresher"
 import { triggerFociAutoPivot } from "@/components/providers/foci-pivot-toast"
+import { cacheClear } from "@/lib/cache"
 
 type ProviderContextValue = {
   provider: ProviderId
@@ -149,6 +150,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
 
   const switchProfile = useCallback(
     async (id: string) => {
+      await cacheClear()
       await activateProfile(id)
       await refreshProfiles()
     },
@@ -230,6 +232,7 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
   const switchProviderInProfile = useCallback(
     async (providerId: ProviderId) => {
       if (!profile) return
+      await cacheClear()
       await storeSetActiveProvider(profile.id, providerId)
       await activateProfile(profile.id)
       await refreshProfiles()
