@@ -12,6 +12,7 @@ import type {
   MicrosoftCredential,
   SlackCredential,
   AwsCredential,
+  GcpApiKeyCredential,
 } from "@/lib/providers/types"
 
 // Ensure providers are registered
@@ -141,6 +142,15 @@ export async function getAwsCredential(): Promise<AwsCredential | null> {
   const result = await getCredentialFromRequest()
   if (!result || result.provider !== "aws") return null
   return result.credential as AwsCredential
+}
+
+/**
+ * Convenience: get a GcpApiKeyCredential from the request cookie, or null.
+ */
+export async function getGcpApiKeyCredential(): Promise<GcpApiKeyCredential | null> {
+  const result = await getCredentialFromRequest()
+  if (!result || result.provider !== "gcp") return null
+  return result.credential as GcpApiKeyCredential
 }
 
 export async function getProviderFromRequest(): Promise<ProviderId | null> {

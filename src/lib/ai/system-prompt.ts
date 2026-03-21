@@ -94,6 +94,14 @@ Available tools:
 
 Available Ninken modules (Operate): Dashboard, S3, IAM, Lambda, EC2, CloudTrail, Secrets Manager.
 Available Ninken modules (Audit): IAM Policies, Public S3, Access Keys, Privilege Escalation, Cross-Account, Secrets.`,
+
+  gcp: (ctx) => `
+You are currently connected to a **GCP** environment via API Key.
+Project: ${ctx.userEmail ?? "unknown"}.
+
+Available Ninken modules (Operate): Firestore, Realtime DB, Cloud Storage, Compute Engine, Vertex AI.
+
+**Note:** GCP API keys are project-scoped with no user identity. Access depends on which APIs are enabled for the key.`,
 }
 
 export function buildSystemPrompt(ctx: AIServiceContext): string {

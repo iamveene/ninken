@@ -96,6 +96,13 @@ const ROUTE_PROVIDER_MAP: [string, ProviderId][] = [
   ["/aws-cloudtrail", "aws"],
   ["/aws-secrets", "aws"],
   ["/aws-audit", "aws"],
+  // GCP routes
+  ["/gcp-dashboard", "gcp"],
+  ["/gcp-firestore", "gcp"],
+  ["/gcp-rtdb", "gcp"],
+  ["/gcp-storage", "gcp"],
+  ["/gcp-compute", "gcp"],
+  ["/gcp-vertexai", "gcp"],
 ]
 
 function getProviderFromPathname(pathname: string): ProviderId | null {

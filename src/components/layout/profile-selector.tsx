@@ -26,9 +26,11 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useProvider } from "@/components/providers/provider-context"
+import { Badge } from "@/components/ui/badge"
 import { resolveIcon } from "@/lib/icon-resolver"
+import { getCredentialShortLabel } from "@/lib/providers/credential-labels"
 import { getProvider } from "@/lib/providers/registry"
-import { getProfileProviders } from "@/lib/providers/types"
+import { getActiveCredential, getProfileProviders } from "@/lib/providers/types"
 import "@/lib/providers"
 
 const AVATAR_COLORS = [
@@ -139,6 +141,15 @@ export function ProfileSelector() {
                   <span className="flex-1 truncate text-xs">
                     {p.email || p.label || `Account ${i + 1}`}
                   </span>
+                  {(() => {
+                    const activeCred = getActiveCredential(p)
+                    const label = getCredentialShortLabel(p.activeProvider ?? p.provider, activeCred.credentialKind)
+                    return label ? (
+                      <Badge variant="outline" className="text-[8px] px-1 py-0 font-mono shrink-0">
+                        {label}
+                      </Badge>
+                    ) : null
+                  })()}
                   {linkedProviders.length > 1 ? (
                     <span className="flex items-center gap-0.5">
                       {linkedProviders.map((pid) => {

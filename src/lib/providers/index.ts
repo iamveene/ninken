@@ -5,6 +5,7 @@ import { slackProvider } from "./slack"
 import { githubProvider } from "./github"
 import { gitlabProvider } from "./gitlab"
 import { awsProvider } from "./aws"
+import { gcpProvider } from "./gcp"
 
 // Auto-register built-in providers
 registerProvider(googleProvider)
@@ -13,6 +14,7 @@ registerProvider(slackProvider)
 registerProvider(githubProvider)
 registerProvider(gitlabProvider)
 registerProvider(awsProvider)
+registerProvider(gcpProvider)
 
 export type {
   ProviderId,
@@ -25,6 +27,7 @@ export type {
   MicrosoftServicePrincipalCredential,
   SlackCredential,
   AwsCredential,
+  GcpApiKeyCredential,
   SlackBrowserSessionCredential,
   SlackApiTokenCredential,
   StoredProfile,
@@ -44,3 +47,4 @@ export { slackProvider } from "./slack"
 export { githubProvider } from "./github"
 export { gitlabProvider } from "./gitlab"
 export { awsProvider } from "./aws"
+export { gcpProvider } from "./gcp"

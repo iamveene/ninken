@@ -118,6 +118,7 @@ const PROVIDER_ACTIONS: Record<ProviderId, Record<string, QuickAction[]>> = {
   gitlab: GITLAB_ACTIONS,
   slack: SLACK_ACTIONS,
   aws: AWS_ACTIONS,
+  gcp: {},
 }
 
 // Page-context-aware extra actions (more specific than the provider defaults)
