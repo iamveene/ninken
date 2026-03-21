@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import {
   ChevronRight,
   ChevronDown,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Lock,
   Plus,
+  Search,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useProjects, useBuckets, type Bucket, type GcpProject } from "@/hooks/use-buckets"
@@ -30,6 +31,7 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
 
   const [manualProject, setManualProject] = useState("")
   const [manualProjects, setManualProjects] = useState<string[]>([])
+  const [filterQuery, setFilterQuery] = useState("")
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +57,17 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
   const accessibleProjects = allProjects.filter((p) => p.accessible !== false)
   const inaccessibleProjects = allProjects.filter((p) => p.accessible === false)
 
+  // Filter projects by search query
+  const query = filterQuery.toLowerCase().trim()
+  const matchesFilter = (p: GcpProject) =>
+    p.projectId.toLowerCase().includes(query) ||
+    (p.displayName?.toLowerCase().includes(query) ?? false)
+  const filteredAccessible = query ? accessibleProjects.filter(matchesFilter) : accessibleProjects
+  const filteredInaccessible = query ? inaccessibleProjects.filter(matchesFilter) : inaccessibleProjects
+
+  // Identify the first project that should auto-select its first bucket
+  const autoSelectProjectId = accessibleProjects.find((p) => (p.bucketCount ?? 0) > 0)?.projectId ?? null
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="border-b px-3 py-2.5">
@@ -63,38 +76,58 @@ export function ExplorerSidebar({ selectedBucket, onSelectBucket }: ExplorerSide
         </h3>
       </div>
 
+      {/* Search filter — only show when there are projects to filter */}
+      {!projectsLoading && allProjects.length > 0 && (
+        <div className="border-b px-2 py-1.5">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Filter projects..."
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              className="h-7 pl-7 text-xs"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto py-1">
         {projectsLoading ? (
           <div className="flex items-center gap-2 px-3 py-4 text-sm text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Loading projects...
+            Discovering projects...
           </div>
         ) : allProjects.length === 0 ? (
           <div className="px-3 py-4 text-xs text-muted-foreground">
             Add a project ID below to browse its buckets.
           </div>
+        ) : filteredAccessible.length === 0 && filteredInaccessible.length === 0 ? (
+          <div className="px-3 py-4 text-xs text-muted-foreground">
+            No projects match &ldquo;{filterQuery}&rdquo;
+          </div>
         ) : (
           <>
-            {accessibleProjects.map((project) => (
+            {filteredAccessible.map((project) => (
               <ProjectNode
                 key={project.projectId}
                 project={project}
                 selectedBucket={selectedBucket}
                 onSelectBucket={onSelectBucket}
                 defaultExpanded={(project.bucketCount ?? 0) > 0}
+                autoSelect={project.projectId === autoSelectProjectId}
               />
             ))}
 
-            {inaccessibleProjects.length > 0 && (
+            {filteredInaccessible.length > 0 && (
               <>
-                {accessibleProjects.length > 0 && (
+                {filteredAccessible.length > 0 && (
                   <div className="px-3 pt-3 pb-1">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                       No storage access
                     </p>
                   </div>
                 )}
-                {inaccessibleProjects.map((project) => (
+                {filteredInaccessible.map((project) => (
                   <ProjectNode
                     key={project.projectId}
                     project={project}
@@ -133,15 +166,18 @@ function ProjectNode({
   onSelectBucket,
   defaultExpanded = false,
   disabled = false,
+  autoSelect = false,
 }: {
   project: GcpProject
   selectedBucket: Bucket | null
   onSelectBucket: (bucket: Bucket, projectId: string) => void
   defaultExpanded?: boolean
   disabled?: boolean
+  autoSelect?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const { buckets, loading, error } = useBuckets(expanded ? project.projectId : "")
+  const didAutoSelect = useRef(false)
 
   // Auto-expand projects that have buckets
   useEffect(() => {
@@ -149,6 +185,17 @@ function ProjectNode({
       setExpanded(true)
     }
   }, [defaultExpanded, disabled])
+
+  // Auto-select the first downloadable bucket when autoSelect is enabled
+  useEffect(() => {
+    if (!autoSelect || didAutoSelect.current || loading || buckets.length === 0) return
+    const firstDownloadable = buckets.find((b) => b.readable !== false && b.downloadable !== false)
+    const target = firstDownloadable ?? buckets[0]
+    if (target) {
+      didAutoSelect.current = true
+      onSelectBucket(target, project.projectId)
+    }
+  }, [autoSelect, loading, buckets, onSelectBucket, project.projectId])
 
   const toggle = useCallback(() => {
     if (!disabled) setExpanded((prev) => !prev)
