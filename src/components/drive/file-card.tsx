@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { CollectButton } from "@/components/collection/collect-button"
+import type { CollectParams } from "@/hooks/use-collect-action"
 import type { DriveFile } from "@/hooks/use-drive"
 
 const FILE_TYPE_CONFIG: Record<string, { icon: typeof File; color: string; label: string }> = {
@@ -58,6 +59,27 @@ function formatFileSize(bytes: string | undefined) {
 }
 
 export { formatFileSize }
+
+export function collectParamsForFile(file: DriveFile): CollectParams {
+  const isFolder = file.mimeType === "application/vnd.google-apps.folder"
+  return {
+    type: isFolder ? "folder" : "file",
+    source: "drive",
+    title: file.name,
+    subtitle: file.owners?.[0]?.emailAddress,
+    sourceId: file.id,
+    ...(isFolder ? {} : {
+      downloadUrl: `/api/drive/files/${file.id}/download`,
+      sizeBytes: file.size ? parseInt(file.size, 10) : undefined,
+    }),
+    mimeType: file.mimeType,
+    metadata: {
+      mimeType: file.mimeType,
+      modifiedTime: file.modifiedTime,
+      shared: file.shared,
+    },
+  }
+}
 
 type FileCardProps = {
   file: DriveFile
@@ -102,26 +124,10 @@ export function FileCard({
       onContextMenu={onContextMenu}
     >
       <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-        {!isFolder && (
-          <CollectButton
-            variant="icon-xs"
-            params={{
-              type: "file",
-              source: "drive",
-              title: file.name,
-              subtitle: file.owners?.[0]?.emailAddress,
-              sourceId: file.id,
-              downloadUrl: `/api/drive/files/${file.id}/download`,
-              mimeType: file.mimeType,
-              sizeBytes: file.size ? parseInt(file.size, 10) : undefined,
-              metadata: {
-                mimeType: file.mimeType,
-                modifiedTime: file.modifiedTime,
-                shared: file.shared,
-              },
-            }}
-          />
-        )}
+        <CollectButton
+          variant="icon-xs"
+          params={collectParamsForFile(file)}
+        />
         {!isFolder && onDownload && (
           <Button
             variant="ghost"

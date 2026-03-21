@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns"
 import {
   Mail,
   FileText,
+  Folder,
   HardDrive,
   MessageSquare,
   BookMarked,
@@ -26,6 +27,7 @@ import type { CollectionItem } from "@/lib/collection-store"
 const TYPE_CONFIG: Record<CollectionItem["type"], { icon: typeof Mail; color: string; bg: string }> = {
   email: { icon: Mail, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/40" },
   file: { icon: FileText, color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/40" },
+  folder: { icon: Folder, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
   object: { icon: HardDrive, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/40" },
   "chat-message": { icon: MessageSquare, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-950/40" },
   repo: { icon: BookMarked, color: "text-teal-600 dark:text-teal-400", bg: "bg-teal-50 dark:bg-teal-950/40" },

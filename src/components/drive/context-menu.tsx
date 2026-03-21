@@ -15,6 +15,7 @@ import {
   FolderInput,
   Copy,
   Share2,
+  PackagePlus,
   Trash2,
   XCircle,
 } from "lucide-react"
@@ -28,6 +29,7 @@ type FileContextMenuProps = {
   onDownload?: () => void
   onRename?: () => void
   onCopy?: () => void
+  onCollect?: () => void
   onShare?: () => void
   onTrash?: () => void
   onDelete?: () => void
@@ -40,6 +42,7 @@ export function FileContextMenu({
   onOpen,
   onDownload,
   onRename,
+  onCollect,
   onCopy,
   onShare,
   onTrash,
@@ -85,6 +88,13 @@ export function FileContextMenu({
           <ContextMenuItem onClick={onShare}>
             <Share2 className="mr-2 h-4 w-4" />
             Share
+          </ContextMenuItem>
+        )}
+
+        {onCollect && (
+          <ContextMenuItem onClick={onCollect}>
+            <PackagePlus className="mr-2 h-4 w-4" />
+            Add to Collection
           </ContextMenuItem>
         )}
 
