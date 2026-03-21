@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import {
+  useGcpKeyInfo,
   useGcpFirestoreDatabases,
   useGcpFirestoreCollections,
   useGcpFirestoreDocuments,
@@ -43,11 +44,17 @@ export default function GcpFirestorePage() {
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null)
   const [selectedDoc, setSelectedDoc] = useState<unknown | null>(null)
   const [pageToken, setPageToken] = useState<string | undefined>(undefined)
+  const { info } = useGcpKeyInfo()
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PROJECT_ID_KEY)
-    if (stored) setProjectId(stored)
-  }, [])
+    if (stored) {
+      setProjectId(stored)
+    } else if (info?.projectId) {
+      setProjectId(info.projectId)
+      sessionStorage.setItem(PROJECT_ID_KEY, info.projectId)
+    }
+  }, [info?.projectId])
 
   const handleProjectChange = (v: string) => {
     setProjectId(v)

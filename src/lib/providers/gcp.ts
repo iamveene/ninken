@@ -75,26 +75,35 @@ export const gcpProvider: ServiceProvider = {
     // API keys have no OAuth scopes. Probe which APIs are enabled.
     const key = (credential as GcpApiKeyCredential).api_key
 
+    // Use Firebase Management API to discover the project ID from the key
+    const projectId = (credential as GcpApiKeyCredential).project_id
+    const projectPath = projectId ?? "-"
+
     const probes: { scope: string; url: string }[] = [
       {
         scope: "firestore.googleapis.com",
-        url: "https://firestore.googleapis.com/v1/projects/-/databases",
+        // Firestore accepts wildcard project
+        url: `https://firestore.googleapis.com/v1/projects/${projectPath}/databases`,
       },
       {
         scope: "firebaseio.com",
-        url: "https://firebasedatabase.googleapis.com/v1beta/projects/-/instances",
+        // Firebase RTDB management API
+        url: `https://firebasedatabase.googleapis.com/v1beta/projects/${projectPath}/instances`,
       },
       {
         scope: "storage.googleapis.com",
-        url: "https://storage.googleapis.com/storage/v1/b?project=_",
+        // Cloud Storage JSON API — list buckets (needs project, but we try with key info)
+        url: projectId
+          ? `https://storage.googleapis.com/storage/v1/b?project=${projectId}`
+          : "https://storage.googleapis.com/storage/v1/b?project=_",
       },
       {
         scope: "compute.googleapis.com",
-        url: "https://compute.googleapis.com/compute/v1/projects/-/zones",
+        url: `https://compute.googleapis.com/compute/v1/projects/${projectPath}/zones`,
       },
       {
         scope: "aiplatform.googleapis.com",
-        url: "https://us-central1-aiplatform.googleapis.com/v1/projects/-/locations/us-central1/models",
+        url: `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectPath}/locations/us-central1/models`,
       },
     ]
 

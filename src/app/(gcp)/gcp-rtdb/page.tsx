@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useGcpRtdbInstances, useGcpRtdbData } from "@/hooks/use-gcp-key"
+import { useGcpKeyInfo, useGcpRtdbInstances, useGcpRtdbData } from "@/hooks/use-gcp-key"
 import { ServiceError } from "@/components/ui/service-error"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -69,11 +69,17 @@ export default function GcpRtdbPage() {
   const [projectId, setProjectId] = useState("")
   const [selectedInstance, setSelectedInstance] = useState<string | null>(null)
   const [currentPath, setCurrentPath] = useState("/")
+  const { info } = useGcpKeyInfo()
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PROJECT_ID_KEY)
-    if (stored) setProjectId(stored)
-  }, [])
+    if (stored) {
+      setProjectId(stored)
+    } else if (info?.projectId) {
+      setProjectId(info.projectId)
+      sessionStorage.setItem(PROJECT_ID_KEY, info.projectId)
+    }
+  }, [info?.projectId])
 
   const handleProjectChange = (v: string) => {
     setProjectId(v)

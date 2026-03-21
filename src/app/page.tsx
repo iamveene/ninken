@@ -437,7 +437,7 @@ if (provider.id === "google" || provider.id === "microsoft") {
   }
 
   // Providers in testing phase (not yet validated with real credentials)
-  const testProviders = new Set(["aws"])
+  const testProviders = new Set(["aws", "gcp"])
 
   // Coming-soon services (not yet implemented)
   const comingSoon = (

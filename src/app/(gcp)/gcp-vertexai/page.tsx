@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useGcpVertexModels, useGcpVertexEndpoints } from "@/hooks/use-gcp-key"
+import { useGcpKeyInfo, useGcpVertexModels, useGcpVertexEndpoints } from "@/hooks/use-gcp-key"
 import { ExportButton } from "@/components/layout/export-button"
 import { ServiceError } from "@/components/ui/service-error"
 import { Badge } from "@/components/ui/badge"
@@ -41,11 +41,17 @@ export default function GcpVertexAiPage() {
   const [region, setRegion] = useState("us-central1")
   const [tab, setTab] = useState<VertexTab>("models")
   const [search, setSearch] = useState("")
+  const { info } = useGcpKeyInfo()
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PROJECT_ID_KEY)
-    if (stored) setProjectId(stored)
-  }, [])
+    if (stored) {
+      setProjectId(stored)
+    } else if (info?.projectId) {
+      setProjectId(info.projectId)
+      sessionStorage.setItem(PROJECT_ID_KEY, info.projectId)
+    }
+  }, [info?.projectId])
 
   const handleProjectChange = (v: string) => {
     setProjectId(v)
