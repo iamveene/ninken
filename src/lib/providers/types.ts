@@ -14,6 +14,8 @@ export type CredentialKind =
   | "access-token"
   | "browser-session"
   | "api-token"
+  | "prt"
+  | "prt-cookie"
 
 // Base credential shape — every provider extends this
 export type BaseCredential = {
@@ -84,6 +86,34 @@ export type MicrosoftServicePrincipalCredential = BaseCredential & {
   client_secret: string
   tenant_id: string
   token_uri?: string
+}
+
+// Microsoft PRT credential (Primary Refresh Token with HMAC session key)
+export type MicrosoftPrtCredential = BaseCredential & {
+  provider: "microsoft"
+  credentialKind: "prt"
+  prt: string
+  session_key: string  // base64-encoded HMAC key
+  tenant_id: string
+  client_id?: string
+}
+
+// Microsoft PRT Cookie credential (pre-built x-ms-RefreshTokenCredential)
+export type MicrosoftPrtCookieCredential = BaseCredential & {
+  provider: "microsoft"
+  credentialKind: "prt-cookie"
+  prt_cookie: string  // The x-ms-RefreshTokenCredential value
+  tenant_id: string
+  client_id?: string
+}
+
+// Microsoft Browser Session credential (ESTSAUTHPERSISTENT cookie)
+export type MicrosoftBrowserSessionCredential = BaseCredential & {
+  provider: "microsoft"
+  credentialKind: "browser-session"
+  estsauthpersistent: string
+  tenant_id?: string
+  client_id?: string
 }
 
 // AWS credential (IAM access keys, optionally with STS session token)

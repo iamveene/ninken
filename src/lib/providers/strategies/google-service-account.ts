@@ -1,5 +1,6 @@
 import type { CredentialStrategy } from "../credential-strategy"
 import type { GoogleServiceAccountCredential } from "../types"
+import { base64urlEncode, base64url } from "./crypto-utils"
 
 function isServiceAccountShape(obj: Record<string, unknown>): boolean {
   return (
@@ -9,20 +10,6 @@ function isServiceAccountShape(obj: Record<string, unknown>): boolean {
     typeof obj.client_email === "string" &&
     !!obj.client_email
   )
-}
-
-/**
- * Base64url encode a Uint8Array (no padding).
- */
-function base64urlEncode(bytes: Uint8Array): string {
-  let binary = ""
-  for (const b of bytes) binary += String.fromCharCode(b)
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
-}
-
-/** Base64url encode a UTF-8 string. */
-function base64url(str: string): string {
-  return base64urlEncode(new TextEncoder().encode(str))
 }
 
 // Cache imported CryptoKeys by PEM fingerprint to avoid re-parsing on every token request
