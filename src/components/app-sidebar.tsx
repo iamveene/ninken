@@ -13,6 +13,7 @@ import { getProvider } from "@/lib/providers/registry"
 import { resolveIcon } from "@/lib/icon-resolver"
 import { studioNavItems } from "@/lib/studio/nav"
 import { collectionNavItems } from "@/lib/collection/nav"
+import { graphNavItems } from "@/lib/graph/nav"
 import { useSidebarSlot } from "@/components/sidebar-slot"
 import type { ProviderId } from "@/lib/providers/types"
 import "@/lib/providers"
@@ -106,12 +107,13 @@ function getProviderFromPathname(pathname: string): ProviderId | null {
   return null
 }
 
-type Mode = "operate" | "audit" | "collection" | "studio"
+type Mode = "operate" | "audit" | "collection" | "studio" | "graph"
 
 function getMode(pathname: string): Mode {
   if (pathname.startsWith("/audit") || pathname.startsWith("/m365-audit") || pathname.startsWith("/gitlab-audit") || pathname.startsWith("/github-audit") || pathname.startsWith("/aws-audit")) return "audit"
   if (pathname.startsWith("/studio")) return "studio"
   if (pathname.startsWith("/collection")) return "collection"
+  if (pathname.startsWith("/graph")) return "graph"
   return "operate"
 }
 
@@ -180,6 +182,9 @@ export function AppSidebar() {
   } else if (mode === "collection") {
     navItems = collectionNavItems
     groupLabel = "Collection"
+  } else if (mode === "graph") {
+    navItems = graphNavItems
+    groupLabel = "Graph"
   }
 
   return (
