@@ -24,9 +24,9 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
             ? "bg-amber-950/40 border-amber-600/50 text-amber-200"
             : "bg-neutral-900/60 border-neutral-700/50 text-neutral-500"
         }`}
-        style={{ minWidth: 120 }}
+        style={{ width: 140 }}
       >
-        <Handle type="target" position={Position.Left} className="!bg-neutral-500 !border-neutral-400 !w-1.5 !h-1.5" />
+        <Handle type="target" position={Position.Top} className="!bg-neutral-500 !border-neutral-400 !w-1.5 !h-1.5" />
 
         <Icon className={`h-3.5 w-3.5 shrink-0 ${data.active ? "text-amber-400" : "text-neutral-600"}`} />
 
@@ -70,7 +70,6 @@ export function ServiceNode({ data }: { data: ServiceNodeData }) {
           <div className="flex flex-col gap-0.5 max-h-32 overflow-y-auto">
             {data.allScopes.map((scope) => {
               const granted = data.grantedScopes.includes(scope)
-              // Show short scope name (last segment)
               const shortName = scope.includes("/")
                 ? scope.split("/").pop()
                 : scope

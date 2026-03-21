@@ -1,6 +1,6 @@
 "use client"
 
-import { BaseEdge, getBezierPath, type EdgeProps } from "@xyflow/react"
+import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react"
 
 type GlowingEdgeData = {
   variant?: "operator" | "service" | "inactive"
@@ -17,13 +17,14 @@ export function GlowingEdge({
   data,
   ...rest
 }: EdgeProps) {
-  const [edgePath] = getBezierPath({
+  const [edgePath] = getSmoothStepPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
+    borderRadius: 8,
   })
 
   const variant = (data as GlowingEdgeData)?.variant ?? "service"
