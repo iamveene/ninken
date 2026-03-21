@@ -184,8 +184,12 @@ class CollectionManager {
         return `${base}.eml`
       case "chat-message":
         return `${base}.txt`
+      case "repo":
+        // GitHub repo archives are zip
+        if (item.mimeType === "application/zip") return `${base}.zip`
+        return `${base}.zip`
       case "project":
-        // Repo archives are tar.gz
+        // GitLab project archives are tar.gz
         if (item.mimeType === "application/gzip") return `${base}.tar.gz`
         return `${base}.tar.gz`
       case "file":
@@ -198,6 +202,11 @@ class CollectionManager {
         }
         return base
       default:
+        // Fallback: check mimeType for extension
+        if (item.mimeType) {
+          const ext = mimeToExtension(item.mimeType)
+          if (ext) return `${base}.${ext}`
+        }
         return base
     }
   }

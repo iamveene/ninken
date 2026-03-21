@@ -67,21 +67,23 @@ function collectParamsForItem(
   driveId: string,
   item: SharePointDriveItem,
 ): CollectParams {
+  const isFolder = !!item.folder
   return {
-    type: "file",
+    type: isFolder ? "folder" : "file",
     source: "onedrive",
     title: item.name,
     subtitle: item.lastModifiedBy?.user?.displayName,
     sourceId: `sharepoint:${siteId}:${driveId}:${item.id}`,
-    downloadUrl: `/api/microsoft/sharepoint/sites/${siteId}/drives/${driveId}/items/${item.id}/download`,
-    mimeType: item.file?.mimeType,
-    sizeBytes: item.size,
+    downloadUrl: isFolder ? undefined : `/api/microsoft/sharepoint/sites/${siteId}/drives/${driveId}/items/${item.id}/download`,
+    mimeType: isFolder ? undefined : item.file?.mimeType,
+    sizeBytes: isFolder ? undefined : item.size,
     metadata: {
       mimeType: item.file?.mimeType,
       lastModifiedDateTime: item.lastModifiedDateTime,
       webUrl: item.webUrl,
       sharePointSiteId: siteId,
       driveId,
+      ...(isFolder ? { childCount: item.folder?.childCount } : {}),
     },
   }
 }
@@ -299,7 +301,7 @@ export default function SharePointDriveBrowserPage() {
                           <Download className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      {!item.folder && siteId && driveId && (
+                      {siteId && driveId && (
                         <CollectButton
                           variant="icon-xs"
                           params={collectParamsForItem(siteId, driveId, item)}
