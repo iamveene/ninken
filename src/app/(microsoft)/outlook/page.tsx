@@ -492,7 +492,7 @@ function OutlookPage() {
           </ResizablePanel>
         </PanelGroup>
       ) : (
-        messageListContent
+        <div className="flex-1 h-full overflow-hidden">{messageListContent}</div>
       )}
 
       {/* Compose Dialog */}
