@@ -46,7 +46,7 @@ import {
 import { toast } from "sonner"
 
 import { ResizablePanel, PanelGroup, ResizeHandle } from "@/components/ui/resize-handle"
-import { FileCard, getFileConfig, formatFileSize } from "@/components/drive/file-card"
+import { FileCard, getFileConfig, formatFileSize, collectParamsForFile } from "@/components/drive/file-card"
 import { FileContextMenu } from "@/components/drive/context-menu"
 import { DriveBreadcrumbs, type BreadcrumbSegment } from "@/components/drive/breadcrumbs"
 import { DriveSearchBar } from "@/components/drive/search-bar"
@@ -69,6 +69,8 @@ import {
 } from "@/hooks/use-drive"
 import { Users, HardDrive } from "lucide-react"
 import { ServiceError } from "@/components/ui/service-error"
+import { CollectButton } from "@/components/collection/collect-button"
+import { useCollectAction } from "@/hooks/use-collect-action"
 
 export function FileBrowser() {
   const [view, setView] = useState<"grid" | "list">("list")
@@ -117,6 +119,7 @@ export function FileBrowser() {
   const { copy } = useCopyFile()
   const { trash } = useTrashFile()
   const { deleteFile: permanentDelete } = useDeleteFile()
+  const { collect } = useCollectAction()
 
   const displayFiles = isSearching ? searchResults : files
 
@@ -227,6 +230,10 @@ export function FileBrowser() {
     } catch {
       toast.error("Failed to delete")
     }
+  }
+
+  const handleCollect = (file: DriveFile) => {
+    collect(collectParamsForFile(file))
   }
 
   const handleInfoToggle = () => {
@@ -441,6 +448,7 @@ export function FileBrowser() {
                 onDownload={file.mimeType !== "application/vnd.google-apps.folder" ? () => handleDownload(file) : undefined}
                 onRename={() => setRenameFile(file)}
                 onCopy={() => handleCopy(file)}
+                onCollect={() => handleCollect(file)}
                 onShare={() => setShareFile(file)}
                 onTrash={() => handleTrash(file)}
                 onDelete={() => setDeleteFile(file)}
@@ -489,6 +497,7 @@ export function FileBrowser() {
                     {sortField === "size" && (sortDir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
                   </button>
                 </TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -513,6 +522,7 @@ export function FileBrowser() {
                     onDownload={file.mimeType !== "application/vnd.google-apps.folder" ? () => handleDownload(file) : undefined}
                     onRename={() => setRenameFile(file)}
                     onCopy={() => handleCopy(file)}
+                    onCollect={() => handleCollect(file)}
                     onShare={() => setShareFile(file)}
                     onTrash={() => handleTrash(file)}
                     onDelete={() => setDeleteFile(file)}
@@ -543,6 +553,12 @@ export function FileBrowser() {
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {formatFileSize(file.size) || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <CollectButton
+                          variant="icon-xs"
+                          params={collectParamsForFile(file)}
+                        />
                       </TableCell>
                   </FileContextMenu>
                 )

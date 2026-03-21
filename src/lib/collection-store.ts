@@ -1,4 +1,4 @@
-export type CollectionItemType = "email" | "file" | "object" | "chat-message" | "repo" | "audit-finding" | "project" | "group" | "snippet"
+export type CollectionItemType = "email" | "file" | "folder" | "object" | "chat-message" | "repo" | "audit-finding" | "project" | "group" | "snippet"
 export type CollectionItemStatus = "pending" | "downloading" | "done" | "error"
 export type CollectionSource = "gmail" | "drive" | "gcs" | "outlook" | "onedrive" | "teams" | "github" | "gitlab" | "audit-query" | "secret-search"
 

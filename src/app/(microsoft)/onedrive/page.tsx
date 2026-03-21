@@ -73,6 +73,20 @@ function formatFileSize(bytes?: number): string {
 }
 
 function collectParamsForItem(item: OneDriveItem): CollectParams {
+  if (item.folder) {
+    return {
+      type: "folder",
+      source: "onedrive",
+      title: item.name,
+      subtitle: item.lastModifiedBy?.user?.displayName,
+      sourceId: item.id,
+      metadata: {
+        childCount: item.folder.childCount,
+        lastModifiedDateTime: item.lastModifiedDateTime,
+        webUrl: item.webUrl,
+      },
+    }
+  }
   return {
     type: "file",
     source: "onedrive",
@@ -297,21 +311,19 @@ export default function OneDrivePage() {
               >
                 <div className="relative">
                   <Icon className={cn("h-10 w-10", color)} />
-                  {!item.folder && (
-                    <div className="absolute -top-2 -right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <CollectButton
-                        variant="icon-xs"
-                        params={collectParamsForItem(item)}
-                      />
-                      <button
-                        className="p-0.5 rounded hover:bg-destructive/20"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item) }}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="absolute -top-2 -right-4 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <CollectButton
+                      variant="icon-xs"
+                      params={collectParamsForItem(item)}
+                    />
+                    <button
+                      className="p-0.5 rounded hover:bg-destructive/20"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(item) }}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </button>
+                  </div>
                 </div>
                 <span className="text-sm font-medium truncate w-full text-center">{item.name}</span>
                 <span className="text-[11px] text-muted-foreground">
@@ -359,12 +371,10 @@ export default function OneDrivePage() {
                     {item.folder ? `${item.folder.childCount} items` : formatFileSize(item.size) || "-"}
                   </TableCell>
                   <TableCell>
-                    {!item.folder && (
-                      <CollectButton
-                        variant="icon-xs"
-                        params={collectParamsForItem(item)}
-                      />
-                    )}
+                    <CollectButton
+                      variant="icon-xs"
+                      params={collectParamsForItem(item)}
+                    />
                   </TableCell>
                 </TableRow>
               )
