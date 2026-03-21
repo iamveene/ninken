@@ -4,6 +4,7 @@ import {
   getAccessToken as msGetAccessToken,
   decodeJwtPayload,
 } from "../../microsoft"
+import { isSpaClientId } from "./microsoft-spa"
 
 // Teams FOCI client ID (public client, no secret needed)
 const TEAMS_FOCI_CLIENT_ID = "1fec8e78-bce4-4aaf-ab1b-5451cc387264"
@@ -13,6 +14,14 @@ export { TEAMS_FOCI_CLIENT_ID }
 function isMicrosoftOAuthShape(obj: Record<string, unknown>): boolean {
   // Must have a refresh_token for OAuth
   if (typeof obj.refresh_token !== "string" || !obj.refresh_token)
+    return false
+
+  // Defer to SPA strategy if the client_id is a known SPA client
+  if (typeof obj.client_id === "string" && isSpaClientId(obj.client_id))
+    return false
+
+  // Explicit SPA markers — let SPA strategy handle these
+  if (obj.token_type === "spa" || obj.credentialKind === "spa")
     return false
 
   // Explicit platform marker
