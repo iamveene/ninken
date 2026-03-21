@@ -23,34 +23,46 @@ export async function activateProfile(profileId: string): Promise<void> {
   const activeProvider = profile.activeProvider ?? profile.provider
   const activeCredential = getActiveCredential(profile)
 
-  // For SPA credentials with a valid access_token, use token-push instead of
-  // activate to avoid overwriting a fresh token with a stale credential.
+  // For SPA credentials, use token-push instead of activate — but ONLY if
+  // the IndexedDB credential has a valid, non-expired access_token.
   // SPA tokens can't be refreshed server-side, so the access_token in IndexedDB
   // is the only source of truth — set by useSpaRefresher.
+  //
+  // BUG-5 fix: If the AT is missing, expired, or has unknown expiry, do NOT
+  // push it to the cookie — that would overwrite a potentially valid cookie
+  // (set by a recent SPA refresh) with a stale/empty token. Instead, just set
+  // the profile ID and let useSpaRefresher handle getting a fresh token.
   if (activeCredential.credentialKind === "spa") {
     const spaCred = activeCredential as { access_token?: string; expires_at?: number }
-    if (spaCred.access_token) {
-      const now = Math.floor(Date.now() / 1000)
-      if (!spaCred.expires_at || spaCred.expires_at > now + 60) {
-        // Use token-push to set cookie with the access_token directly
-        const pushRes = await fetch("/api/auth/token-push", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            provider: activeProvider,
-            access_token: spaCred.access_token,
-            expires_in: spaCred.expires_at ? spaCred.expires_at - now : 3600,
-            account: (activeCredential as { account?: string }).account,
-          }),
-        })
-        if (pushRes.ok) {
-          setActiveProfileId(profileId)
-          return
-        }
+    const now = Math.floor(Date.now() / 1000)
+
+    // Only push if we have BOTH a non-empty AT AND a known future expiry
+    const hasValidAt = !!(
+      spaCred.access_token &&
+      spaCred.expires_at &&
+      spaCred.expires_at > now + 60
+    )
+
+    if (hasValidAt) {
+      // Use token-push to set cookie with the access_token directly
+      const pushRes = await fetch("/api/auth/token-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: activeProvider,
+          access_token: spaCred.access_token,
+          expires_in: spaCred.expires_at! - now,
+          account: (activeCredential as { account?: string }).account,
+        }),
+      })
+      if (pushRes.ok) {
+        setActiveProfileId(profileId)
+        return
       }
     }
-    // If no valid AT, still set the profile ID but skip the cookie —
-    // useSpaRefresher will handle the refresh and push
+
+    // No valid AT or push failed — set profile ID but skip cookie write.
+    // useSpaRefresher will handle the refresh and push a fresh token.
     setActiveProfileId(profileId)
     return
   }
