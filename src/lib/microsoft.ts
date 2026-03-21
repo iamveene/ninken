@@ -1,7 +1,9 @@
 import type {
   MicrosoftCredential,
   MicrosoftServicePrincipalCredential,
+  MicrosoftSpaCredential,
 } from "./providers/types"
+import { resolveResourceToken } from "./providers/types"
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 const LOGIN_BASE = "https://login.microsoftonline.com"
@@ -103,6 +105,17 @@ export async function getAccessToken(
     credential.credentialKind === "spa" ||
     credential.credentialKind === "access-token"
   ) {
+    // For SPA credentials with resource_tokens, check for a resource-specific AT
+    if (credential.credentialKind === "spa" && resource !== DEFAULT_RESOURCE) {
+      const spaCred = credential as MicrosoftSpaCredential
+      if (spaCred.resource_tokens) {
+        const rt = resolveResourceToken(spaCred.resource_tokens, resource)
+        if (rt) {
+          const now = Math.floor(Date.now() / 1000)
+          if (rt.expires_at > now + 300) return rt.access_token
+        }
+      }
+    }
     const at = credential.access_token || (credential as { access_token?: string }).access_token
     if (at) return at
     throw new Error("No access_token on credential — SPA refresh required from browser")

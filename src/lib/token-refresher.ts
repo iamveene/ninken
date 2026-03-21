@@ -3,6 +3,11 @@ import { getProvider } from "./providers/registry"
 import { activateProfile } from "./token-sync"
 import type { StoredProfile } from "./providers/types"
 import { getActiveCredential } from "./providers/types"
+import {
+  detectSpaClientFromError,
+  isSpaClientId,
+  registerSpaClient,
+} from "./providers/spa-client-registry"
 
 const DEFAULT_INTERVAL = 45 * 60 * 1000 // 45 minutes
 const PREFS_KEY = "ninken_refresh_prefs"
@@ -92,6 +97,18 @@ async function refreshProfile(profile: StoredProfile): Promise<void> {
 
     // Detect SPA-bound tokens that need browser-side refresh
     if (errorMsg.includes("AADSTS9002327") || errorMsg.includes("SPA")) {
+      const discoveredId = detectSpaClientFromError(errorMsg)
+      if (discoveredId && !isSpaClientId(discoveredId)) {
+        registerSpaClient({
+          clientId: discoveredId,
+          name: `Discovered SPA Client (${discoveredId.slice(0, 8)})`,
+          origin: "unknown",
+          defaultResource: "https://graph.microsoft.com/.default",
+          knownResources: ["https://graph.microsoft.com"],
+          isFoci: false,
+          notes: "Auto-discovered from AADSTS9002327 error",
+        })
+      }
       emit({ type: "spa-required", profileId: profile.id, error: errorMsg })
       return
     }

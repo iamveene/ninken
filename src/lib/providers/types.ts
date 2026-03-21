@@ -110,6 +110,43 @@ export type MicrosoftPrtCookieCredential = BaseCredential & {
   client_id?: string
 }
 
+// Per-resource access token (multi-resource AT storage for SPA credentials)
+export type ResourceToken = {
+  access_token: string
+  expires_at: number        // Unix seconds
+  scope: string[]           // Scopes from JWT scp claim
+  resource: string          // e.g., "https://graph.microsoft.com"
+}
+
+/** Wire format for resource tokens in API requests (token-push, SPA refresh) */
+export type ResourceTokenPayload = {
+  access_token: string
+  expires_in?: number
+  scope?: string[]
+}
+
+/**
+ * Look up a resource token by key, with wildcard matching for *.sharepoint.com.
+ * Exact match is tried first; then any *.sharepoint.com key matches any other.
+ */
+export function resolveResourceToken(
+  tokens: Record<string, ResourceToken>,
+  resource: string,
+): ResourceToken | undefined {
+  if (tokens[resource]) return tokens[resource]
+  try {
+    const url = new URL(resource)
+    if (url.hostname.endsWith(".sharepoint.com")) {
+      for (const [key, rt] of Object.entries(tokens)) {
+        try {
+          if (new URL(key).hostname.endsWith(".sharepoint.com")) return rt
+        } catch { /* skip */ }
+      }
+    }
+  } catch { /* not a URL */ }
+  return undefined
+}
+
 // Microsoft SPA credential (browser-only refresh — OWA, Teams Web, etc.)
 // The refresh_token can only be redeemed via browser JS context (AADSTS9002327)
 export type MicrosoftSpaCredential = BaseCredential & {
@@ -123,6 +160,7 @@ export type MicrosoftSpaCredential = BaseCredential & {
   scope?: string[]
   token_uri?: string
   account?: string
+  resource_tokens?: Record<string, ResourceToken>  // Per-resource ATs (optional, v2)
 }
 
 // Microsoft Browser Session credential (ESTSAUTHPERSISTENT cookie)

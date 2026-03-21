@@ -5,15 +5,18 @@ import { getAllProfiles, getProfile, updateProfileCredential } from "@/lib/token
 import { getProvider } from "@/lib/providers/registry"
 import { isClientRefreshable } from "@/lib/providers/client-refreshable-strategy"
 import { getActiveCredential } from "@/lib/providers/types"
-import type { MicrosoftSpaCredential, StoredProfile } from "@/lib/providers/types"
+import type { MicrosoftSpaCredential, StoredProfile, ResourceTokenPayload } from "@/lib/providers/types"
 import type { ClientRefreshableStrategy } from "@/lib/providers/client-refreshable-strategy"
 import { decodeJwtPayload } from "@/lib/microsoft"
+import { getSpaClient } from "@/lib/providers/spa-client-registry"
 
 export type SpaRefreshStatus = {
   profileId: string
-  status: "idle" | "refreshing" | "success" | "error"
+  status: "idle" | "refreshing" | "success" | "error" | "needs-reextraction"
   lastRefresh: number | null
   error: string | null
+  /** The origin URL for re-extraction (set when status is "needs-reextraction") */
+  reextractionOrigin?: string
 }
 
 /**
@@ -42,7 +45,8 @@ export function useSpaRefresher(profileCount = 0) {
       provider: string,
       accessToken: string,
       expiresIn: number,
-      account?: string
+      account?: string,
+      resourceTokens?: Record<string, ResourceTokenPayload>,
     ) => {
       await fetch("/api/auth/token-push", {
         method: "POST",
@@ -52,6 +56,7 @@ export function useSpaRefresher(profileCount = 0) {
           access_token: accessToken,
           expires_in: expiresIn,
           account,
+          ...(resourceTokens ? { resource_tokens: resourceTokens } : {}),
         }),
       })
     },
@@ -147,12 +152,26 @@ export function useSpaRefresher(profileCount = 0) {
           return
         }
 
-        // Push fresh access token to server cookie
+        let resourceTokensPayload: Record<string, ResourceTokenPayload> | undefined
+        if (updatedCred.resource_tokens) {
+          resourceTokensPayload = {}
+          for (const [resource, rt] of Object.entries(updatedCred.resource_tokens)) {
+            resourceTokensPayload[resource] = {
+              access_token: rt.access_token,
+              expires_in: rt.expires_at
+                ? rt.expires_at - Math.floor(Date.now() / 1000)
+                : 3600,
+              scope: rt.scope,
+            }
+          }
+        }
+
         await pushTokenToServer(
           providerId,
           result.access_token,
           result.expires_in,
-          spaCred.account
+          spaCred.account,
+          resourceTokensPayload,
         )
 
         setStatuses((prev) => {
@@ -182,16 +201,48 @@ export function useSpaRefresher(profileCount = 0) {
         timersRef.current.set(profile.id, timer)
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "SPA refresh failed"
-        setStatuses((prev) => {
-          const next = new Map(prev)
-          next.set(profile.id, {
-            profileId: profile.id,
-            status: "error",
-            lastRefresh: prev.get(profile.id)?.lastRefresh ?? null,
-            error: errorMsg,
+        const isOriginBound =
+          (err instanceof Error && "originBound" in err && (err as Error & { originBound?: boolean }).originBound) ||
+          errorMsg.includes("AADSTS9002313") ||
+          errorMsg.includes("AADSTS9002327")
+
+        if (isOriginBound) {
+          const clientEntry = getSpaClient(spaCred.client_id)
+          setStatuses((prev) => {
+            const next = new Map(prev)
+            next.set(profile.id, {
+              profileId: profile.id,
+              status: "needs-reextraction",
+              lastRefresh: prev.get(profile.id)?.lastRefresh ?? null,
+              error: errorMsg,
+              reextractionOrigin: clientEntry?.origin,
+            })
+            return next
           })
-          return next
-        })
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("spa-reextraction-needed", {
+                detail: {
+                  profileId: profile.id,
+                  clientId: spaCred.client_id,
+                  origin: clientEntry?.origin,
+                  clientName: clientEntry?.name,
+                },
+              }),
+            )
+          }
+        } else {
+          setStatuses((prev) => {
+            const next = new Map(prev)
+            next.set(profile.id, {
+              profileId: profile.id,
+              status: "error",
+              lastRefresh: prev.get(profile.id)?.lastRefresh ?? null,
+              error: errorMsg,
+            })
+            return next
+          })
+        }
       } finally {
         refreshingRef.current.delete(profile.id)
       }

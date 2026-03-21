@@ -1,9 +1,16 @@
 import type { ProviderId, BaseCredential } from "@/lib/providers/types"
 
+type StoredResourceToken = {
+  access_token: string
+  expires_at: number
+  scope: string[]
+}
+
 type SessionEntry = {
   provider: ProviderId
   credential: BaseCredential
   expiresAt: number
+  resourceTokens?: Record<string, StoredResourceToken>
 }
 
 const store = new Map<string, SessionEntry>()
@@ -58,6 +65,60 @@ export function getSession(
  */
 export function deleteSession(sessionId: string): void {
   store.delete(sessionId)
+}
+
+/**
+ * Store per-resource access tokens for a session.
+ */
+export function storeResourceTokens(
+  sessionId: string,
+  tokens: Record<string, StoredResourceToken>,
+): void {
+  const entry = store.get(sessionId)
+  if (!entry) return
+  entry.resourceTokens = tokens
+}
+
+/**
+ * Get an access token for a specific resource from a session.
+ * Returns null if not found or expired.
+ */
+export function getResourceToken(
+  sessionId: string,
+  resource: string,
+): string | null {
+  const entry = store.get(sessionId)
+  if (!entry?.resourceTokens) return null
+
+  // Exact match first
+  const rt = entry.resourceTokens[resource]
+  if (rt) {
+    const now = Math.floor(Date.now() / 1000)
+    if (rt.expires_at > now + 300) return rt.access_token
+    return null
+  }
+
+  // Wildcard: *.sharepoint.com
+  try {
+    const url = new URL(resource)
+    if (url.hostname.endsWith(".sharepoint.com")) {
+      for (const [key, token] of Object.entries(entry.resourceTokens)) {
+        try {
+          const keyUrl = new URL(key)
+          if (keyUrl.hostname.endsWith(".sharepoint.com")) {
+            const now = Math.floor(Date.now() / 1000)
+            if (token.expires_at > now + 300) return token.access_token
+          }
+        } catch {
+          // Skip
+        }
+      }
+    }
+  } catch {
+    // Not a URL
+  }
+
+  return null
 }
 
 /** Run a full sweep only if enough time has elapsed since the last one. */

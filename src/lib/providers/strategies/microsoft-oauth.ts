@@ -4,7 +4,7 @@ import {
   getAccessToken as msGetAccessToken,
   decodeJwtPayload,
 } from "../../microsoft"
-import { isSpaClientId } from "./microsoft-spa"
+import { isSpaClientId } from "../spa-client-registry"
 
 // Teams FOCI client ID (public client, no secret needed)
 const TEAMS_FOCI_CLIENT_ID = "1fec8e78-bce4-4aaf-ab1b-5451cc387264"
