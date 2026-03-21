@@ -24,6 +24,7 @@ import {
   migrateFromCookies,
 } from "@/lib/token-sync"
 import { startTokenRefresher, stopTokenRefresher } from "@/lib/token-refresher"
+import { triggerFociAutoPivot } from "@/components/providers/foci-pivot-toast"
 
 type ProviderContextValue = {
   provider: ProviderId
@@ -150,6 +151,14 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
 
       await activateProfile(newProfile.id)
       await refreshProfiles()
+
+      // Auto-trigger FOCI pivot probe for Microsoft FOCI credentials
+      if (
+        result.credential.provider === "microsoft" &&
+        result.credential.credentialKind === "foci"
+      ) {
+        triggerFociAutoPivot()
+      }
 
       return { success: true }
     },
