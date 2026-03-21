@@ -85,5 +85,10 @@ export async function POST(request: Request) {
     pushed: true,
     provider: providerId,
     expiresIn: exp ? exp - now : expires_in || 3600,
+    // Signal to the client whether a matching IndexedDB profile should exist.
+    // token-push is cookie-only — if no SPA profile exists in IndexedDB,
+    // the next syncActiveProfile() call will overwrite this cookie with a
+    // different profile's credential (session hijack — BUG-1).
+    warning: "token-push is cookie-only; ensure a matching SPA profile exists in IndexedDB",
   })
 }

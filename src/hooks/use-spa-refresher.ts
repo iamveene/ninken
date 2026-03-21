@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useCallback, useState } from "react"
-import { getAllProfiles, updateProfileCredential } from "@/lib/token-store"
+import { getAllProfiles, getProfile, updateProfileCredential } from "@/lib/token-store"
 import { getProvider } from "@/lib/providers/registry"
 import { isClientRefreshable } from "@/lib/providers/client-refreshable-strategy"
 import { getActiveCredential } from "@/lib/providers/types"
@@ -67,6 +67,18 @@ export function useSpaRefresher() {
       const credential = getActiveCredential(profile)
       if (credential.credentialKind !== "spa") return
 
+      // BUG-1 guard: re-verify the profile still exists in IndexedDB before
+      // starting the refresh. The scan may have found this profile, but it
+      // could have been deleted between scan time and now.
+      const freshProfile = await getProfile(profile.id)
+      if (!freshProfile) {
+        console.warn(
+          "[SPA Refresher] Profile", profile.id.slice(0, 8),
+          "no longer exists — skipping refresh"
+        )
+        return
+      }
+
       // Find the SPA strategy
       const strategies = (provider as { strategies?: unknown[] }).strategies
       // Access strategy via the provider's getAccessToken delegation pattern
@@ -120,6 +132,20 @@ export function useSpaRefresher() {
 
         // Write rotated refresh token back to IndexedDB
         await updateProfileCredential(profile.id, updatedCred)
+
+        // BUG-1 guard: verify the profile still exists in IndexedDB before
+        // pushing the token to the server cookie. If the profile was deleted
+        // between the refresh start and now, pushing would create an orphaned
+        // cookie that syncActiveProfile() would overwrite with a different
+        // profile's credential (session hijack).
+        const profileCheck = await getProfile(profile.id)
+        if (!profileCheck) {
+          console.warn(
+            "[SPA Refresher] Profile", profile.id.slice(0, 8),
+            "no longer exists in IndexedDB — skipping token push"
+          )
+          return
+        }
 
         // Push fresh access token to server cookie
         await pushTokenToServer(
