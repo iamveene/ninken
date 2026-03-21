@@ -379,6 +379,7 @@ function OutlookPage() {
                   title: selectedMessage.subject || "(No subject)",
                   subtitle: selectedMessage.from?.emailAddress?.address || selectedMessage.from?.emailAddress?.name || "",
                   sourceId: selectedMessage.id,
+                  downloadUrl: `/api/microsoft/mail/messages/${selectedMessage.id}/raw`,
                   mimeType: "message/rfc822",
                   metadata: {
                     from: selectedMessage.from,
