@@ -19,6 +19,7 @@ import {
   addTokenToProfile as storeAddToken,
   setActiveProvider as storeSetActiveProvider,
   getActiveProfileId,
+  updateProfileCredential as storeUpdateCredential,
 } from "@/lib/token-store"
 import {
   activateProfile,
@@ -164,13 +165,35 @@ export function ProviderContextProvider({ children }: { children: ReactNode }) {
       const resolved = await resolveCredential(raw)
       if (!resolved.success) return resolved
 
-      const newProfile = await storeAddProfile(
-        resolved.provider.id,
-        resolved.credential,
-        resolved.email
-      )
+      // BUG-10: Check for existing profile with same email + provider to avoid duplicates
+      let profileId: string
+      if (resolved.email) {
+        const existingProfiles = await getAllProfiles()
+        const existing = existingProfiles.find(
+          (p) => p.email === resolved.email && p.provider === resolved.provider.id
+        )
+        if (existing) {
+          // Update the existing profile's credential instead of creating a new one
+          await storeUpdateCredential(existing.id, resolved.credential)
+          profileId = existing.id
+        } else {
+          const newProfile = await storeAddProfile(
+            resolved.provider.id,
+            resolved.credential,
+            resolved.email
+          )
+          profileId = newProfile.id
+        }
+      } else {
+        const newProfile = await storeAddProfile(
+          resolved.provider.id,
+          resolved.credential,
+          resolved.email
+        )
+        profileId = newProfile.id
+      }
 
-      await activateProfile(newProfile.id)
+      await activateProfile(profileId)
       await refreshProfiles()
 
       // Auto-trigger FOCI pivot probe for Microsoft FOCI credentials

@@ -11,12 +11,15 @@ import {
 import { detectProvider } from "./providers"
 import type { StoredProfile } from "./providers/types"
 import { getActiveCredential } from "./providers/types"
+import { cacheClear } from "./cache"
 
 /**
  * Activate a profile: read from IndexedDB, POST credential to server
  * so the httpOnly cookie is set for API route access.
  */
 export async function activateProfile(profileId: string): Promise<void> {
+  const previousActiveId = getActiveProfileId()
+
   const profile = await getProfile(profileId)
   if (!profile) throw new Error("Profile not found")
 
@@ -35,6 +38,11 @@ export async function activateProfile(profileId: string): Promise<void> {
   if (!res.ok) {
     const data = await res.json().catch(() => ({ error: "Failed to activate" }))
     throw new Error(data.error || "Failed to activate profile")
+  }
+
+  // Clear stale cache when switching to a different profile
+  if (previousActiveId && previousActiveId !== profileId) {
+    await cacheClear()
   }
 
   setActiveProfileId(profileId)
