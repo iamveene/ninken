@@ -23,14 +23,15 @@ export async function GET() {
           const buckets = bucketsRes.data.items ?? []
           const bucketCount = buckets.length
 
-          // Probe how many buckets have visible objects (sample up to 5 to limit latency)
+          // Probe how many buckets have visible objects
           let withObjectsCount = 0
-          const toProbe = buckets.slice(0, 5)
           const probes = await Promise.allSettled(
-            toProbe.map(async (b) => {
+            buckets.map(async (b) => {
               try {
-                const objRes = await storage.objects.list({ bucket: b.name!, maxResults: 1 })
-                return (objRes.data.items?.length ?? 0) > 0
+                const objRes = await storage.objects.list({ bucket: b.name!, maxResults: 1, delimiter: "/" })
+                const hasItems = (objRes.data.items?.length ?? 0) > 0
+                const hasPrefixes = (objRes.data.prefixes?.length ?? 0) > 0
+                return hasItems || hasPrefixes
               } catch {
                 return false
               }
