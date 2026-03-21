@@ -46,6 +46,7 @@ export function getFolderConfig() {
 type ObjectCardProps = {
   object?: StorageObject
   prefix?: string
+  bucketName?: string
   view: "grid" | "list"
   selected?: boolean
   disabled?: boolean
@@ -57,6 +58,7 @@ type ObjectCardProps = {
 export function ObjectCard({
   object,
   prefix,
+  bucketName,
   view,
   selected,
   disabled,
@@ -86,6 +88,20 @@ export function ObjectCard({
       onClick={onClick}
       onDoubleClick={onDoubleClick}
     >
+      {isFolder && bucketName && (
+        <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+          <CollectButton
+            variant="icon-xs"
+            params={{
+              type: "folder",
+              source: "gcs",
+              title: displayName,
+              sourceId: `${bucketName}/${prefix}`,
+              metadata: { bucket: bucketName, prefix },
+            }}
+          />
+        </div>
+      )}
       {!isFolder && (
         <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           {object && (
