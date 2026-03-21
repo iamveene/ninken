@@ -11,6 +11,7 @@ export type GcpProject = {
   state?: string
   accessible?: boolean
   bucketCount?: number
+  withObjectsCount?: number
 }
 
 export function useProjects() {

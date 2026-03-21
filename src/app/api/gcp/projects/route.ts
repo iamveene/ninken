@@ -20,10 +20,29 @@ export async function GET() {
         if (!projectId) return { project, accessible: false, bucketCount: 0 }
         try {
           const bucketsRes = await storage.buckets.list({ project: projectId })
-          const bucketCount = bucketsRes.data.items?.length ?? 0
-          return { project, accessible: true, bucketCount }
+          const buckets = bucketsRes.data.items ?? []
+          const bucketCount = buckets.length
+
+          // Probe how many buckets have visible objects (sample up to 5 to limit latency)
+          let withObjectsCount = 0
+          const toProbe = buckets.slice(0, 5)
+          const probes = await Promise.allSettled(
+            toProbe.map(async (b) => {
+              try {
+                const objRes = await storage.objects.list({ bucket: b.name!, maxResults: 1 })
+                return (objRes.data.items?.length ?? 0) > 0
+              } catch {
+                return false
+              }
+            })
+          )
+          for (const p of probes) {
+            if (p.status === "fulfilled" && p.value) withObjectsCount++
+          }
+
+          return { project, accessible: true, bucketCount, withObjectsCount }
         } catch {
-          return { project, accessible: false, bucketCount: 0 }
+          return { project, accessible: false, bucketCount: 0, withObjectsCount: 0 }
         }
       })
     )
@@ -31,7 +50,7 @@ export async function GET() {
     const enriched = accessChecks
       .map((result) => {
         if (result.status !== "fulfilled" || !result.value) return null
-        const { project, accessible, bucketCount } = result.value
+        const { project, accessible, bucketCount, withObjectsCount } = result.value
         return {
           projectId: project.projectId,
           name: project.name,
@@ -39,15 +58,23 @@ export async function GET() {
           state: project.state,
           accessible,
           bucketCount,
+          withObjectsCount,
         }
       })
       .filter(Boolean)
 
-    // Sort: accessible with buckets first, then accessible empty, then inaccessible
+    // Sort: projects with visible data first, then accessible but empty, then inaccessible
     enriched.sort((a, b) => {
       if (!a || !b) return 0
       if (a.accessible && !b.accessible) return -1
       if (!a.accessible && b.accessible) return 1
+      // Within accessible: projects with buckets containing objects first
+      const aData = a.withObjectsCount ?? 0
+      const bData = b.withObjectsCount ?? 0
+      if (aData > 0 && bData === 0) return -1
+      if (aData === 0 && bData > 0) return 1
+      if (aData !== bData) return bData - aData
+      // Then by bucket count, then alphabetical
       if (a.bucketCount > 0 && b.bucketCount === 0) return -1
       if (a.bucketCount === 0 && b.bucketCount > 0) return 1
       return (a.displayName || a.projectId || "").localeCompare(b.displayName || b.projectId || "")
