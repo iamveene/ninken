@@ -106,7 +106,7 @@ export function AppSidebar() {
     const all = await getAllProfiles()
     for (const p of all) await removeProfile(p.id)
     await fetch("/api/auth", { method: "DELETE" })
-    router.push("/?add=true")
+    window.location.href = "/?add=true"
   }
 
   // Determine what to show in sidebar based on mode
@@ -365,7 +365,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Home"
-              render={<Link href="/?add=true" />}
+              render={<a href="/?add=true" />}
             >
               <Home />
               <span>Home</span>

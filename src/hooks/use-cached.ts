@@ -27,11 +27,17 @@ export function useCachedQuery<T>(
   const [error, setError] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
   const mountedRef = useRef(true)
+  const dataRef = useRef<T | null>(null)
 
   useEffect(() => {
     mountedRef.current = true
     return () => { mountedRef.current = false }
   }, [])
+
+  // Keep dataRef in sync so doFetch can read it without depending on data
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
 
   const doFetch = useCallback(async (ignoreCache = false) => {
     if (!key || !enabled) {
@@ -68,7 +74,7 @@ export function useCachedQuery<T>(
       await cacheSet(key, result, ttlMs)
     } catch (err) {
       if (!mountedRef.current) return
-      if (data !== null) {
+      if (dataRef.current !== null) {
         setStale(true)
       } else {
         setError(err instanceof Error ? err.message : "Unknown error")
@@ -76,7 +82,7 @@ export function useCachedQuery<T>(
     } finally {
       if (mountedRef.current) setLoading(false)
     }
-  }, [key, enabled, fetcher, ttlMs, staleWhileRevalidate, data])
+  }, [key, enabled, fetcher, ttlMs, staleWhileRevalidate])
 
   useEffect(() => {
     setLoading(true)

@@ -283,11 +283,17 @@ export function useSpaRefresher(profileCount = 0) {
     [pushTokenToServer]
   )
 
-  // Scan profiles and start refresh for SPA credentials
+  // Scan profiles and start refresh for SPA credentials.
+  // Only refreshes profiles whose active provider is "microsoft" to avoid
+  // CORS noise from attempting MS token refresh on non-Microsoft pages.
   const scan = useCallback(async () => {
     try {
       const profiles = await getAllProfiles()
       for (const profile of profiles) {
+        // Skip profiles that aren't actively using Microsoft provider
+        const activeProvider = profile.activeProvider ?? profile.provider
+        if (activeProvider !== "microsoft") continue
+
         const credential = getActiveCredential(profile)
         if (credential.credentialKind !== "spa") continue
 

@@ -26,11 +26,16 @@ import {
   Globe,
   Archive,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
+
+const PAGE_SIZE = 50
 
 export default function GitLabProjectsPage() {
   const [search, setSearch] = useState("")
   const [visibilityFilter, setVisibilityFilter] = useState<string>("all")
+  const [page, setPage] = useState(0)
   const { projects: rawProjects, loading, error, refetch } = useGitLabProjects()
 
   // Deduplicate projects by ID (GitLab can return same project via multiple group memberships)
@@ -46,6 +51,21 @@ export default function GitLabProjectsPage() {
       visibilityFilter === "all" || p.visibility === visibilityFilter
     return matchesSearch && matchesVisibility
   })
+
+  // Client-side pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const paged = filtered.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE)
+
+  // Reset to page 0 when filters change
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    setPage(0)
+  }
+  const handleVisibility = (value: string) => {
+    setVisibilityFilter(value)
+    setPage(0)
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,7 +94,7 @@ export default function GitLabProjectsPage() {
           <Input
             placeholder="Search projects..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-8 h-8 text-xs"
           />
         </div>
@@ -85,7 +105,7 @@ export default function GitLabProjectsPage() {
               variant={visibilityFilter === v ? "default" : "outline"}
               size="sm"
               className="text-xs h-8"
-              onClick={() => setVisibilityFilter(v)}
+              onClick={() => handleVisibility(v)}
             >
               {v.charAt(0).toUpperCase() + v.slice(1)}
             </Button>
@@ -123,7 +143,7 @@ export default function GitLabProjectsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((project) => (
+              paged.map((project) => (
                 <TableRow key={`project-${project.id}-${project.pathWithNamespace}`}>
                   <TableCell className="max-w-[300px]">
                     <div className="flex flex-col gap-0.5 min-w-0">
@@ -230,6 +250,35 @@ export default function GitLabProjectsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2">
+          <span className="text-xs text-muted-foreground">
+            Page {safePage + 1} of {totalPages} ({filtered.length} projects)
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={safePage <= 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={safePage >= totalPages - 1}
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
