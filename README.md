@@ -30,18 +30,22 @@ Drop a stolen token and instantly see the world through the victim's eyes:
 - **FOCI token pivoting** — exchange a Microsoft refresh token across Teams, Office, Outlook, OneDrive to discover hidden scopes
 - **Resource probing** — test if the credential can reach Azure Resource Manager, Key Vault, Storage, DevOps
 - **Cross-tenant discovery** — enumerate federated tenants and trust relationships
-- **Privilege escalation paths** — AWS IAM privesc analysis, conditional access policy gaps
+- **Privilege escalation paths** — AWS IAM privesc analysis, per-provider risk dashboards with scored attack paths
+- **Conditional Access bypass analysis** — full scoring engine that identifies CA policy gaps, exclusion abuse, legacy protocol bypasses, trusted location pivots, and report-only mode exploitation
+- **Adversarial graphs** — multi-provider operator graph showing all compromised accounts and their service access, attack path visualization, and cross-provider entity mapping
 
-## Secret Scanning
+## Secret Scanning & Intelligence Queries
 
-Hunt for credentials, API keys, and sensitive data across every service in a single query:
+Hunt for credentials, API keys, and sensitive data across every service:
 
-- **37+ built-in queries** — passwords in email/drive, private keys, .env files, database connection strings, AWS AKIA keys, bearer tokens, SSH keys
+- **41 detection patterns** — regex-based scanning for AWS keys, GCP service accounts, Azure secrets, private keys, .env files, database connection strings, bearer tokens, SSH keys, webhooks, and more
+- **38 pre-built intelligence queries** — passwords in email/drive, financial data, VPN configs, infrastructure diagrams, onboarding docs, security reports — each with severity rating and red team context
 - **Multi-service search** — one query searches Gmail + Drive + OneDrive + Outlook simultaneously
-- **Severity-rated** — Critical / High / Medium / Low with red team context
-- **Category filters** — Credentials, API Keys, Infrastructure, PII, Internal Access, Security, Reconnaissance, Exfiltration Indicators
+- **Custom patterns** — define and save your own detection patterns with IndexedDB persistence
+- **Category filters** — Cloud Keys, Tokens, Private Keys, Credentials, Connection Strings, PII, Webhooks
+- **AI extraction** — toggle AI extraction to parse raw text matches into clean secret values
 
-Available under **Audit → Query** for each provider.
+Available under **Audit → Hunt** for each provider.
 
 ## NinLoader — Token Extraction CLI
 
@@ -139,13 +143,13 @@ Sent github/gh_cli [200]
 
 | Provider | Operate | Audit | Collect | Status |
 |----------|---------|-------|---------|--------|
-| Google Workspace | Gmail, Drive, Calendar, Chat, Buckets | Users, Groups, Roles, Apps, Delegation, Policies, Query | Email, files, attachments | Active |
-| Microsoft 365 | Outlook, OneDrive, Teams, Entra ID, SharePoint | Users, Groups, Roles, Apps, Service Principals, Sign-ins, CA Policies, FOCI Pivot, Resource Pivot | Email, files | Active |
-| GitHub | Repos, Orgs, Gists, Actions | Members, Branch Protections, Webhooks, Deploy Keys, Secrets | Repo data | Active |
-| GitLab | Projects, Groups, Pipelines, Snippets | Members, Deploy Tokens, Runners, Variables, Webhooks | Project data | Active |
+| Google Workspace | Gmail, Drive, Calendar, Chat, Buckets, Directory | Users, Groups, Roles, Apps, Delegation, Policies, Devices, Marketplace, Access Policies, Contacts, Admin Reports, Alert Center, Drive Activity, Hunt, Risk Dashboard | Email, files, attachments | Active |
+| Microsoft 365 | Outlook, OneDrive, Teams, Entra ID, SharePoint | Users, Groups, Roles, Apps, Service Principals, Sign-ins, CA Policies, CA Bypass Analysis, Risky Users, Cross-Tenant, Auth Methods, FOCI Pivot, Resource Pivot, Hunt, Risk Dashboard | Email, files | Active |
+| GitHub | Repos, Orgs, Gists, Actions | Members, Branch Protections, Webhooks, Deploy Keys, Secrets, Actions Security, Repo Access, Apps, Hunt, Risk Dashboard | Repo data | Active |
+| GitLab | Projects, Groups, Pipelines, Snippets | Members, Deploy Tokens, Runners, Variables, Webhooks, Hunt, Risk Dashboard | Project data | Active |
 | Slack | Channels, Users, Files | — | Messages, files | Active |
-| AWS | IAM, EC2, S3, Lambda, CloudTrail, Secrets Manager | IAM Policies, Access Keys, Privesc, Cross-Account, Public S3, Lambda URLs | — | Test |
-| GCP | Firestore, RTDB, Storage, Compute, Vertex AI | Public Buckets, Firewall Rules, API Keys, Risk Dashboard | — | Test |
+| AWS | IAM, EC2, S3, Lambda, CloudTrail, Secrets Manager | IAM Policies, Access Keys, Privesc, Cross-Account, Public S3, Lambda URLs, CloudTrail Gaps, Security Groups, Secrets Rotation | — | Active |
+| GCP | Firestore, RTDB, Storage, Compute, Vertex AI | Public Buckets, Firewall Rules, API Keys, Risk Dashboard, Hunt | — | Active |
 
 ## OPSEC Guidance
 
@@ -215,10 +219,10 @@ Available under **Settings** (gear icon in the header).
 ## Modes
 
 - **Operate** — Browse and interact with cloud service data (read-only)
-- **Explore** — Enumerate permissions, configurations, and security posture
-- **Collect** — Queue and download evidence (email, files, attachments)
-- **Studio** — Token analyzer, FOCI converter, scope calculator, collection reference
-- **OPSEC** — Stealth calculator and detection risk scoring for API operations
+- **Explore** — Enumerate permissions, configurations, and security posture. Includes adversarial graphs (operator view, attack paths, cross-provider entity mapping) and per-provider risk dashboards
+- **Collect** — Queue and download evidence (email, files, attachments) with JSZip bundling
+- **Studio** — Token analyzer, FOCI converter, scope calculator, MSAL extractor, service map, extraction techniques database, collection reference, API explorer (raw API proxy with request builder), offline DB export (JSON/CSV snapshots)
+- **OPSEC** — Stealth calculator and 56-operation detection risk catalog across all providers
 
 ## Install
 
@@ -262,22 +266,27 @@ npm run dev
 src/
 ├── app/
 │   ├── (google)/          # Google Workspace (23 pages)
-│   ├── (microsoft)/       # Microsoft 365 (19 pages)
-│   ├── (github)/          # GitHub (16 pages)
-│   ├── (gitlab)/          # GitLab (14 pages)
+│   ├── (microsoft)/       # Microsoft 365 (24 pages)
+│   ├── (github)/          # GitHub (18 pages)
+│   ├── (gitlab)/          # GitLab (15 pages)
 │   ├── (slack)/           # Slack (4 pages)
-│   ├── (aws)/             # AWS (14 pages)
-│   ├── (gcp)/             # GCP (6 pages)
+│   ├── (aws)/             # AWS (18 pages)
+│   ├── (gcp)/             # GCP (11 pages)
+│   ├── (explore)/         # Adversarial graphs, attack paths
 │   ├── (studio)/          # Studio tools (7 pages)
 │   ├── (vault)/           # Vault — credential inventory
+│   ├── alerts/            # Alert management
+│   ├── collection/        # Evidence collection queue
 │   ├── settings/          # Settings page (AI, MCP, About)
-│   ├── api/               # 220+ API routes
+│   ├── api/               # 195+ API routes
 │   └── page.tsx           # Landing / credential import
 ├── components/            # UI components
 ├── hooks/                 # React hooks
 └── lib/
-    ├── providers/         # Service provider abstractions (8 providers)
+    ├── providers/         # Service provider abstractions (7 providers)
+    ├── audit/             # Risk scoring, attack path builders, CA bypass analysis
     ├── llm/               # Multi-vendor LLM adapters (Anthropic, OpenAI, Gemini, Ollama)
+    ├── graph/             # Adversarial graph types and layout
     ├── vault-store.ts     # Encrypted Vault IndexedDB
     ├── settings-store.ts  # Settings IndexedDB
     ├── token-store.ts     # Encrypted credential storage
@@ -320,13 +329,13 @@ ninloader/
 
 1. **Import credentials** — drag-and-drop, paste JSON, or use NinLoader CLI to extract tokens from a compromised host
 2. **Operate** — browse email, files, calendars, repos, and channels as the target user
-3. **Secret Search** — scan across all services for exposed credentials, API keys, and private keys using 41+ detection patterns
+3. **Hunt** — scan across all services for exposed credentials using 41 detection patterns, plus run 38 pre-built intelligence queries
 4. **Audit** — enumerate users, groups, roles, permissions, delegations, and security configurations
-5. **Query** — run 37+ pre-built intelligence queries across Gmail, Drive, OneDrive, and Outlook simultaneously
+5. **Risk Assessment** — per-provider risk dashboards with scored attack paths, CA bypass analysis, and adversarial graphs
 6. **OPSEC** — assess detection risk before executing with the stealth calculator and 56-operation catalog
 7. **Collect** — queue and download evidence (emails, attachments, files) for offline analysis
 8. **AI Partner** — ask natural language questions about the target environment with Live/Collection search modes
-9. **Studio** — analyze tokens, calculate scopes, convert FOCI tokens, download NinLoader
+9. **Studio** — analyze tokens, calculate scopes, convert FOCI tokens, explore APIs, export offline snapshots
 
 ## Security
 
