@@ -298,20 +298,23 @@ mcp-server/
 └── package.json           # Standalone dependencies (@modelcontextprotocol/sdk)
 
 ninloader/
-├── ninloader.py           # Python CLI entry point
-├── NinLoader.ps1          # PowerShell version (Windows)
-└── ninloader/
-    ├── collectors/        # 17 service-specific extractors
-    │   ├── aws/           # credentials, env, sso_cache
-    │   ├── google/        # adc, gcloud, gws_cli, browser_hijack, browser_cookies
-    │   ├── github/        # gh_cli, git_credentials
-    │   ├── microsoft/     # foci_device_code, browser_hijack, browser_cookies, teams_desktop
-    │   └── slack/         # desktop, browser_cookies
-    └── core/
-        ├── cdp.py         # Chrome DevTools Protocol client
-        ├── chromium_decrypt.py  # Cross-platform cookie decryption
-        ├── output.py      # stdout/file/clipboard/ninken handlers
-        └── validator.py   # Token validation
+├── python/
+│   ├── ninloader.py       # Python CLI entry point
+│   ├── pyproject.toml     # Package metadata
+│   └── ninloader/
+│       ├── collectors/    # 17 service-specific extractors
+│       │   ├── aws/       # credentials, env, sso_cache
+│       │   ├── google/    # adc, gcloud, gws_cli, browser_hijack, browser_cookies
+│       │   ├── github/    # gh_cli, git_credentials
+│       │   ├── microsoft/ # foci_device_code, browser_hijack, browser_cookies, teams_desktop
+│       │   └── slack/     # desktop, browser_cookies
+│       └── core/
+│           ├── cdp.py     # Chrome DevTools Protocol client
+│           ├── chromium_decrypt.py  # Cross-platform cookie decryption
+│           ├── output.py  # stdout/file/clipboard/ninken handlers
+│           └── validator.py  # Token validation
+└── powershell/
+    └── NinLoader.ps1      # PowerShell version (Windows)
 ```
 
 ## Adding a Provider

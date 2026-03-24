@@ -41,12 +41,13 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === "python") {
-    // Build a tar.gz of the ninloader/ directory
+    // Build a tar.gz of the ninloader/python/ directory
     // Include: ninloader.py, pyproject.toml, ninloader/ subpackage
-    // Exclude: __pycache__, *.pyc, .egg-info, tokens/, NinLoader.ps1
+    // Exclude: __pycache__, *.pyc, .egg-info, tokens/
+    const pythonDir = join(ninloaderDir, "python")
     const exclude =
-      /__pycache__|\.pyc$|\.egg-info|\/tokens\/|\/tokens$|\.ps1$/
-    const files = collectFiles(ninloaderDir, ninloaderDir, exclude)
+      /__pycache__|\.pyc$|\.egg-info|\/tokens\/|\/tokens$/
+    const files = collectFiles(pythonDir, pythonDir, exclude)
 
     if (files.length === 0) {
       return Response.json(
@@ -55,18 +56,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Use tar command to create the archive — reliable and handles directory structure
+    // Use tar command — transforms python/ root to ninloader/ for clean extraction
     const excludeArgs = [
       "--exclude=__pycache__",
       "--exclude=*.pyc",
       "--exclude=*.egg-info",
       "--exclude=tokens",
-      "--exclude=NinLoader.ps1",
     ].join(" ")
 
     try {
       const tarBuffer = execSync(
-        `tar czf - ${excludeArgs} -C "${join(ninloaderDir, "..")}" ninloader`,
+        `tar czf - ${excludeArgs} -s '/^python/ninloader/' -C "${ninloaderDir}" python`,
         { maxBuffer: 50 * 1024 * 1024 }
       )
 
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (type === "powershell") {
-    const psPath = join(ninloaderDir, "NinLoader.ps1")
+    const psPath = join(ninloaderDir, "powershell", "NinLoader.ps1")
     if (!existsSync(psPath)) {
       return Response.json(
         { error: "NinLoader.ps1 not found" },
