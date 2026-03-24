@@ -49,14 +49,19 @@ Available under **Audit → Hunt** for each provider.
 
 ## NinLoader — Token Extraction CLI
 
-NinLoader is a cross-platform credential collector that discovers and extracts cloud service tokens from compromised hosts. It ships as both Python and PowerShell — zero external dependencies for core features.
+NinLoader is a cross-platform credential collector that discovers and extracts cloud service tokens from compromised hosts. It ships as **Go** (single static binary), **Python**, and **PowerShell** — zero external dependencies for core features.
 
 ### Quick Start
 
 ```bash
-cd ninloader
-python3 ninloader.py discover        # Scan for token sources
-python3 ninloader.py collect          # Extract all available tokens
+# Go binary (recommended — single file, no runtime dependencies)
+./ninloader discover                 # Scan for token sources
+./ninloader collect                  # Extract all available tokens
+
+# Python (if no Go binary available)
+cd ninloader/python
+python3 ninloader.py discover
+python3 ninloader.py collect
 ```
 
 ### Discover token sources
@@ -125,9 +130,12 @@ Sent github/gh_cli [200]
 | Microsoft | `teams_desktop` | All | 5 | Teams LevelDB cache |
 | Slack | `desktop` | All | 5 | Slack LevelDB xoxc tokens |
 | Slack | `browser_cookies` | Win/Linux | 5 | Chrome d_cookie decrypt |
+| Slack | `combined` | All | 5 | xoxc + d_cookie correlation |
 | AWS | `credentials` | All | 5 | ~/.aws/credentials |
 | AWS | `env` | All | 5 | Environment variables |
 | AWS | `sso_cache` | All | 5 | AWS SSO cache |
+| GitLab | `pat` | All | 5 | glab config, env, Keychain, .netrc |
+| Chrome | `cdp_cookies` | All | 4 | CDP Network.getAllCookies — universal decrypt bypass |
 
 ### OPSEC Notes
 
@@ -298,6 +306,19 @@ mcp-server/
 └── package.json           # Standalone dependencies (@modelcontextprotocol/sdk)
 
 ninloader/
+├── go/                    # Go binary (recommended — single static file, 10MB)
+│   ├── main.go            # Entry point
+│   ├── cmd/               # CLI layer (cobra: discover, collect, validate, refresh)
+│   ├── collectors/        # 21 collectors across 7 services
+│   │   ├── aws/           # credentials, env, sso_cache
+│   │   ├── google/        # adc, gcloud, gws_cli, browser_cookies, http_oauth
+│   │   ├── github/        # gh_cli, git_credentials
+│   │   ├── microsoft/     # foci_device_code, browser_hijack, browser_cookies, teams_desktop
+│   │   ├── slack/         # desktop, browser_cookies, combined
+│   │   ├── gitlab/        # pat (glab config, env, Keychain, .netrc)
+│   │   └── chrome/        # cdp_cookies (universal decrypt bypass)
+│   ├── internal/          # Core: types, registry, CDP, chromium decrypt, platform
+│   └── Makefile           # Cross-compile: darwin/linux/windows × amd64/arm64
 ├── python/
 │   ├── ninloader.py       # Python CLI entry point
 │   ├── pyproject.toml     # Package metadata

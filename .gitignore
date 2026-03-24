@@ -97,6 +97,10 @@ coverage/
 .vercel/
 .cache/
 
+# Go build artifacts
+ninloader/go/ninloader
+ninloader/go/dist/
+
 # Docker
 docker-compose.override.yml
 !images/screenshots/*.png
