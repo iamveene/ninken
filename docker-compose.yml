@@ -9,7 +9,7 @@ services:
       args:
         PORT: ${NINKEN_PORT:-4000}
     ports:
-      - "${NINKEN_PORT:-4000}:${NINKEN_PORT:-4000}"
+      - "${NINKEN_PORT:-4000}:4000"
     environment:
       - PORT=${NINKEN_PORT:-4000}
       - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:4000}

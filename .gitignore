@@ -75,6 +75,7 @@ next-env.d.ts
 *.log
 npm-debug.log*
 yarn-error.log*
+install.log
 
 # Coverage
 coverage/

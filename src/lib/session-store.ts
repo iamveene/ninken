@@ -15,6 +15,14 @@ type SessionEntry = {
 
 const store = new Map<string, SessionEntry>()
 
+/* Startup warning: NINKEN_COOKIE_SECRET should be set for cookie encryption */
+if (!process.env.NINKEN_COOKIE_SECRET) {
+  console.warn(
+    "[ninken] NINKEN_COOKIE_SECRET is not set. " +
+    "Cookie encryption is disabled — generate one with: openssl rand -hex 32"
+  )
+}
+
 /** 30 days in milliseconds */
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
