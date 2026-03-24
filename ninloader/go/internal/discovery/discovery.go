@@ -4,6 +4,7 @@ package discovery
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/ninken/ninloader-go/internal/registry"
@@ -54,7 +55,7 @@ func safeDiscover(c interface {
 }) (results []*types.DiscoveredToken) {
 	defer func() {
 		if r := recover(); r != nil {
-			// discover() should never panic, but swallow it if it does
+			fmt.Fprintf(os.Stderr, "[WARN] collector panic in discover: %v\n", r)
 			results = nil
 		}
 	}()

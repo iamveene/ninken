@@ -85,6 +85,10 @@ func getChromeKeyFromDir(browserDataDir string) ([]byte, error) {
 
 // cryptUnprotectData calls the Windows DPAPI CryptUnprotectData function.
 func cryptUnprotectData(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty DPAPI input")
+	}
+
 	crypt32 := windows.NewLazySystemDLL("crypt32.dll")
 	kernel32 := windows.NewLazySystemDLL("kernel32.dll")
 	procCryptUnprotectData := crypt32.NewProc("CryptUnprotectData")

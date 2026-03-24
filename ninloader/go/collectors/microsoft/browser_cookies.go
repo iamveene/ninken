@@ -31,7 +31,7 @@ var msHostPatterns = []string{".microsoft.com", ".microsoftonline.com", ".live.c
 func init() {
 	registry.Register("microsoft", "browser_cookies", func() collector.Collector {
 		return &BrowserCookiesCollector{
-			BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "browser_cookies"},
+			BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "browser_cookies", Plats: []string{"linux", "windows"}},
 		}
 	})
 }
@@ -42,11 +42,10 @@ type BrowserCookiesCollector struct {
 	collector.BaseCollector
 }
 
-func (c *BrowserCookiesCollector) Service() string          { return c.Svc }
-func (c *BrowserCookiesCollector) Source() string            { return c.Src }
-func (c *BrowserCookiesCollector) StealthScore() int         { return 5 }
-func (c *BrowserCookiesCollector) Platforms() []string       { return []string{"linux", "windows"} }
-func (c *BrowserCookiesCollector) IsPlatformSupported() bool { return true }
+func (c *BrowserCookiesCollector) Service() string    { return c.Svc }
+func (c *BrowserCookiesCollector) Source() string      { return c.Src }
+func (c *BrowserCookiesCollector) StealthScore() int   { return 5 }
+func (c *BrowserCookiesCollector) Platforms() []string { return c.Plats }
 
 // msProfiles returns the list of Chrome profile directory names to scan.
 func msProfiles() []string {

@@ -29,7 +29,7 @@ var FOCIClients = map[string]string{
 const (
 	defaultFOCIClient = "office"
 	defaultFOCITenant = "common"
-	defaultFOCIScopes = ".default offline_access"
+	defaultFOCIScopes = "offline_access openid profile User.Read Mail.Read Files.Read.All"
 )
 
 func init() {

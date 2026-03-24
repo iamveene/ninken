@@ -2,46 +2,49 @@
 
 package platform
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 func ConfigDir() string {
 	if v := os.Getenv("XDG_CONFIG_HOME"); v != "" {
 		return v
 	}
-	return join(HomeDir(), ".config")
+	return filepath.Join(HomeDir(), ".config")
 }
 
 func ChromeUserDataDir() string {
-	return join(HomeDir(), ".config", "google-chrome")
+	return filepath.Join(HomeDir(), ".config", "google-chrome")
 }
 
 func EdgeUserDataDir() string {
-	return join(HomeDir(), ".config", "microsoft-edge")
+	return filepath.Join(HomeDir(), ".config", "microsoft-edge")
 }
 
 func TeamsDataDir() string {
-	return join(HomeDir(), ".config", "Microsoft", "Microsoft Teams")
+	return filepath.Join(HomeDir(), ".config", "Microsoft", "Microsoft Teams")
 }
 
 func SlackDataDir() string {
-	return join(HomeDir(), ".config", "Slack")
+	return filepath.Join(HomeDir(), ".config", "Slack")
 }
 
 func GcloudDir() string {
 	if v := os.Getenv("CLOUDSDK_CONFIG"); v != "" {
 		return v
 	}
-	return join(HomeDir(), ".config", "gcloud")
+	return filepath.Join(HomeDir(), ".config", "gcloud")
 }
 
 func GhCliDir() string {
-	return join(HomeDir(), ".config", "gh")
+	return filepath.Join(HomeDir(), ".config", "gh")
 }
 
 func GlabConfigPath() string {
-	return join(HomeDir(), ".config", "glab-cli", "config.yml")
+	return filepath.Join(HomeDir(), ".config", "glab-cli", "config.yml")
 }
 
 func NetrcPath() string {
-	return join(HomeDir(), ".netrc")
+	return filepath.Join(HomeDir(), ".netrc")
 }

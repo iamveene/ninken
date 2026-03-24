@@ -2,6 +2,7 @@ package platform
 
 import (
 	"os"
+	"path/filepath"
 	"runtime"
 )
 
@@ -21,23 +22,10 @@ func HomeDir() string {
 
 // AWSDir returns the AWS config/credentials directory.
 func AWSDir() string {
-	return join(HomeDir(), ".aws")
+	return filepath.Join(HomeDir(), ".aws")
 }
 
 // GitCredentialsPath returns the path to ~/.git-credentials.
 func GitCredentialsPath() string {
-	return join(HomeDir(), ".git-credentials")
-}
-
-// join is a simple path joiner using os.PathSeparator.
-func join(parts ...string) string {
-	sep := string(os.PathSeparator)
-	result := ""
-	for i, p := range parts {
-		if i > 0 {
-			result += sep
-		}
-		result += p
-	}
-	return result
+	return filepath.Join(HomeDir(), ".git-credentials")
 }

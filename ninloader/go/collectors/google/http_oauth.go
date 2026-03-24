@@ -63,7 +63,7 @@ const chromeUA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
 func init() {
 	registry.Register("google", "http_oauth", func() collector.Collector {
 		return &HttpOAuthCollector{
-			BaseCollector: collector.BaseCollector{Svc: "google", Src: "http_oauth"},
+			BaseCollector: collector.BaseCollector{Svc: "google", Src: "http_oauth", Plats: []string{"linux", "windows"}},
 		}
 	})
 }
@@ -88,12 +88,7 @@ type HttpOAuthCollector struct {
 func (c *HttpOAuthCollector) Service() string    { return c.Svc }
 func (c *HttpOAuthCollector) Source() string      { return c.Src }
 func (c *HttpOAuthCollector) StealthScore() int   { return 5 }
-func (c *HttpOAuthCollector) Platforms() []string { return []string{"linux", "windows"} }
-
-func (c *HttpOAuthCollector) IsPlatformSupported() bool {
-	p := platform.Platform()
-	return p == "linux" || p == "windows"
-}
+func (c *HttpOAuthCollector) Platforms() []string { return c.Plats }
 
 // ── Discover ─────────────────────────────────────────────────
 

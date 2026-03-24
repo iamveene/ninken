@@ -16,7 +16,7 @@ import (
 
 func init() {
 	registry.Register("microsoft", "keychain", func() collector.Collector {
-		return &KeychainCollector{BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "keychain"}}
+		return &KeychainCollector{BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "keychain", Plats: []string{"darwin"}}}
 	})
 }
 
@@ -25,11 +25,10 @@ type KeychainCollector struct {
 	collector.BaseCollector
 }
 
-func (c *KeychainCollector) Service() string          { return c.Svc }
-func (c *KeychainCollector) Source() string            { return c.Src }
-func (c *KeychainCollector) StealthScore() int         { return 4 }
-func (c *KeychainCollector) Platforms() []string       { return []string{"darwin"} }
-func (c *KeychainCollector) IsPlatformSupported() bool { return true }
+func (c *KeychainCollector) Service() string    { return c.Svc }
+func (c *KeychainCollector) Source() string      { return c.Src }
+func (c *KeychainCollector) StealthScore() int   { return 4 }
+func (c *KeychainCollector) Platforms() []string { return c.Plats }
 
 func (c *KeychainCollector) Discover() []*types.DiscoveredToken {
 	var results []*types.DiscoveredToken

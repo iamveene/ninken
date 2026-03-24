@@ -13,7 +13,7 @@ import (
 
 func init() {
 	registry.Register("microsoft", "dpapi", func() collector.Collector {
-		return &DPAPICollector{BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "dpapi"}}
+		return &DPAPICollector{BaseCollector: collector.BaseCollector{Svc: "microsoft", Src: "dpapi", Plats: []string{"windows"}}}
 	})
 }
 
@@ -22,11 +22,10 @@ type DPAPICollector struct {
 	collector.BaseCollector
 }
 
-func (c *DPAPICollector) Service() string          { return c.Svc }
-func (c *DPAPICollector) Source() string            { return c.Src }
-func (c *DPAPICollector) StealthScore() int         { return 4 }
-func (c *DPAPICollector) Platforms() []string       { return []string{"windows"} }
-func (c *DPAPICollector) IsPlatformSupported() bool { return true }
+func (c *DPAPICollector) Service() string    { return c.Svc }
+func (c *DPAPICollector) Source() string      { return c.Src }
+func (c *DPAPICollector) StealthScore() int   { return 4 }
+func (c *DPAPICollector) Platforms() []string { return c.Plats }
 
 func (c *DPAPICollector) Discover() []*types.DiscoveredToken {
 	localAppData := os.Getenv("LOCALAPPDATA")

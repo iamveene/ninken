@@ -38,27 +38,21 @@ type CollectOptions struct {
 // BaseCollector provides default implementations for Collector methods.
 // Embed it in every concrete collector.
 type BaseCollector struct {
-	Svc string
-	Src string
+	Svc   string
+	Src   string
+	Plats []string // platform restrictions; nil means all platforms
 }
 
 func (b *BaseCollector) IsPlatformSupported() bool {
-	platforms := b.CollectorPlatforms()
-	if len(platforms) == 0 {
+	if len(b.Plats) == 0 {
 		return true
 	}
-	for _, p := range platforms {
+	for _, p := range b.Plats {
 		if p == runtime.GOOS {
 			return true
 		}
 	}
 	return false
-}
-
-// CollectorPlatforms returns nil (all platforms). Override in concrete collectors.
-// This exists because Platforms() must be defined on the concrete type, not BaseCollector.
-func (b *BaseCollector) CollectorPlatforms() []string {
-	return nil
 }
 
 func (b *BaseCollector) Refresh(token *types.CollectedToken) *types.RefreshResult {

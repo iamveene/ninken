@@ -28,11 +28,6 @@ func RefreshToken(token *types.CollectedToken) *types.RefreshResult {
 		}
 	}
 
-	defer func() {
-		// If the collector's Refresh() panics, we return an error result.
-		// The named return is handled by the outer function; this is a safety net.
-	}()
-
 	return safeRefresh(c, token)
 }
 

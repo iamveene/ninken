@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -67,7 +68,7 @@ func (o *FileOutput) Write(tokens []*types.CollectedToken) error {
 	for _, token := range tokens {
 		ts := time.Now().UTC().Format("20060102_150405")
 		filename := fmt.Sprintf("%s_%s_%s.json", token.Service, token.Source, ts)
-		filepath := o.Dir + "/" + filename
+		outPath := filepath.Join(o.Dir, filename)
 
 		b, err := json.MarshalIndent(token.ToNinkenDict(), "", "  ")
 		if err != nil {
@@ -75,19 +76,19 @@ func (o *FileOutput) Write(tokens []*types.CollectedToken) error {
 			continue
 		}
 
-		fd, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+		fd, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", filepath, err)
+			fmt.Fprintf(os.Stderr, "Error creating %s: %v\n", outPath, err)
 			continue
 		}
 		if _, err := fd.Write(b); err != nil {
 			fd.Close()
-			fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", filepath, err)
+			fmt.Fprintf(os.Stderr, "Error writing %s: %v\n", outPath, err)
 			continue
 		}
 		fd.Close()
 
-		fmt.Fprintf(os.Stderr, "Written: %s\n", filepath)
+		fmt.Fprintf(os.Stderr, "Written: %s\n", outPath)
 	}
 
 	return nil
@@ -119,9 +120,17 @@ func (o *ClipboardOutput) Write(tokens []*types.CollectedToken) error {
 
 	switch runtime.GOOS {
 	case "darwin":
-		return pipeToCmd(text, "pbcopy")
+		if err := pipeToCmd(text, "pbcopy"); err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "Copied %d token(s) to clipboard.\n", len(tokens))
+		return nil
 	case "windows":
-		return pipeToCmd(text, "clip")
+		if err := pipeToCmd(text, "clip"); err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "Copied %d token(s) to clipboard.\n", len(tokens))
+		return nil
 	default:
 		// Try xclip first, then xsel
 		err := pipeToCmd(text, "xclip", "-selection", "clipboard")
