@@ -1,0 +1,14 @@
+{
+  "name": "ninken-mcp-server",
+  "version": "0.5.0",
+  "type": "module",
+  "main": "index.js",
+  "bin": { "ninken-mcp": "./index.js" },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.0"
+  }
+}

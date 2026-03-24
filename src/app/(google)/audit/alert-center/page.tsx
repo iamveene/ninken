@@ -1,0 +1,379 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import {
+  Bell,
+  AlertTriangle,
+  ShieldAlert,
+  ChevronDown,
+  ChevronRight,
+  AlertCircle,
+} from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import {
+  useAuditAlertCenter,
+  type SecurityAlert,
+} from "@/hooks/use-audit-alert-center"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table"
+import { ExportButton } from "@/components/layout/export-button"
+
+type SeverityFilter = "all" | "critical" | "high" | "medium" | "low"
+
+const SEVERITY_CONFIG = {
+  critical: {
+    label: "Critical",
+    badgeVariant: "destructive" as const,
+    countClass: "text-red-400",
+    cardBorder: "border-red-500/40",
+    cardBg: "bg-red-950/20",
+  },
+  high: {
+    label: "High",
+    badgeVariant: "outline" as const,
+    countClass: "text-amber-400",
+    cardBorder: "border-amber-500/40",
+    cardBg: "bg-amber-950/20",
+  },
+  medium: {
+    label: "Medium",
+    badgeVariant: "outline" as const,
+    countClass: "text-yellow-400",
+    cardBorder: "border-yellow-500/40",
+    cardBg: "bg-yellow-950/20",
+  },
+  low: {
+    label: "Low",
+    badgeVariant: "secondary" as const,
+    countClass: "text-muted-foreground",
+    cardBorder: "border-muted-foreground/20",
+    cardBg: "bg-muted/10",
+  },
+} as const
+
+function SeverityBadge({ severity }: { severity: SecurityAlert["severity"] }) {
+  const config = SEVERITY_CONFIG[severity]
+  return (
+    <Badge variant={config.badgeVariant} className="text-xs">
+      {config.label}
+    </Badge>
+  )
+}
+
+function AlertDetailPanel({ alert }: { alert: SecurityAlert }) {
+  return (
+    <div className="px-4 py-3 bg-muted/5 border-t border-border/50">
+      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+        <div>
+          <span className="text-muted-foreground">Alert ID:</span>{" "}
+          <span className="font-mono text-xs">{alert.alertId}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Source:</span>{" "}
+          <span>{alert.source}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Deleted:</span>{" "}
+          <span>{alert.deleted ? "Yes" : "No"}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Created:</span>{" "}
+          <span>
+            {alert.createTime
+              ? new Date(alert.createTime).toLocaleString()
+              : "Unknown"}
+          </span>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground mb-1">Raw data</p>
+        <pre className="text-xs font-mono bg-background/50 rounded-md p-3 overflow-auto max-h-64 border border-border/30">
+          {JSON.stringify(alert.data, null, 2)}
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+export default function AlertCenterPage() {
+  const { alerts, scope, loading, error, refetch } = useAuditAlertCenter()
+  const [activeFilter, setActiveFilter] = useState<SeverityFilter>("all")
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+
+  const severityCounts = useMemo(() => {
+    const counts = { critical: 0, high: 0, medium: 0, low: 0 }
+    for (const a of alerts) {
+      counts[a.severity]++
+    }
+    return counts
+  }, [alerts])
+
+  const filteredAlerts = useMemo(() => {
+    if (activeFilter === "all") return alerts
+    return alerts.filter((a) => a.severity === activeFilter)
+  }, [alerts, activeFilter])
+
+  const toggleExpanded = (alertId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(alertId)) {
+        next.delete(alertId)
+      } else {
+        next.add(alertId)
+      }
+      return next
+    })
+  }
+
+  const exportData = useMemo(
+    () =>
+      filteredAlerts.map((a) => ({
+        alertId: a.alertId,
+        type: a.type,
+        source: a.source,
+        severity: a.severity,
+        createTime: a.createTime,
+        deleted: a.deleted,
+        data: JSON.stringify(a.data),
+      })),
+    [filteredAlerts]
+  )
+
+  const filters: { key: SeverityFilter; label: string; count: number }[] = [
+    { key: "all", label: "All", count: alerts.length },
+    { key: "critical", label: "Critical", count: severityCounts.critical },
+    { key: "high", label: "High", count: severityCounts.high },
+    { key: "medium", label: "Medium", count: severityCounts.medium },
+    { key: "low", label: "Low", count: severityCounts.low },
+  ]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold">Alert Center</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Security alerts generated by Google -- phishing, suspicious activity,
+            malware, data exports, government-backed attacks.
+          </p>
+        </div>
+        <ExportButton
+          data={exportData}
+          filename="alert-center"
+          disabled={loading || filteredAlerts.length === 0}
+        />
+      </div>
+
+      {/* OPSEC Banner */}
+      {!loading && scope === "granted" && alerts.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-950/10 px-3 py-2 text-sm text-red-200">
+          <ShieldAlert className="h-4 w-4 shrink-0 text-red-500" />
+          <span>
+            If alerts about your activity exist here, the SOC has already been
+            notified by Google.
+          </span>
+        </div>
+      )}
+
+      {/* Scope denied banner */}
+      {!loading && scope === "denied" && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-950/10 px-3 py-2 text-sm text-amber-200">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+          <span>
+            Alert Center scope not granted -- add{" "}
+            <code className="text-xs bg-amber-950/40 px-1 rounded">
+              apps.alerts.readonly
+            </code>{" "}
+            to access alerts.
+          </span>
+        </div>
+      )}
+
+      {error ? (
+        <Card className="border-destructive/50">
+          <CardContent className="flex items-center gap-3 py-4">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
+            <div>
+              <p className="font-medium">Unable to load alerts</p>
+              <p className="text-sm text-muted-foreground">{error}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+              onClick={refetch}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Summary cards */}
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 rounded-lg" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                ["critical", "high", "medium", "low"] as const
+              ).map((sev) => {
+                const config = SEVERITY_CONFIG[sev]
+                const count = severityCounts[sev]
+                return (
+                  <Card
+                    key={sev}
+                    className={`cursor-pointer transition-colors ${config.cardBorder} ${config.cardBg} ${
+                      activeFilter === sev
+                        ? "ring-1 ring-offset-1 ring-offset-background ring-primary"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setActiveFilter(activeFilter === sev ? "all" : sev)
+                    }
+                  >
+                    <CardContent className="py-3 px-4">
+                      <p className="text-xs text-muted-foreground">
+                        {config.label}
+                      </p>
+                      <p className={`text-2xl font-bold ${config.countClass}`}>
+                        {count}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Filter tabs */}
+          <div className="flex items-center gap-1">
+            {filters.map((f) => (
+              <Button
+                key={f.key}
+                variant={activeFilter === f.key ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setActiveFilter(f.key)}
+              >
+                {f.label}
+                {!loading && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {f.count}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
+
+          {/* Alerts table */}
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : alerts.length === 0 && scope === "granted" ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <Bell className="h-10 w-10 text-muted-foreground/50" />
+              <p className="text-lg font-medium">No alerts found</p>
+              <p className="text-sm text-muted-foreground">
+                No security alerts have been generated in your Google Workspace.
+              </p>
+            </div>
+          ) : filteredAlerts.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8" />
+                  <TableHead>Type</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAlerts.map((alert) => {
+                  const isExpanded = expandedIds.has(alert.alertId)
+                  return (
+                    <TableRow
+                      key={alert.alertId}
+                      className="group cursor-pointer"
+                      data-expanded={isExpanded || undefined}
+                    >
+                      <TableCell
+                        colSpan={6}
+                        className="p-0"
+                      >
+                        <div
+                          className="flex items-center px-4 py-2 hover:bg-muted/30 transition-colors"
+                          onClick={() => toggleExpanded(alert.alertId)}
+                        >
+                          <div className="w-8 flex items-center justify-center shrink-0">
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 font-medium text-sm truncate">
+                            {alert.type}
+                          </div>
+                          <div className="w-32 text-sm text-muted-foreground truncate">
+                            {alert.source}
+                          </div>
+                          <div className="w-24">
+                            <SeverityBadge severity={alert.severity} />
+                          </div>
+                          <div className="w-36 text-sm text-muted-foreground">
+                            {alert.createTime
+                              ? formatDistanceToNow(
+                                  new Date(alert.createTime),
+                                  { addSuffix: true }
+                                )
+                              : "Unknown"}
+                          </div>
+                          <div className="w-20 text-sm">
+                            {alert.deleted ? (
+                              <Badge variant="secondary" className="text-xs">
+                                Deleted
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {isExpanded && <AlertDetailPanel alert={alert} />}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-3 py-12">
+              <p className="text-sm text-muted-foreground">
+                No alerts match the selected severity filter.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,106 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Credentials & tokens — NEVER commit these
+/secrets/
+
+# Internal project docs — not for the repo
+CLAUDE.md
+AGENTS.md
+DESIGN.md
+PLAYBOOK.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Playwright & test screenshots
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+*.png
+!images/*.png
+!public/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# NinLoader output
+/ninloader/tokens/
+
+# Tests & E2E
+/e2e/
+/tests/
+
+# Internal research & docs
+/internal/
+REGRESSION_BUGS.md
+ROADMAP.md
+DESIGN.md
+PLAYBOOK.md
+GOOGLE-TOKEN-RESEARCH.md
+/docs/research/
+/.claude/
+
+# Scripts — dev utilities, never commit
+/scripts/
+
+# Internal credential scripts — contain secrets
+reauth.py
+reauth_microsoft.py
+workspace_cli.py
+
+# Next.js auto-generated
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+*.lcov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Certificates & keys
+*.pem
+*.key
+*.cert
+
+# Build & cache
+.turbo/
+.vercel/
+.cache/
+
+# Docker
+docker-compose.override.yml
+!images/screenshots/*.png
+/.playwright-mcp/
+/images/screenshots/
+UI_COSMETIC_ASSESSMENT.md
+REGRESSION_BUGS.md
+ROADMAP.md
